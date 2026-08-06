@@ -27,21 +27,24 @@ def main() -> None:
     ap.add_argument("--opponent-deck", default=None,
                     help="defaults to the same deck, so only policy differs")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--opponent", choices=("random", "heuristic"),
+                    default="random",
+                    help="heuristic vs heuristic isolates deck strength")
     args = ap.parse_args()
 
     from main import agent as heuristic_agent
 
     deck = load_deck(args.deck)
     opp_deck = load_deck(args.opponent_deck) if args.opponent_deck else list(deck)
+    opp = heuristic_agent if args.opponent == "heuristic" else random_agent
 
-    print(f"heuristic vs random — {args.games} games, mirror deck"
-          if not args.opponent_deck else
-          f"heuristic vs random — {args.games} games")
-    res = match(heuristic_agent, random_agent, deck, opp_deck,
+    same_deck = "mirror deck" if opp_deck == deck else "different decks"
+    print(f"heuristic vs {args.opponent} — {args.games} games, {same_deck}")
+    res = match(heuristic_agent, opp, deck, opp_deck,
                 games=args.games, seed0=args.seed)
 
-    print(f"\n  heuristic wins : {res['agent0_wins']}")
-    print(f"  random wins    : {res['agent1_wins']}")
+    print(f"\n  agent0 wins    : {res['agent0_wins']}")
+    print(f"  opponent wins  : {res['agent1_wins']}")
     print(f"  draws          : {res['draws']}")
     print(f"  win rate       : {res['agent0_win_rate']:.3f}")
     print(f"  median turns   : {res['median_turns']}")

@@ -271,6 +271,62 @@ list, common at the table.
 4. **Match-length and turn-order effects** are unexplored and sitting in the
    replays.
 
+---
+
+# EDA pass 3 — multi-day meta, and the finding that changes the plan
+
+Five days mined (2026-08-01 … 08-05, plus 07-08), one at a time: download,
+aggregate into `data/history_*.csv`, delete the 20 GB dump, next day.
+
+## 12. The meta moves, and the popular deck stays bad
+
+| Archetype | 07-08 | 08-03 | 08-04 | 08-05 |
+|---|---|---|---|---|
+| Marnie's Grimmsnarl ex (most played, every day) | 49.0% | 45.9% | 46.3% | 45.4% |
+| Mega Lopunny ex | 47.8% *(n=69)* | 57.0% | 53.9% | 56.1% |
+| Fezandipiti ex | 49.4% | 49.3% | 50.1% | 50.6% |
+
+Mega Lopunny ex went from a 69-deck curiosity to ~1,200 decks a day at ~56%.
+Marnie's Grimmsnarl ex is the most-played deck *every single day* and has never
+once had a winning record. The field's misallocation from §10 is not a one-day
+artifact — it is stable across a month.
+
+Best agents shift daily (Yushin Ito 61.3% on 07-08, Luca 65.3% on 08-05,
+Majkel1337 63–66% on 08-03/08-04), but Majkel1337 places in the top five on
+most days.
+
+## 13. The meta is only ~120 decklists wide
+
+On 2026-08-04, 9,614 deck instances resolve to **112 distinct 60-card lists**;
+on 08-03, 9,434 instances to 120. Agents are copying each other. That means
+decklist-level analysis is tractable in a way archetype-level analysis is not:
+
+The best individual list is a **Mega Lucario ex build at 69.5% over 239 games**
+(Wilson lower bound 63.3%), run by just 2 agents. The *archetype* average for
+Mega Lucario ex is 45.8%. **The list matters far more than the archetype** — a
+23-point spread inside one archetype name.
+
+## 14. Deck strength is not separable from the policy that plays it
+
+This is the finding that redirected the build.
+
+I adopted that 69.5% Mega Lucario list and measured it. Piloted by our heuristic
+agent, against the trivial 9-card sample deck **also piloted by our heuristic**,
+it lost **32–88 (26.7%)**. Against a random agent on a mirror deck it managed
+exactly 50%, versus 89% for the sample deck.
+
+A top player's list encodes their agent's competence: evolution lines timed
+correctly, Energy placed deliberately, Supporters sequenced. Hand that list to a
+greedy agent and it is *worse than a deck with no decisions in it*, because
+every card it misplays is a card the simple deck never asked it to play.
+
+**So a deck must be chosen for the pilot, not for the leaderboard.**
+`scripts/design_deck.py` builds for pilotability instead: Basic Pokémon only (no
+evolution to misplay), one Energy type (every attachment is live), and only
+unconditional attacks (so "attack with the biggest number" is correct). The
+strongest mono-type pool by this filter is **Fighting** — which is also the #2
+best-rewarded attacking type from §5's weakness analysis, at 188 targets.
+
 ## Open blocker
 
 Competition data for the Simulation category is still **403**. The correct slug

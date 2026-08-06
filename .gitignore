@@ -52,3 +52,6 @@ runs/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Submission bundles contain the licensed engine
+build/

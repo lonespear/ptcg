@@ -79,29 +79,73 @@ def _pokemon_in_play(obs: dict) -> list[dict]:
     return (p.get("active") or []) + (p.get("bench") or [])
 
 
-def _best_attack(options: list[dict]) -> int | None:
-    """Index of the highest-damage attack among MAIN options."""
+def _opponent_active_hp(obs: dict) -> int | None:
+    """Remaining HP of the Pokémon we would be attacking."""
+    cur = obs.get("current") or {}
+    me = cur.get("yourIndex", 0)
+    players = cur.get("players") or []
+    if len(players) < 2:
+        return None
+    active = players[1 - me].get("active") or []
+    if not active:
+        return None
+    return active[0].get("hp")
+
+
+def _best_attack(options: list[dict], obs: dict) -> int | None:
+    """Pick the attack to use.
+
+    A knockout is worth more than raw damage — it takes a prize and removes the
+    threat — so the cheapest attack that knocks the target out wins. With no
+    knockout available, fall back to the biggest hit.
+    """
     dmg = attack_damage()
-    best, best_d = None, -1
+    target_hp = _opponent_active_hp(obs)
+
+    ko_i, ko_d = None, None
+    big_i, big_d = None, -1
     for i, o in enumerate(options):
         if o.get("type") != OPT_ATTACK:
             continue
-        d = dmg.get(o.get("attackId"), 0)
-        if d > best_d:
-            best, best_d = i, d
-    return best
+        d = dmg.get(o.get("attackId"), 0) or 0
+        if d > big_d:
+            big_i, big_d = i, d
+        if target_hp is not None and d >= target_hp:
+            # Cheapest knockout = smallest damage that still finishes the job,
+            # which keeps the harder-hitting attack available for later.
+            if ko_d is None or d < ko_d:
+                ko_i, ko_d = i, d
+    return ko_i if ko_i is not None else big_i
 
 
-def _choose_main(options: list[dict]) -> int:
+def _best_attach(options: list[dict]) -> int | None:
+    """Attach Energy to the Active Pokémon — that is the one that attacks."""
+    fallback = None
+    for i, o in enumerate(options):
+        if o.get("type") != OPT_ATTACH:
+            continue
+        if fallback is None:
+            fallback = i
+        if o.get("inPlayArea") == 4:  # AreaType.ACTIVE
+            return i
+    return fallback
+
+
+def _choose_main(options: list[dict], obs: dict) -> int:
     """One action from the main menu, by the free-actions-first rule."""
     best_i, best_rank = 0, -1
     for i, o in enumerate(options):
         rank = MAIN_PRIORITY.get(o.get("type"), 0)
         if rank > best_rank:
             best_i, best_rank = i, rank
-    # Among equally-ranked attacks, take the hardest hitting one.
-    if options[best_i].get("type") == OPT_ATTACK:
-        alt = _best_attack(options)
+
+    kind = options[best_i].get("type")
+    if kind == OPT_ATTACK:
+        alt = _best_attack(options, obs)
+        if alt is not None:
+            return alt
+    elif kind == OPT_ATTACH:
+        alt = _best_attach(options)
         if alt is not None:
             return alt
     return best_i
@@ -124,6 +168,18 @@ def _choose_setup(options: list[dict], obs: dict) -> int:
 
 
 def agent(obs_dict: dict) -> list[int]:
+    """Never raise — an exception forfeits the game, so fall back to a legal pick."""
+    try:
+        return _agent(obs_dict)
+    except Exception:
+        sel = (obs_dict or {}).get("select")
+        if sel is None:
+            raise  # the deck must load; failing loudly here is correct
+        k = max(1, sel.get("minCount", 1) or 1)
+        return list(range(min(k, len(sel.get("option") or [1]))))
+
+
+def _agent(obs_dict: dict) -> list[int]:
     obs = obs_dict
     select = obs.get("select")
     if select is None:
@@ -150,7 +206,7 @@ def agent(obs_dict: dict) -> list[int]:
         if ctx == CTX_SETUP_ACTIVE:
             return [_choose_setup(options, obs)]
         if any(o.get("type") in MAIN_PRIORITY for o in options):
-            return [_choose_main(options)]
+            return [_choose_main(options, obs)]
         return [0]
 
     # Multi-pick: take the smallest legal set, lowest indices, no duplicates.

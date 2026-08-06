@@ -70,6 +70,44 @@ def aggregate_day(rows: list[dict], by_id: pd.DataFrame, date: str
     return cards, arch, agents
 
 
+def deck_signature(deck: dict) -> str:
+    """A stable id for an exact 60-card list: 'cardId:count,...' sorted."""
+    return ",".join(f"{cid}:{n}" for cid, n in sorted(deck.items()))
+
+
+def signature_to_deck(sig: str) -> list[int]:
+    """Expand a signature back into 60 card ids."""
+    out: list[int] = []
+    for part in sig.split(","):
+        cid, n = part.split(":")
+        out.extend([int(cid)] * int(n))
+    return out
+
+
+def aggregate_decks(rows: list[dict], by_id: pd.DataFrame, date: str
+                    ) -> pd.DataFrame:
+    """Per exact decklist: how often it was played and how often it won.
+
+    This is the point of keeping the replays — a decklist that wins on the
+    leaderboard is a tested artifact, not a guess.
+    """
+    if not rows:
+        return pd.DataFrame()
+    recs: dict[str, dict] = {}
+    for r in rows:
+        sig = deck_signature(r["deck"])
+        e = recs.setdefault(sig, {"date": date, "signature": sig, "decks": 0,
+                                  "wins": 0, "archetype": None, "agents": set()})
+        e["decks"] += 1
+        e["wins"] += r["won"]
+        e["agents"].add(r["agent"])
+        if e["archetype"] is None:
+            e["archetype"] = label_archetype(r["deck"], by_id)
+    df = pd.DataFrame(recs.values())
+    df["n_agents"] = df["agents"].map(len)
+    return df.drop(columns=["agents"])
+
+
 def summarize_history(cards: pd.DataFrame, arch: pd.DataFrame,
                       agents: pd.DataFrame, min_decks: int = 40
                       ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:

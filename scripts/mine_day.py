@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from ptcg import load_cards
 from ptcg.episodes import parse_episode
-from ptcg.meta import aggregate_day
+from ptcg.meta import aggregate_day, aggregate_decks
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -33,6 +33,7 @@ DATA.mkdir(exist_ok=True)
 CARDS_CSV = DATA / "history_cards.csv"
 ARCH_CSV = DATA / "history_archetypes.csv"
 AGENTS_CSV = DATA / "history_agents.csv"
+DECKS_CSV = DATA / "history_decklists.csv"
 
 CACHE = Path.home() / ".cache" / "kagglehub" / "datasets" / "kaggle"
 DS_PREFIX = "pokemon-tcg-ai-battle-episodes-"
@@ -119,6 +120,14 @@ def mine(date: str, by_id: pd.DataFrame, keep: bool) -> bool:
     append(arch, ARCH_CSV)
     append(agents, AGENTS_CSV)
 
+    # Keep only decklists with enough games to mean something — storing all
+    # ~10k instances per day would bloat the history for no extra signal.
+    decks = aggregate_decks(rows, by_id, date)
+    if not decks.empty:
+        append(decks[decks["decks"] >= 5], DECKS_CSV)
+        print(f"  {len(decks)} distinct decklists "
+              f"({int((decks['decks'] >= 5).sum())} with >=5 games kept)")
+
     if not arch.empty:
         top = arch.assign(wr=arch["wins"] / arch["decks"]).nlargest(5, "decks")
         print("  most-played archetypes:")
@@ -166,7 +175,7 @@ def main() -> None:
             break
 
     print("\nhistory files:")
-    for p in (CARDS_CSV, ARCH_CSV, AGENTS_CSV):
+    for p in (CARDS_CSV, ARCH_CSV, AGENTS_CSV, DECKS_CSV):
         if p.exists():
             print(f"  {p.relative_to(ROOT)}  ({len(pd.read_csv(p))} rows)")
 
