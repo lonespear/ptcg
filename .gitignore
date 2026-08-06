@@ -29,6 +29,9 @@ cache/
 data/*
 !data/meta_cards.csv
 !data/meta_decks.csv
+!data/history_cards.csv
+!data/history_archetypes.csv
+!data/history_agents.csv
 
 # Python
 __pycache__/
