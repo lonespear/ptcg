@@ -39,30 +39,79 @@ MAIN_PRIORITY = {
     OPT_END: 1,
 }
 
-_ATTACK_DAMAGE: dict[int, int] | None = None
+# The grader exec()s this file rather than importing it, so `__file__` does not
+# exist at run time. Touching it raises NameError and the episode dies — this is
+# exactly what failed the first two submissions, and it cannot reproduce locally
+# because a normal import always defines `__file__`.
+try:
+    _HERE = os.path.dirname(os.path.abspath(__file__))
+except NameError:
+    _HERE = ""
+
+# Where the competition mounts the agent bundle.
+_KAGGLE_DIR = "/kaggle_simulations/agent"
+
+
+def _candidate_paths(name: str) -> list[str]:
+    paths = [name, os.path.join(_KAGGLE_DIR, name)]
+    if _HERE:
+        paths.insert(1, os.path.join(_HERE, name))
+    return paths
+
+
+_TABLES: dict | None = None
+
+
+def _load_tables() -> dict:
+    """Attack damage and card HP, baked in at build time.
+
+    This deliberately does NOT import `cg`. The grader already has the engine
+    loaded, and importing our own copy runs `lib.GameInitialize()` a second
+    time against a live battle — which is what killed the first submission
+    ("Validation Episode failed"). A local test cannot reproduce it, because
+    there the module is already imported and the re-import is a no-op.
+    """
+    global _TABLES
+    if _TABLES is None:
+        for path in _candidate_paths("agent_data.json"):
+            try:
+                with open(path, "r") as fh:
+                    raw = json.load(fh)
+                _TABLES = {
+                    "attack_damage": {int(k): v for k, v in
+                                      raw.get("attack_damage", {}).items()},
+                    "card_hp": {int(k): v for k, v in
+                                raw.get("card_hp", {}).items()},
+                }
+                break
+            except (OSError, ValueError):
+                continue
+        else:
+            _TABLES = {"attack_damage": {}, "card_hp": {}}
+    return _TABLES
 
 
 def attack_damage() -> dict[int, int]:
-    """attackId -> printed damage, read from the engine's own table."""
-    global _ATTACK_DAMAGE
-    if _ATTACK_DAMAGE is None:
-        try:
-            from cg.sim import lib
-            rows = json.loads(lib.AllAttack().decode())
-            _ATTACK_DAMAGE = {r["attackId"]: r.get("damage") or 0 for r in rows}
-        except Exception:
-            _ATTACK_DAMAGE = {}
-    return _ATTACK_DAMAGE
+    """attackId -> printed damage."""
+    return _load_tables()["attack_damage"]
+
+
+def card_hp() -> dict[int, int]:
+    """cardId -> printed HP."""
+    return _load_tables()["card_hp"]
 
 
 def read_deck_csv() -> list[int]:
-    path = "deck.csv"
-    if not os.path.exists(path):
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "deck.csv")
-    if not os.path.exists(path):
-        path = "/kaggle_simulations/agent/deck.csv"
-    with open(path, "r") as fh:
-        text = fh.read()
+    text = None
+    for path in _candidate_paths("deck.csv"):
+        try:
+            with open(path, "r") as fh:
+                text = fh.read()
+            break
+        except OSError:
+            continue
+    if text is None:
+        raise FileNotFoundError("deck.csv not found next to the agent")
     deck = [int(x) for x in text.replace(",", "\n").split() if x.strip()]
     if len(deck) != 60:
         raise ValueError(f"deck.csv must hold 60 card ids, got {len(deck)}")
@@ -153,15 +202,12 @@ def _choose_main(options: list[dict], obs: dict) -> int:
 
 def _choose_setup(options: list[dict], obs: dict) -> int:
     """Opening Active: the sturdiest Basic we can lead with."""
-    try:
-        from cg.sim import lib
-        cards = {c["cardId"]: c for c in json.loads(lib.AllCard().decode())}
-    except Exception:
+    hp_table = card_hp()
+    if not hp_table:
         return 0
     best_i, best_hp = 0, -1
     for i, o in enumerate(options):
-        cid = o.get("cardId")
-        hp = (cards.get(cid) or {}).get("hp", 0) or 0
+        hp = hp_table.get(o.get("cardId"), 0) or 0
         if hp > best_hp:
             best_i, best_hp = i, hp
     return best_i

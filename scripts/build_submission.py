@@ -27,6 +27,31 @@ BUILD = ROOT / "build"
 COMPETITION = "pokemon-tcg-ai-battle"
 
 
+def write_tables(dest: Path) -> None:
+    """Bake the engine's attack/HP tables into the bundle.
+
+    The agent must not import `cg` at run time: the grader already has the
+    engine loaded, and a second import re-runs GameInitialize() against the
+    live battle. So the numbers get extracted here, at build time, instead.
+    """
+    import json
+    sys.path.insert(0, str(ENGINE))
+    from cg.sim import lib
+
+    attacks = json.loads(lib.AllAttack().decode())
+    cards = json.loads(lib.AllCard().decode())
+    data = {
+        "attack_damage": {str(a["attackId"]): (a.get("damage") or 0)
+                          for a in attacks},
+        "card_hp": {str(c["cardId"]): (c.get("hp") or 0) for c in cards
+                    if c.get("hp")},
+    }
+    dest.write_text(json.dumps(data, separators=(",", ":")))
+    print(f"  baked {len(data['attack_damage'])} attacks, "
+          f"{len(data['card_hp'])} card HP values "
+          f"({dest.stat().st_size / 1024:.0f} KB)")
+
+
 def build() -> Path:
     staging = BUILD / "submission"
     if staging.exists():
@@ -39,12 +64,7 @@ def build() -> Path:
             raise FileNotFoundError(f"missing {src}")
         shutil.copy2(src, staging / name)
 
-    cg_src = ENGINE / "cg"
-    if not cg_src.exists():
-        raise FileNotFoundError(
-            f"missing {cg_src} — copy sample_submission from the competition "
-            f"download into engine/")
-    shutil.copytree(cg_src, staging / "cg")
+    write_tables(staging / "agent_data.json")
 
     archive = BUILD / "submission.tar.gz"
     if archive.exists():
@@ -112,6 +132,14 @@ def main() -> None:
 
     verify(AGENT / "deck.csv")
     archive = build()
+
+    if args.submit:
+        # Never submit without reproducing the grader's validation episode.
+        rc = subprocess.run(
+            [sys.executable, str(Path(__file__).parent / "validate_submission.py")],
+            text=True).returncode
+        if rc != 0:
+            sys.exit("validation failed — not submitting")
     if args.submit:
         rc = submit(archive, args.message)
         sys.exit(rc)

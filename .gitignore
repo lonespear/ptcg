@@ -55,3 +55,6 @@ desktop.ini
 
 # Submission bundles contain the licensed engine
 build/
+
+# Derived from the engine's card tables
+agent/agent_data.json

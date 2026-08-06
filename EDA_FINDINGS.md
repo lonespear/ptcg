@@ -327,6 +327,33 @@ unconditional attacks (so "attack with the biggest number" is correct). The
 strongest mono-type pool by this filter is **Fighting** — which is also the #2
 best-rewarded attacking type from §5's weakness analysis, at 188 targets.
 
+## 15. Six days consolidated — 57,108 deck instances
+
+Days mined: 2026-07-08 and 08-01 … 08-05. All 122 distinct decklists retained.
+
+| Archetype | Decks | Win rate |
+|---|---|---|
+| Mega Lucario ex | 1,604 | **58.8%** |
+| Mega Lopunny ex | 5,893 | **56.6%** |
+| Mega Starmie ex | 828 | **56.2%** |
+| Dragapult ex | 2,723 | 53.6% |
+| Teal Mask Ogerpon ex | 3,772 | 51.9% |
+| Mega Kangaskhan ex | 5,924 | 51.2% |
+| Fezandipiti ex | 7,802 | 50.0% |
+| Dudunsparce | 1,408 | 47.7% |
+| **Marnie's Grimmsnarl ex** | **19,696** | **46.4%** |
+| Team Rocket's Mewtwo ex | 1,030 | 45.0% |
+
+**Marnie's Grimmsnarl ex is 34.5% of the entire metagame and has the second
+worst win rate in it.** One deck in three is a deck that loses. This is the
+central strategic fact of this competition: the field is not efficient, and an
+agent that simply plays one of the top-three archetypes competently starts with
+a ~10-point edge over the median opponent.
+
+Best agents over six days (≥300 games): Luca 63.8% (632), **Majkel1337 61.4%
+(2,699 — the only player combining high volume with a high rate)**, James Cox &
+Henry Chao 58.1% (716), Yushin Ito 58.0% (1,158).
+
 ## Open blocker
 
 Competition data for the Simulation category is still **403**. The correct slug
