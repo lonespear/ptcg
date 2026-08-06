@@ -261,6 +261,239 @@ def _rank_card_options(options: list[dict], obs: dict) -> list[int]:
     return [i for _, _, i in scored]
 
 
+# =========================================================================
+# Forward search
+#
+# The engine can roll the game forward from the current position, but only if
+# we supply the hidden information: the opponent's deck, hand and prizes. That
+# would be hopeless guesswork except the mined replays show the whole metagame
+# is ~120 decklists, and the 40 shipped in deck_priors.json cover 94% of it.
+# So we identify which known list the opponent is playing, fill in the rest,
+# and actually simulate our candidate turns instead of guessing at them.
+# =========================================================================
+
+_PRIORS: list[tuple[dict, int]] | None = None
+_MY_DECK: list[int] | None = None
+SEARCH_ROLLOUT_STEPS = 24     # enough to finish a turn; caps the cost
+SEARCH_ENABLED = True
+
+
+def _load_priors() -> list[tuple[dict, int]]:
+    global _PRIORS
+    if _PRIORS is None:
+        _PRIORS = []
+        paths = ["deck_priors.json", os.path.join(_KAGGLE_DIR, "deck_priors.json")]
+        if _HERE:
+            paths.insert(1, os.path.join(_HERE, "deck_priors.json"))
+        import json
+        for path in paths:
+            try:
+                with open(path, "r") as fh:
+                    raw = json.load(fh)
+            except (OSError, ValueError):
+                continue
+            for e in raw.get("decks", []):
+                counts = {int(k): v for k, v in e.get("c", {}).items()}
+                _PRIORS.append((counts, int(e.get("p", 1))))
+            break
+    return _PRIORS
+
+
+def _counter_from_zone(cards, out: dict) -> None:
+    for card in cards or []:
+        if not isinstance(card, dict):
+            continue
+        cid = card.get("id")
+        if cid:
+            out[cid] = out.get(cid, 0) + 1
+        for sub in ("energyCards", "tools", "preEvolution"):
+            for c in card.get(sub) or []:
+                if isinstance(c, dict) and c.get("id"):
+                    out[c["id"]] = out.get(c["id"], 0) + 1
+
+
+def _visible(player: dict, include_hand: bool) -> dict:
+    seen: dict = {}
+    for zone in ("active", "bench", "discard"):
+        _counter_from_zone(player.get(zone), seen)
+    if include_hand:
+        _counter_from_zone(player.get("hand"), seen)
+    return seen
+
+
+def _predict_opponent(obs: dict) -> tuple[list[int], list[int], list[int]]:
+    """(deck, hand, prize) card ids for the opponent's hidden cards."""
+    cur = obs.get("current") or {}
+    me = cur.get("yourIndex", 0)
+    players = cur.get("players") or []
+    if len(players) < 2:
+        return [], [], []
+    opp = players[1 - me]
+    n_deck = opp.get("deckCount", 0) or 0
+    n_hand = opp.get("handCount", 0) or 0
+    n_prize = len(opp.get("prize") or [])
+
+    seen = _visible(opp, include_hand=False)
+    best, best_plays = None, -1
+    for counts, plays in _load_priors():
+        if all(counts.get(cid, 0) >= n for cid, n in seen.items()):
+            if plays > best_plays:
+                best, best_plays = counts, plays
+
+    hidden: list[int] = []
+    if best is not None:
+        for cid, n in best.items():
+            hidden.extend([cid] * max(n - seen.get(cid, 0), 0))
+
+    need = n_deck + n_hand + n_prize
+    if len(hidden) < need:
+        hidden.extend([3] * (need - len(hidden)))   # Basic Energy is safe filler
+    hidden = hidden[:need]
+    return (hidden[n_hand + n_prize:], hidden[:n_hand],
+            hidden[n_hand:n_hand + n_prize])
+
+
+def _own_hidden(obs: dict) -> tuple[list[int], list[int]]:
+    """(deck, prize) for our own side — we know our list, so this is exact."""
+    global _MY_DECK
+    if _MY_DECK is None:
+        try:
+            _MY_DECK = read_deck_csv()
+        except Exception:
+            _MY_DECK = []
+    cur = obs.get("current") or {}
+    me = cur.get("yourIndex", 0)
+    players = cur.get("players") or []
+    if me >= len(players):
+        return [], []
+    mine = players[me]
+    n_deck = mine.get("deckCount", 0) or 0
+    n_prize = len(mine.get("prize") or [])
+
+    remaining: dict = {}
+    for cid in _MY_DECK:
+        remaining[cid] = remaining.get(cid, 0) + 1
+    for cid, n in _visible(mine, include_hand=True).items():
+        remaining[cid] = remaining.get(cid, 0) - n
+
+    hidden = [cid for cid, n in remaining.items() for _ in range(max(n, 0))]
+    need = n_deck + n_prize
+    if len(hidden) < need:
+        hidden.extend([3] * (need - len(hidden)))
+    hidden = hidden[:need]
+    return hidden[n_prize:], hidden[:n_prize]
+
+
+def _side_hp(player) -> float:
+    total = 0.0
+    for zone in ("active", "bench"):
+        for mon in getattr(player, zone, None) or []:
+            if mon is not None:
+                total += getattr(mon, "hp", 0) or 0
+    return total
+
+
+def _evaluate(observation, me: int) -> float:
+    """Score a simulated position from our seat.
+
+    Prizes dominate because prizes are the win condition; board HP is the
+    tie-breaker that points toward taking the next one.
+    """
+    cur = observation.current
+    result = getattr(cur, "result", -1)
+    if result is not None and result != -1:
+        return 1e6 if result == me else -1e6
+    mine = cur.players[me]
+    theirs = cur.players[1 - me]
+    # Our prize pile shrinking means we have been taking prizes.
+    score = (len(theirs.prize or []) - len(mine.prize or [])) * 1000.0
+    score += _side_hp(mine) - _side_hp(theirs)
+    score += (getattr(mine, "handCount", 0) or 0) * 5.0
+    return score
+
+
+def _rollout_value(state, me: int, rules_choice) -> float:
+    """Play our own turn out with the rule policy, then score the position."""
+    from cg.api import search_step
+    steps = 0
+    while steps < SEARCH_ROLLOUT_STEPS:
+        o = state.observation
+        sel = o.select
+        if sel is None or not sel.option:
+            break
+        if o.current.yourIndex != me:
+            break                      # our turn is over; stop here
+        try:
+            state = search_step(state.searchId, rules_choice(o))
+        except Exception:
+            break
+        steps += 1
+    return _evaluate(state.observation, me)
+
+
+def _search_main(obs: dict, options: list[dict]) -> int | None:
+    """1-ply search: simulate each option, finish the turn, keep the best."""
+    if not SEARCH_ENABLED or not obs.get("search_begin_input"):
+        return None
+    try:
+        from cg.api import (search_begin, search_end, search_step,
+                            to_observation_class)
+    except Exception:
+        return None
+
+    try:
+        o = to_observation_class(obs)
+        me = o.current.yourIndex
+        my_deck, my_prize = _own_hidden(obs)
+        opp_deck, opp_hand, opp_prize = _predict_opponent(obs)
+
+        root = search_begin(o, my_deck, my_prize, opp_deck, opp_prize,
+                            opp_hand, [])
+    except Exception:
+        return None
+
+    best_i, best_v = None, None
+    try:
+        for i in range(len(options)):
+            try:
+                child = search_step(root.searchId, [i])
+            except Exception:
+                continue
+            v = _rollout_value(child, me, _rules_choice_for)
+            if best_v is None or v > best_v:
+                best_i, best_v = i, v
+    finally:
+        try:
+            search_end()
+        except Exception:
+            pass
+    return best_i
+
+
+def _rules_choice_for(observation) -> list[int]:
+    """Rule policy over a simulated Observation (dataclass, not dict)."""
+    sel = observation.select
+    opts = sel.option or []
+    if not opts:
+        return [0]
+    types = {getattr(o, "type", None) for o in opts}
+    if types <= {OPT_YES, OPT_NO}:
+        for i, o in enumerate(opts):
+            if getattr(o, "type", None) == OPT_YES:
+                return [i]
+        return [0]
+    best_i, best_rank = 0, -1
+    for i, o in enumerate(opts):
+        rank = MAIN_PRIORITY.get(getattr(o, "type", None), 0)
+        if rank > best_rank:
+            best_i, best_rank = i, rank
+    lo = max(getattr(sel, "minCount", 1) or 1, 1)
+    hi = min(getattr(sel, "maxCount", 1) or 1, len(opts))
+    if lo > 1:
+        return list(range(min(lo, hi)))
+    return [best_i]
+
+
 def agent(obs_dict: dict) -> list[int]:
     """Never raise on a play decision — an exception forfeits the game."""
     try:
@@ -307,8 +540,12 @@ def _agent(obs_dict: dict) -> list[int]:
                 best_i, best_n = i, v
         return [best_i]
 
-    # The main menu.
+    # The main menu: simulate the candidates when we can, fall back to rules.
     if any(o.get("type") in MAIN_PRIORITY for o in options):
+        if len(options) > 1:
+            picked = _search_main(obs, options)
+            if picked is not None:
+                return [picked]
         return [_choose_main(options, obs)]
 
     # Card choices: put the most valuable card where we want it, and the least

@@ -64,6 +64,16 @@ def build() -> Path:
             raise FileNotFoundError(f"missing {src}")
         shutil.copy2(src, staging / name)
 
+    # The opponent-deck prior the search needs. Without it the agent still
+    # plays, but falls back to rules — so its absence must be loud.
+    priors = AGENT / "deck_priors.json"
+    if priors.exists():
+        shutil.copy2(priors, staging / "deck_priors.json")
+        print(f"  priors: {priors.stat().st_size / 1024:.0f} KB")
+    else:
+        print("  WARNING: no deck_priors.json — search will be disabled. "
+              "Run scripts/export_priors.py")
+
     # The agent reads card/attack metadata through cg.api, exactly as the
     # official sample does, so the package ships with the bundle. (Importing it
     # was never the problem — the first two failures were the __file__ bug.)
