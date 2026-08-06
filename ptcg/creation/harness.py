@@ -88,6 +88,9 @@ def play_game(agent_p0, agent_p1, deck_p0: list[int], deck_p1: list[int],
             f"errorType={start.errorType}"
         )
     agents = (agent_p0, agent_p1)
+    for agent, deck in ((agent_p0, deck_p0), (agent_p1, deck_p1)):
+        if hasattr(agent, "bind_deck"):
+            agent.bind_deck(deck)  # deck-aware pilots get their seat's list
     turns = selects = 0
     winner = reason = None
     try:

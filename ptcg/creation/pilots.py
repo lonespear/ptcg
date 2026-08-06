@@ -287,3 +287,32 @@ class GreedyPilot:
             return [values[0][1]]
         values.sort(key=lambda v: -v[0])
         return [i for _, i in values[:hi]]
+
+
+class JonDayPilot:
+    """Adapter over agent/main.py (chunk 2's live agent) for GA evaluation.
+
+    Two things the raw module can't do alone:
+    - seat-correct self-model: the module's _MY_DECK global normally comes
+      from deck.csv, but GA matches pit two arbitrary decks; the harness
+      calls bind_deck() per game and we re-point the global on every call
+      (both seats share the module, so per-call re-pointing is required).
+    - search throttle: forward search (~4.4 ms/decision) is ladder-grade
+      but ~300x too slow for the GA inner loop. search=False gives the
+      rules-only policy for fitness; use search=True for gates and
+      tournaments.
+    """
+
+    def __init__(self, seed: int | None = None, search: bool = False):
+        import agent.main as _jon  # real import (not exec): __file__ works,
+        self._jon = _jon           # so priors resolve next to the module
+        self.search = search
+        self.deck: list[int] | None = None
+
+    def bind_deck(self, deck: list[int]) -> None:
+        self.deck = list(deck)
+
+    def __call__(self, obs: dict) -> list[int]:
+        self._jon._MY_DECK = self.deck
+        self._jon.SEARCH_ENABLED = self.search
+        return self._jon.agent(obs)
