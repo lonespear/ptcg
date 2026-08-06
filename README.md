@@ -324,6 +324,31 @@ refuses to submit unless it passes.
 
 ---
 
+# The deck is fragile in our hands, and no relative test could see it
+
+Comparing our self-play games against real replays *distributionally* — not
+against another agent, against the field's actual statistics — flags them at
+7-8 turns where real games run 13. Naming how they end explains it:
+
+| Game ends because | Real replays | Our self-play |
+|---|---|---|
+| A player ran out of Pokémon | 8% | **70%** |
+
+**Our deck holds 4 Pokémon in 60 cards.** Four copies of Teal Mask Ogerpon ex
+and nothing else — four knockouts and you lose regardless of prizes. Real
+players run this exact list at 52.8% because they protect those four; our agent
+does not.
+
+The important part is *why nothing caught it*. The gauntlet pilots both sides
+with our own agent, so a weakness that hurts us and the opponent equally cancels
+out — every deck in it was dying the same way, the ranking held, and the
+absolute behaviour was nowhere near the real field. **Relative tests are blind
+to errors common to both arms.** Only checking against an external distribution
+exposes them.
+
+That makes four distinct ways a benchmark has misled us in this project, and
+this is the subtlest.
+
 # What we know is still wrong
 
 Playing the *same* deck, the reference agent beats us roughly 2:1. The gap is

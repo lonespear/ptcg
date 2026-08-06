@@ -648,6 +648,45 @@ confidence, which is precisely when we are facing an opponent we cannot pin
 down. The adaptive behaviour is already correct — but the honest expectation is
 that the gate earns more at rank 500 than it does at rank 4500.
 
+## 28. The gauntlet has a symmetric blind spot — and it hid a fragile deck
+
+Validating the rollout world model distributionally against real replays flagged
+our self-play games at ~7-8 turns against a real median of 13. Naming the
+termination mode found why:
+
+| Game ends because | Real replays | Our self-play |
+|---|---|---|
+| A player has no Pokémon left | 8% | **70%** |
+| Prizes taken | — | 30% |
+| Median turn | 13 | **8** |
+
+The cause is not the agent. **Our deck holds 4 Pokémon in 60 cards** — four
+copies of Teal Mask Ogerpon ex and nothing else. Four knockouts and the game is
+over regardless of prizes. Real players run this list at a 52.8% win rate
+because they protect those four (healing, careful trading, fetching); our agent
+does not, and dies to it 70% of the time.
+
+**Why no benchmark caught it.** The field-weighted gauntlet pilots *both sides*
+with our own agent. A failure mode that hurts us and the opponent equally is
+invisible to a symmetric test: every deck in the gauntlet was dying the same way,
+so the relative ranking was undisturbed while the absolute behaviour was far
+outside anything the real field does.
+
+That is a fourth distinct benchmark failure, and the subtlest:
+
+| Benchmark | Bias | How it was caught |
+|---|---|---|
+| Own weak agent, round-robin | opponent too weak | leaderboard contradicted it |
+| Official reference agent | monoculture, one archetype | field-weighted gauntlet |
+| Field gauntlet | field piloted by us | still open — this |
+| Any self-play measure | **symmetric failure modes cancel** | distributional check vs replays |
+
+The general lesson: **relative tests cannot see errors that are common to both
+arms.** Only comparison against an external distribution — the real replays —
+exposes them. That is the same instrument that caught the first broken benchmark
+(turn-5 games against a 146-step median) and it is now a deliberate, repeatable
+script rather than an accident.
+
 ## Open blocker
 
 ~~Competition data for the Simulation category is still **403**.~~ **Resolved** —
