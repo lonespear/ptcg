@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import math
 import os
+import random
 
 # --- option / area / context constants (see cg/api.py) ----------------------
 OPT_NUMBER, OPT_YES, OPT_NO, OPT_CARD = 0, 1, 2, 3
@@ -296,6 +297,11 @@ SEARCH_ROLLOUT_STEPS = 24     # enough to finish a turn; caps the cost
 # 0.9+ and is right 0.98), so its own confidence is a trustworthy gate.
 N_DETERMINIZATIONS = 3
 CONFIDENCE_GATE = 0.80
+# Total determinizations per decision, split across two axes: which decklist,
+# and how its unseen cards are dealt. Deck identity turned out to be the easy
+# half — 80% of misidentifications are between sister lists that play the same —
+# so when the posterior is confident the whole budget goes to shuffles instead.
+DETERMINIZATION_BUDGET = 3
 
 # Roll the opponent's reply into the rollout before scoring. Tested once on a
 # single point-estimate determinization and rejected (0.467) — the extra depth
@@ -409,19 +415,32 @@ def _deck_posterior(obs: dict, top_k: int = 3) -> list[tuple[dict, float]]:
 
 
 def _hidden_from(counts: dict, seen: dict, n_deck: int, n_hand: int,
-                 n_prize: int) -> tuple[list[int], list[int], list[int]]:
-    """Split one candidate decklist's unseen cards into (deck, hand, prize)."""
-    hidden: list[int] = []
+                 n_prize: int, rng=None) -> tuple[list[int], list[int], list[int]]:
+    """Split one candidate decklist's unseen cards into (deck, hand, prize).
+
+    The split must be SHUFFLED. Knowing the opponent's 60-card list still leaves
+    the harder question of which unseen cards are in hand, deck, or prizes — and
+    that is the variable that actually changes game to game.
+
+    This previously took the pool in dict order, which the priors file stores
+    sorted by card id, so the simulated opponent hand was deterministically the
+    lowest-numbered cards in their list — basic Energy, every rollout, every
+    game. Every simulated reply was made by an opponent holding a hand of pure
+    Energy and no Pokémon or Trainers.
+    """
+    pool: list[int] = []
     for cid, n in counts.items():
-        hidden.extend([cid] * max(n - seen.get(cid, 0), 0))
+        pool.extend([cid] * max(n - seen.get(cid, 0), 0))
     need = n_deck + n_hand + n_prize
-    if len(hidden) < need:
+    if len(pool) < need:
         cycle = [cid for cid, n in counts.items() for _ in range(n)] or [3]
-        while len(hidden) < need:
-            hidden.append(cycle[len(hidden) % len(cycle)])
-    hidden = hidden[:need]
-    return (hidden[n_hand + n_prize:], hidden[:n_hand],
-            hidden[n_hand:n_hand + n_prize])
+        while len(pool) < need:
+            pool.append(cycle[len(pool) % len(cycle)])
+    if rng is not None:
+        rng.shuffle(pool)
+    pool = pool[:need]
+    return (pool[n_hand + n_prize:], pool[:n_hand],
+            pool[n_hand:n_hand + n_prize])
 
 
 def _predict_opponent(obs: dict) -> tuple[list[int], list[int], list[int]]:
@@ -615,9 +634,30 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
     totals = [0.0] * len(options)
     reached = [0.0] * len(options)
 
+    # Determinizations vary along two axes: which decklist they are playing, and
+    # how its unseen cards are split into hand / deck / prizes. Measurement says
+    # the first axis barely matters — 80% of misidentifications are between
+    # sister lists that play identically — while the second is the thing that
+    # genuinely differs game to game. So spend the budget on shuffles.
+    #
+    # Seeded from the position so both sides of a paired A/B test see the same
+    # shuffles, and so a rollout is reproducible.
+    cur_step = obs.get("step") or 0
+    turn = (obs.get("current") or {}).get("turn") or 0
+    rng = random.Random((cur_step * 8191) ^ (turn * 131) ^ n_deck)
+
+    # Fixed budget, reallocated rather than multiplied: confident about the
+    # decklist means spending all of it on shuffles of that one list; uncertain
+    # means splitting it across the candidate lists. Cost stays flat either way.
+    per_deck = max(1, DETERMINIZATION_BUDGET // max(len(posterior), 1))
+    plan: list[tuple[dict, float]] = []
     for counts, weight in posterior:
+        for _ in range(per_deck):
+            plan.append((counts, weight / per_deck))
+
+    for counts, weight in plan:
         opp_deck, opp_hand, opp_prize = _hidden_from(
-            counts, seen, n_deck, n_hand, n_prize)
+            counts, seen, n_deck, n_hand, n_prize, rng)
         try:
             root = search_begin(o, my_deck, my_prize, opp_deck, opp_prize,
                                 opp_hand, [])
