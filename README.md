@@ -3,8 +3,17 @@
 Our entry for the Kaggle **Pokémon TCG AI Battle Challenge**. Final deadline
 **13 Sep 2026**.
 
-**Live standing (6 Aug):** rank **4567 of 6421**, score **520.5** and still
-climbing after the v5 submission.
+**Live standing (6 Aug):** `v9` at **656.4**, roughly rank **2905 of 6421** —
+**above the median** and still settling. We started the day at 445.8.
+
+| Submission | Score | Rank | |
+|---|---|---|---|
+| v3 — starter deck, rules only | 544.8 | ~4292 | |
+| v4 — Mega Lucario ex | 305.8 | ~6024 | a bad benchmark call |
+| v5 — search + Teal Mask Ogerpon ex | 535.8 | ~4391 | |
+| **v9 — energy term in the eval** | **656.4** | **~2905** | **top 45%** |
+
+**+182 rating from here is the top decile.**
 
 The score is a rating, not a rank — worth stating because they get confused. The
 field:
@@ -121,7 +130,37 @@ score = HP + 2 × (best attack damage) − 220 × (extra prizes it concedes)
 That penalty is what stops it from reflexively leading with the biggest Pokémon
 on the board.
 
-### Rule 4 — everything else
+### Rule 4 — Energy in play is worth something on its own
+
+This one is the single biggest improvement we made, and it is four lines.
+
+Our attacker, Teal Mask Ogerpon ex, has exactly one attack: **Myriad Leaf
+Shower** — 3 Grass, printed at **30 damage**, and *"does 30 more damage for each
+Energy attached to both Active Pokémon."* With six Energy on the board that is
+**210 damage, not 30**.
+
+So for this deck, **Energy attached *is* the position.** But the agent's
+scoring function only counted prizes and HP. That meant two different
+attachment choices scored *identically* unless one of them happened to win a
+knockout on the spot — which is why attaching Energy was our worst decision even
+after we routed it through simulation.
+
+The fix is to score Energy directly:
+
+```
+score = 1000 × (their prizes left − our prizes left)   # the win condition
+      +        (our board HP − their board HP)
+      +   30 × (our Energy in play − their Energy in play)   # <- this
+```
+
+30 sits on the HP scale, so it can never outweigh a prize — it just makes
+building toward the big attack visible instead of invisible. Measured twice on
+independent samples: **0.707** and **0.608** against the previous agent.
+
+The general point: a scoring function has to contain the thing your deck is
+actually accumulating, or search cannot see progress toward it.
+
+### Rule 5 — everything else
 
 Attach Energy to the Active Pokémon (it's the one that attacks). Draw the
 maximum when asked "how many?". Never mulligan a legal opening hand. When asked
@@ -357,6 +396,48 @@ failure anywhere falls straight back to the rules.
 
 ---
 
+# How we decide whether a change is real
+
+Every comparison plays the two agents on the **same deck**, swapping sides each
+game so the first-player advantage cancels. What decides it is a **Sequential
+Probability Ratio Test** (Wald, 1945 — the same machinery Stockfish's `fishtest`
+uses to accept engine patches). It stops the moment the evidence crosses a
+threshold instead of at an arbitrary game count.
+
+This was not academic tidiness. Fixed-size samples cost us real rating: a 0.33
+that was really 0.276, a "regression" that was inside the noise, and a search
+agent nearly discarded because its edge had been measured through the wrong
+opponent. 100-game runs carry about ±5%.
+
+What SPRT bought, in one session:
+
+| Change | Verdict | Games to decide |
+|---|---|---|
+| **Energy term in the evaluation** | **accept, 0.707** | **82** |
+| Energy term, replicated on a fresh seed | **accept, 0.608** | 181 |
+| Search on every sub-selection too | reject, 0.461 | 230 |
+| Static correction for scaling damage | reject, 0.462 | 234 |
+| 2-ply rollouts (simulate the reply) | reject, 0.467 | 259 |
+
+Three plausible ideas killed for ~230 games each instead of 500+, and the one
+that worked confirmed in 82.
+
+**Why those three failed is the useful part.** All three replace a
+state-dependent value with a fixed guess. A flat "assume scaling attacks hit 3×"
+is wrong in both directions depending on the board. Searching sub-selections
+fails because a card you fetch pays off after the rollout ends. And 2-ply
+doubles your exposure to having guessed the opponent's deck wrong — you spend
+the extra depth defending against a reply that may be fiction. Simulation beats
+static guesses; more simulation on a shaky assumption does not.
+
+Two habits that follow: an accept/reject at 5% error each way means roughly
+**one decision in twenty is wrong**, so anything surprising gets re-tested on a
+fresh seed before we build on it. And candidates are compared **directly**, never
+through a stronger third agent — that compression is what nearly lost us the
+search agent.
+
+---
+
 # Repo layout
 
 | Path | What it is |
@@ -367,7 +448,10 @@ failure anywhere falls straight back to the rules.
 | `ptcg/arena.py` | Plays two agents head-to-head locally |
 | `ptcg/meta.py` | Per-day metagame aggregation |
 | `scripts/mine_day.py` | Download a day of replays → aggregate → delete |
-| `scripts/compare_agents.py` | A vs B, same deck, sides swapped |
+| `scripts/compare_agents.py` | A vs B, same deck, sides swapped (`--sprt`) |
+| `scripts/gauntlet.py` | Decks vs the real field, weighted by play share |
+| `ptcg/opponent.py` | Infers the opponent's decklist from what they've shown |
+| `ptcg/sprt.py` | Wald's sequential test |
 | `scripts/build_submission.py` | Bundle + validate + submit |
 | `scripts/validate_submission.py` | Runs the real Kaggle validation episode |
 | `EDA_FINDINGS.md` | Full analysis log, numbers and all |
@@ -395,9 +479,43 @@ This will not send anything unless the local validation episode passes.
 
 ## Status
 
-- [x] Metagame mined — 6 days, 57,108 decks, decklist-level win rates
-- [x] Local engine + self-play arena + competent sparring partner
-- [x] **Agent live at 724.9** (top ~1200)
-- [ ] Close the piloting gap against the reference agent
-- [ ] Lookahead via `search_begin` / `search_step`
+- [x] Metagame mined — 16 days, 146,376 decks, 204 distinct decklists
+- [x] Local engine, self-play arena, and a field gauntlet weighted by real play
+- [x] Opponent-deck inference from the mined lists (30/30, mean confidence 0.71)
+- [x] Forward search via `search_begin` / `search_step`
+- [x] SPRT so every change is judged on evidence, not on a game count
+- [x] **Agent live at 656.4 — above median, ~rank 2905/6421**
+- [ ] **Multi-determinization**: sample from the posterior over consistent
+      decklists per rollout instead of taking the mode. The 2-ply rejection is
+      evidence that determinization error is now the binding constraint, which
+      makes this the right next move rather than more depth.
+- [ ] **Confidence-gated depth**: 2-ply failed on average, which is consistent
+      with it helping once deck inference is confident and hurting before that.
+      Testable by splitting the result early-game vs late-game — no submission
+      needed.
+- [ ] **Matchup matrix over the top archetypes** (empirical game theory). Our
+      deck is a best response to today's field, and the field moves — Marnie's
+      Grimmsnarl ex went 64% → 30% in a week. This says whether the counter is
+      robust or fragile.
 - [ ] Strategy writeup (**draft only — not submitted**)
+
+## Reading list behind the method
+
+The approach has names in the literature, which the strategy report should cite:
+
+- Our search is **Perfect Information Monte Carlo** (Ginsberg's GIB). Its known
+  flaw is *strategy fusion* (Frank & Basin 1998); the standard fix is
+  **Information Set MCTS** (Cowling, Powley & Whitehouse 2012) — sample a fresh
+  determinization per iteration, which is the multi-determinization item above.
+- Deck inference is an informal **Bayesian opponent model** (Albrecht & Stone
+  2018); making the likelihood explicitly hypergeometric is the principled form.
+- The field-weighted gauntlet computes a best response to an empirical strategy
+  distribution — **Empirical Game-Theoretic Analysis** (Wellman 2006).
+- Ranking agents through a single strong opponent misranks them; see
+  **Balduzzi et al., "Re-evaluating Evaluation" (2018)**. We hit this exactly.
+- **SPRT**: Wald (1945).
+
+Deliberately *not* used: CFR and its descendants (DeepStack, Libratus, ReBeL)
+are the theoretically correct tools for imperfect-information games, but the
+state space is enormous, the deadline is real, and deck inference already
+collapses the hidden information to near-nothing for 94% of the field.
