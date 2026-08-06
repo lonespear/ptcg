@@ -30,6 +30,7 @@ if __name__ == "__main__":
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--plateau", type=int, default=15)
     ap.add_argument("--pilot", choices=list(PILOTS), default="jon")
+    ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--git", action="store_true")
     args = ap.parse_args()
 
@@ -38,4 +39,5 @@ if __name__ == "__main__":
                     phase_a_frac=args.phase_a_frac, pop_size=args.pop,
                     games_per_opponent=args.games, seed=args.seed,
                     plateau_window=args.plateau, git_commit=args.git,
-                    pilot_factory=PILOTS[args.pilot])
+                    pilot_factory=PILOTS[args.pilot], workers=args.workers,
+                    generalist_name=args.pilot if args.pilot in ('jon','greedy') else 'jon')

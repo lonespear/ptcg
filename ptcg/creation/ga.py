@@ -39,6 +39,8 @@ NEO_UPPER = 10   # any type x2, Stage 2 only
 class GeneBank:
     def __init__(self, p: CardPool):
         self.pool = p
+        self._chain_cache: dict = {}
+        self._lines_cache: dict = {}
         cards = list(p.by_id.values())
         self.trainer_names = sorted({c["name"] for c in cards
                                      if c["cardType"] in (1, 2, 3, 4)})
@@ -64,13 +66,17 @@ class GeneBank:
 
     def chain(self, name: str) -> list[str] | None:
         """Evolution line from basic up to `name`; None if broken."""
+        if name in self._chain_cache:
+            return self._chain_cache[name]
         line = [name]
         seen = {name}
         while True:
             pre = self.pool.evolves_from_name(line[0])
             if pre is None:
+                self._chain_cache[name] = line
                 return line
             if pre not in self.pool.ids_by_name or pre in seen:
+                self._chain_cache[name] = None
                 return None
             line.insert(0, pre)
             seen.add(pre)
@@ -90,11 +96,15 @@ class GeneBank:
         return False
 
     def eligible_lines(self, allowed: set[int]) -> list[list[str]]:
+        key = frozenset(allowed)
+        if key in self._lines_cache:
+            return self._lines_cache[key]
         lines = []
         for name in self.pokemon_names:
             ch = self.chain(name)
             if ch and all(self.name_playable(n, allowed) for n in ch):
                 lines.append(ch)
+        self._lines_cache[key] = lines
         return lines
 
     def pick_print(self, name: str, rng: random.Random) -> int:

@@ -163,7 +163,8 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
                     phase_a_frac: float = 0.7, pop_size: int = 10,
                     games_per_opponent: int = 24, seed: int = 0,
                     plateau_window: int = 15, pilot_factory=None,
-                    git_commit: bool = False) -> None:
+                    git_commit: bool = False, workers: int = 1,
+                    generalist_name: str = "jon") -> None:
     rng = random.Random(seed)
     bank = GeneBank(pool())
     p = pool()
@@ -182,6 +183,11 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
     # for that archetype; the rest keep the injected generalist.
     panel = build_specialist_panel(priors_path)
     panel_pilots = make_panel_pilots(panel, pf)
+    pfit = None
+    if workers > 1:
+        from .parallel import ParallelFitness
+        pfit = ParallelFitness(panel, generalist_name, games_per_opponent,
+                               workers, str(Path.cwd()))
     (run_dir / "panel.json").write_text(json.dumps(panel))
     print("panel:\n" + panel_report(panel), flush=True)
 
@@ -303,6 +309,10 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
         live = [ai for ai in mono if ai.set_key not in frozen]
         if not live:
             break
+        if pfit:
+            fresh = [d for ai in live for d in pops[ai.label]
+                     if tuple(sorted(d)) not in cache]
+            cache.update(pfit.evaluate_many(fresh))
         reports = {ai.label: breed(ai, era) for ai in live}
         migrate_internal(era)
         plateau_check(sorted({ai.set_key for ai in live}), reports, era)
@@ -335,6 +345,10 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
             live = [ai for ai in mono if ai.set_key not in frozen]
             if not live:
                 break
+        if pfit:
+            fresh = [d for ai in live for d in pops[ai.label]
+                     if tuple(sorted(d)) not in cache]
+            cache.update(pfit.evaluate_many(fresh))
         reports = {ai.label: breed(ai, era) for ai in live}
         plateau_check(sorted({ai.set_key for ai in live}), reports, era)
         checkpoint(era, "B", reports)
