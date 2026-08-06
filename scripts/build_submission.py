@@ -137,8 +137,9 @@ def submit(archive: Path, message: str) -> int:
            "-c", COMPETITION, "-f", str(archive), "-m", message]
     print("running:", " ".join(cmd[2:]))
     proc = subprocess.run(cmd, capture_output=True, text=True)
-    print(proc.stdout.strip())
-    if proc.stderr.strip():
+    if proc.stdout:
+        print(proc.stdout.strip())
+    if proc.stderr:
         print("stderr:", proc.stderr.strip())
     return proc.returncode
 

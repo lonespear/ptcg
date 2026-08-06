@@ -334,11 +334,17 @@ def _predict_opponent(obs: dict) -> tuple[list[int], list[int], list[int]]:
     n_prize = len(opp.get("prize") or [])
 
     seen = _visible(opp, include_hand=False)
+    priors = _load_priors()
     best, best_plays = None, -1
-    for counts, plays in _load_priors():
+    for counts, plays in priors:
         if all(counts.get(cid, 0) >= n for cid, n in seen.items()):
             if plays > best_plays:
                 best, best_plays = counts, plays
+    if best is None and priors:
+        # Nothing consistent — assume the most-played list anyway. Padding with
+        # Energy instead would risk an opponent deck holding no Basic Pokémon,
+        # which search_begin rejects outright.
+        best = max(priors, key=lambda cp: cp[1])[0]
 
     hidden: list[int] = []
     if best is not None:
@@ -346,8 +352,13 @@ def _predict_opponent(obs: dict) -> tuple[list[int], list[int], list[int]]:
             hidden.extend([cid] * max(n - seen.get(cid, 0), 0))
 
     need = n_deck + n_hand + n_prize
-    if len(hidden) < need:
-        hidden.extend([3] * (need - len(hidden)))   # Basic Energy is safe filler
+    if len(hidden) < need and best is not None:
+        # Top up with the assumed list's own cards rather than a foreign one.
+        cycle = [cid for cid, n in best.items() for _ in range(n)] or [3]
+        while len(hidden) < need:
+            hidden.append(cycle[len(hidden) % len(cycle)])
+    elif len(hidden) < need:
+        hidden.extend([3] * (need - len(hidden)))
     hidden = hidden[:need]
     return (hidden[n_hand + n_prize:], hidden[:n_hand],
             hidden[n_hand:n_hand + n_prize])

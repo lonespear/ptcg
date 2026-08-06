@@ -3,8 +3,13 @@
 Our entry for the Kaggle **Pokémon TCG AI Battle Challenge**. Final deadline
 **13 Sep 2026**.
 
-**Live standing:** `v4` scores **724.9** on the Simulation leaderboard, against
-a current top of **~1200**. Started at 445.8 this morning.
+**Live standing:** `v5` just submitted and settling from the 600 starting
+rating. Previous submissions settled at **544.8** (starter deck) and **305.8**
+(Mega Lucario ex); top of the leaderboard is **~1180**.
+
+> Ratings take hours of episodes to settle. An early reading of 724.9 on the
+> Mega Lucario submission fell to 305.8 once it had played enough games, and we
+> made a bad decision on the strength of it. Numbers here are settled ones.
 
 ---
 
@@ -105,13 +110,33 @@ silently picking option 0 every time.
 
 ---
 
-# The deck: Mega Lucario ex
+# The deck: Teal Mask Ogerpon ex, and why
 
-17 distinct cards, built around evolving Riolu into Mega Lucario ex and hitting
-for 270 with Mega Brave.
+The deck is deliberately simple: **4× Teal Mask Ogerpon ex** (210 HP, Grass),
+**18 Grass Energy**, and the rest draw and search. One attacker, one Energy
+type, no evolution line.
 
-We did **not** design it from scratch, and the story of how we chose it is the
-interesting part.
+It is chosen entirely to exploit one fact about the field.
+
+**Weakness doubles damage.** And when you mine what people actually play:
+
+- **Marnie's Grimmsnarl ex is 47% of the metagame** — two near-identical lists
+  at 41.1% and 5.8% of all decks played. Its Pokémon are **weak to Grass**.
+- **Cynthia's Garchomp ex**, another top-six deck, is weak to Grass on all four
+  of its Pokémon.
+- So roughly **half the field takes double damage** from our only attacker.
+- Teal Mask Ogerpon ex is weak only to **Fire** — and no top-six deck plays Fire.
+  Our one vulnerability is unexploited.
+
+Measured: our agent piloting this deck beats Marnie's Grimmsnarl ex **92–8**
+over 100 games, and scores **0.942** against the play-weighted field.
+
+This is the whole thesis in one card. The field has concentrated a third of its
+play into a deck that is *already losing* (46.4% win rate across 57,000 games)
+**and** is weak to Grass — and almost nobody is punishing it.
+
+The story of how we got here is the more useful part, because we got it wrong
+twice first.
 
 ---
 
@@ -168,18 +193,38 @@ The competition ships an *official rule-based sample agent* — a genuinely
 competent opponent. The moment we used it as the yardstick instead of our own
 weak agent, **the ranking inverted**:
 
-| Deck (our agent piloting) | vs our own weak agent | vs a competent agent |
+| Deck (our agent piloting) | vs our own weak agent | vs the reference agent |
 |---|---|---|
 | Starter deck (Mega Abomasnow ex) | **0.883** — tournament winner | **0.194** |
 | Mega Lucario ex | 0.337 — last place | **0.276** |
 
-Both right-hand figures are 500 games (±2% at one standard deviation), so the
-8-point gap is real. The ordering is exactly reversed between the two columns.
+Both right-hand figures are 500 games, so the gap is real. We switched decks,
+and an early leaderboard reading of 724.9 seemed to confirm it.
 
-Note the median game length in each: **7 turns** for the starter deck against a
-competent opponent, **12** for Mega Lucario. The starter deck was not winning
-its own tournament by playing well — it was ending games before decisions
-happened.
+### Step 5 — that was also wrong
+
+The rating settled. Mega Lucario finished at **305.8**; the starter deck it
+replaced was at **544.8**. The switch cost us ~240 points.
+
+We had correctly spotted that our own weak agent was a bad yardstick — and then
+replaced it with the **official reference agent, which plays a single
+archetype**. Beating a Mega Lucario specialist measures one matchup, not a
+field. *A single opponent cannot rank decks no matter how strong it is.*
+
+### Step 6 — measure against the field you actually face
+
+The fix was sitting in the mined data the whole time. `scripts/gauntlet.py`
+builds the opponent pool from real decklists and weights each by **how often it
+is genuinely played**:
+
+| Deck | vs weak agent | vs reference | **field-weighted** | settled rating |
+|---|---|---|---|---|
+| Starter deck | 0.883 | 0.194 | **0.705** | **544.8** |
+| Mega Lucario ex | 0.337 | 0.276 | **0.366** | **305.8** |
+| **Teal Mask Ogerpon ex** | — | — | **0.942** | *pending* |
+
+The field-weighted column is the only one that agrees with the leaderboard —
+and it is the one that picked the deck described above.
 
 The starter deck's 350 HP wall is unbeatable *by an opponent who cannot knock it
 out*. Against one who can, its core problem shows: Mega Abomasnow ex is a Mega
@@ -196,7 +241,7 @@ Two warning signs were visible the whole time and we ignored both:
 
 Switching decks on the better benchmark took us from 445.8 → **724.9**.
 
-### Step 5 — the bug that cost two submissions
+### Step 7 — the bug that cost two submissions
 
 Our first two submissions failed with `Validation Episode failed` and no detail.
 The cause is worth writing down:
@@ -230,6 +275,17 @@ at 500 games put it at **0.276**, where 100-game runs had read anywhere from
 0.25 to 0.33 — so several conclusions drawn earlier in the day were inside the
 noise. Everything here is now measured at 500 games minimum, and that policy
 work is parked until it can be judged properly.
+
+**One caveat on that 2:1 figure.** Measured against the reference agent, the
+search agent below looked marginal — 0.303 against the rule agent's 0.276,
+inside the noise. Head to head on the same deck it wins **0.720 (288–112 over
+400 games)**, roughly 10σ.
+
+Both readings are correct, and the reconciliation is the third distinct way a
+benchmark misled us in a day: when two candidates are both far weaker than a
+common opponent, their gap *measured through that opponent* is compressed.
+Compare candidates **directly**. The search work was nearly discarded on the
+compressed reading.
 
 ---
 

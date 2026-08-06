@@ -466,6 +466,64 @@ deck versus **144** on the Lucario deck, against a real-replay median of 146.
 A benchmark whose games end in a third of the expected time is not measuring
 the same game.
 
+## 20. The same benchmark mistake, twice — and what finally worked
+
+§19 concluded the vendor sample deck was a benchmark artefact and switched to
+Mega Lucario ex, citing a live move 445.8 → 724.9. **Both halves of that were
+wrong.** The 724.9 was an early reading off few episodes; it settled to **305.8**
+while the sample-deck agent settled to **544.8**. The deck swap cost ~240 points.
+
+The error: §19 correctly identified that our own weak agent was a bad yardstick,
+then replaced it with the *official reference agent* — which plays one archetype.
+Beating a Mega Lucario specialist measures one matchup, not the field. **A single
+opponent cannot rank decks no matter how strong it is.**
+
+The fix uses the mining that was already sitting there. `scripts/gauntlet.py`
+builds the opponent pool from the mined decklists and weights each by its real
+play share:
+
+| Deck | vs weak agent | vs reference agent | **field-weighted** | live |
+|---|---|---|---|---|
+| Vendor sample | 0.883 | 0.194 | **0.705** | **544.8** |
+| Mega Lucario ex | 0.337 | 0.276 | **0.366** | **305.8** |
+| **Teal Mask Ogerpon ex** | — | — | **0.942** | — |
+
+The field-weighted column is the only one that matches the leaderboard.
+
+## 21. The actual strategy: attack the field's shared weakness
+
+Teal Mask Ogerpon ex wins the gauntlet by a mile, and the reason is mechanical
+rather than lucky:
+
+- The deck is **mono-Grass** — 4× Teal Mask Ogerpon ex (210 HP) and 18 Grass
+  Energy.
+- **Marnie's Grimmsnarl ex is 47% of the metagame** (two near-identical lists at
+  41.1% and 5.8%) and its Pokémon are **weak to Grass**. Cynthia's Garchomp ex,
+  another top-six deck, is weak to Grass on all four of its Pokémon.
+- Weakness doubles damage. So roughly half the field takes double from our only
+  attacker.
+- Teal Mask Ogerpon ex is weak only to **Fire** — and no top-six deck plays Fire.
+
+Measured: our search agent piloting Teal Mask beats Marnie's Grimmsnarl ex
+**92–8 (0.920)** over 100 games.
+
+This is §5 and §10 cashing out. §5 found the weakness graph is near-deterministic
+and lopsided; §10 found the field is badly misallocated, with its most-played
+deck also one of its worst. Put together: **the field has concentrated a third of
+its play into a deck that is weak to Grass, and almost nobody punishes it.**
+
+## 22. Search is worth much more than it first appeared
+
+Measured against the reference agent, the search agent looked marginal — 0.303
+against v4's 0.276, well inside the noise. Head to head on the same deck it is
+**0.720 (288–112 over 400 games)**, roughly a 10σ result.
+
+Both are true: when two agents are far weaker than a third, their gap against
+that third is compressed. **Comparing candidates through a much stronger common
+opponent hides differences; compare them directly.** That is the third distinct
+way a benchmark misled us today, and the reason the search work was nearly
+discarded.
+
 ## Open blocker
 
 ~~Competition data for the Simulation category is still **403**.~~ **Resolved** —
