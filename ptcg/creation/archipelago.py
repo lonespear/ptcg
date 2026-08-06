@@ -11,9 +11,12 @@ a founding burst seeds duals/tri from mature refine elites, Phase B
 evolves duals+tri (~30%). A set freezes after `plateau_window` eras
 without refine-elite improvement; frozen sets stop billing.
 
-Fitness: play-weighted win rate vs a real-field panel (deck_priors.json),
-under an injected pilot. Elite changes are confirmed with a 500-game
-match against the previous elite before being reported as progress.
+Fitness: play-weighted win rate vs a real-field panel (deck_priors.json).
+The candidate is played by the injected pilot; each field deck is played by
+its own harvested specialist where one exists (see specialist_panel.py), so
+opponents execute their plans instead of being flattened by one generalist.
+Elite changes are confirmed with a 500-game match against the previous
+elite before being reported as progress.
 """
 
 import json
@@ -169,10 +172,18 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
     downstream = [ai for ai in islands if ai.temperament in ("mix", "gem")]
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    panel = load_field_panel(priors_path)
-    (run_dir / "panel.json").write_text(json.dumps(panel))
+    # local import: specialist_panel reuses load_field_panel from this module
+    from .specialist_panel import (build_specialist_panel, make_panel_pilots,
+                                   panel_report)
+
     pf = pilot_factory or (lambda s: GreedyPilot(seed=s))
     pilot_a, pilot_b = pf(101), pf(202)
+    # Each field deck is played by its own specialist when one was harvested
+    # for that archetype; the rest keep the injected generalist.
+    panel = build_specialist_panel(priors_path)
+    panel_pilots = make_panel_pilots(panel, pf)
+    (run_dir / "panel.json").write_text(json.dumps(panel))
+    print("panel:\n" + panel_report(panel), flush=True)
 
     pops = {ai.label: [build_template(ai.island, bank, rng)
                        for _ in range(pop_size)] for ai in islands}
@@ -186,8 +197,8 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
         key = tuple(sorted(deck))
         if key not in cache:
             score = 0.0
-            for entry in panel:
-                m = play_match(pilot_a, pilot_b, deck, entry["deck"],
+            for entry, opp_pilot in zip(panel, panel_pilots):
+                m = play_match(pilot_a, opp_pilot, deck, entry["deck"],
                                games_per_opponent)
                 score += m.win_rate(0) * entry["weight"]
             cache[key] = score

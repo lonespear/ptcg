@@ -316,3 +316,38 @@ class JonDayPilot:
         self._jon._MY_DECK = self.deck
         self._jon.SEARCH_ENABLED = self.search
         return self._jon.agent(obs)
+
+
+class ExternalPilot:
+    """Load a single-file competition agent (main.py style) as a pilot.
+
+    Works for community agents pulled from public Kaggle notebooks: imports
+    the module (engine bootstrap must have run), finds its entrypoint, and
+    injects the seat's deck into the module's known deck globals per call.
+    """
+
+    DECK_GLOBALS = ("my_deck", "_MY_DECK", "MY_DECK")
+
+    def __init__(self, path: str, seed: int | None = None):
+        import importlib.util
+        import sys
+        spec = importlib.util.spec_from_file_location(
+            f"ext_agent_{abs(hash(path))}", path)
+        mod = importlib.util.module_from_spec(spec)
+        # dataclass decorators resolve their defining module through
+        # sys.modules, so register before executing
+        sys.modules[spec.name] = mod
+        spec.loader.exec_module(mod)
+        self.mod = mod
+        self.fn = getattr(mod, "competition_entrypoint", None) or mod.agent
+        self.deck: list[int] | None = None
+
+    def bind_deck(self, deck: list[int]) -> None:
+        self.deck = list(deck)
+
+    def __call__(self, obs: dict) -> list[int]:
+        if self.deck is not None:
+            for g in self.DECK_GLOBALS:
+                if hasattr(self.mod, g):
+                    setattr(self.mod, g, list(self.deck))
+        return list(self.fn(obs))
