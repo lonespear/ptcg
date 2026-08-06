@@ -6,6 +6,11 @@ smallest legal selection, so the only clock in the game is the deck's own
 setup. Two numbers come out: the turn of the first damaging attack (median
 over games) and the damage dealt through turn 5 (mean over games).
 
+A mean hides the shape of a deck's draw. The profile therefore also reports
+the 10/25/50/75/90th percentiles of *cumulative* damage at each turn and the
+full distribution of first-damage turns, so a fast deck that bricks a fifth
+of the time is distinguishable from a merely average one.
+
 The harness's play_game discards logs, and speed lives in the logs, so the
 battle loop is repeated here rather than widened there. Seats alternate,
 so the profile averages the play and the draw.
@@ -100,9 +105,27 @@ def goldfish_game(pilot, deck: list[int], seat: int = 0,
         battle_finish()
 
 
+QUANTILES = (10, 25, 50, 75, 90)
+
+
+def percentile(values: list[float], q: float) -> float:
+    """Linear-interpolated percentile (the numpy default), pure Python."""
+    if not values:
+        return 0.0
+    s = sorted(values)
+    if len(s) == 1:
+        return float(s[0])
+    pos = (q / 100.0) * (len(s) - 1)
+    lo = int(pos)
+    hi = min(lo + 1, len(s) - 1)
+    frac = pos - lo
+    return float(s[lo]) * (1.0 - frac) + float(s[hi]) * frac
+
+
 def profile(deck: list[int], n_games: int = 50, seed: int = 7) -> dict:
     """Speed profile of one deck: median first-damage turn, mean damage
-    by turn 5, and the per-turn damage curve behind them."""
+    by turn 5, the per-turn damage curve behind them, per-turn quantile
+    bands on cumulative damage, and the first-damage-turn distribution."""
     pilot = GreedyPilot(seed=seed)
     games = [goldfish_game(pilot, deck, seat=i % 2) for i in range(n_games)]
     firsts = [g["first_damage_turn"] for g in games
@@ -111,6 +134,27 @@ def profile(deck: list[int], n_games: int = 50, seed: int = 7) -> dict:
     for t in range(1, DAMAGE_HORIZON + 1):
         curve[t] = round(sum(g["damage"].get(t, 0) for g in games)
                          / len(games), 1)
+
+    # cumulative damage per game per turn, then the bands across games
+    cumulative = {t: [] for t in range(1, DAMAGE_HORIZON + 1)}
+    for g in games:
+        run = 0
+        for t in range(1, DAMAGE_HORIZON + 1):
+            run += g["damage"].get(t, 0)
+            cumulative[t].append(run)
+    bands = {t: {f"p{q}": round(percentile(cumulative[t], q), 1)
+                 for q in QUANTILES}
+             for t in range(1, DAMAGE_HORIZON + 1)}
+    for t in range(1, DAMAGE_HORIZON + 1):
+        bands[t]["mean"] = round(sum(cumulative[t]) / len(games), 1)
+
+    # first-damage turn as a distribution, not just a median
+    hist: dict[str, int] = {}
+    for g in games:
+        key = (str(g["first_damage_turn"])
+               if g["first_damage_turn"] is not None else "none")
+        hist[key] = hist.get(key, 0) + 1
+
     return {
         "n_games": n_games,
         "median_first_damage_turn":
@@ -121,7 +165,39 @@ def profile(deck: list[int], n_games: int = 50, seed: int = 7) -> dict:
             round(statistics.mean(firsts), 2) if firsts else None,
         "games_with_no_damage": n_games - len(firsts),
         "mean_damage_per_turn": curve,
+        "cumulative_damage_bands": bands,
+        "first_damage_turn_quantiles":
+            {f"p{q}": round(percentile(firsts, q), 1) for q in QUANTILES}
+            if firsts else None,
+        "first_damage_turn_counts": dict(
+            sorted(hist.items(), key=lambda kv: (kv[0] == "none", kv[0]))),
+        "first_damage_turns": [g["first_damage_turn"] for g in games],
     }
+
+
+def format_profile(prof: dict) -> str:
+    """The bands as a table a judge can read without parsing JSON."""
+    lines = [f"games: {prof['n_games']}   "
+             f"no damage in {prof['games_with_no_damage']}",
+             f"first damage turn: median {prof['median_first_damage_turn']}"
+             f"  mean {prof['mean_first_damage_turn']}"]
+    fq = prof.get("first_damage_turn_quantiles")
+    if fq:
+        lines.append("  quantiles " + "  ".join(
+            f"{k} {v}" for k, v in fq.items()))
+    lines.append("  distribution " + "  ".join(
+        f"T{k}x{v}" if k != "none" else f"none x{v}"
+        for k, v in prof["first_damage_turn_counts"].items()))
+    lines.append("")
+    lines.append("cumulative damage by turn (percentiles over games)")
+    head = "turn " + "".join(f"{f'p{q}':>8}" for q in QUANTILES) + f"{'mean':>9}"
+    lines.append(head)
+    for t in range(1, DAMAGE_HORIZON + 1):
+        b = prof["cumulative_damage_bands"][t]
+        lines.append(f"{t:>4} " + "".join(f"{b[f'p{q}']:>8.0f}"
+                                          for q in QUANTILES)
+                     + f"{b['mean']:>9.1f}")
+    return "\n".join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -143,6 +219,14 @@ def read_deck(source: str) -> list[int]:
 
 
 if __name__ == "__main__":
-    src = sys.argv[1]
-    n = int(sys.argv[2]) if len(sys.argv) > 2 else 50
-    print(json.dumps(profile(read_deck(src), n), indent=2))
+    args = [a for a in sys.argv[1:] if a != "--json"]
+    json_only = "--json" in sys.argv[1:]
+    src = args[0]
+    n = int(args[1]) if len(args) > 1 else 50
+    prof = profile(read_deck(src), n)
+    if json_only:
+        print(json.dumps(prof, indent=2))
+    else:
+        print(format_profile(prof))
+        print()
+        print(json.dumps(prof, indent=2))
