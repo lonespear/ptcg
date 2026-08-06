@@ -9,6 +9,9 @@ access_token
 data/
 cache/
 *.zip
+# ...but the mined metagame summaries are small and worth versioning.
+!data/meta_cards.csv
+!data/meta_decks.csv
 
 # Python
 __pycache__/

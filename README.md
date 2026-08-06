@@ -23,9 +23,11 @@ python scripts/download_data.py         # ~598 MB
 | Path | What it is |
 |---|---|
 | `ptcg/data.py` | Loads the CSV into tidy `cards` + `effects` tables |
+| `ptcg/episodes.py` | Parses `cabt` replay JSON into decklists + outcomes |
 | `ptcg/viz.py` | Chart styling — one validated palette for every figure |
 | `scripts/download_data.py` | kagglehub download |
-| `scripts/run_eda.py` | First EDA pass; writes `figures/` |
+| `scripts/run_eda.py` | Card-pool EDA; writes `figures/` |
+| `scripts/mine_meta.py` | Mines replays into the live metagame; writes `data/` |
 | `EDA_FINDINGS.md` | **Findings so far — read this first** |
 
 ## Using the data
@@ -40,12 +42,28 @@ cards, effects = load_cards("EN")   # 1,267 cards, 1,811 attacks/abilities
 flag). `effects` carries parsed energy costs, damage, and a `drawback`
 classification — see `EDA_FINDINGS.md` §4 for why that last one matters.
 
+## Replay mining
+
+The Simulation episodes are published as **public datasets** (no competition
+access needed) and each replay carries both 60-card decks plus the winner:
+
+```bash
+python -c "import kagglehub; print(kagglehub.dataset_download('kaggle/pokemon-tcg-ai-battle-episodes-index'))"
+python scripts/mine_meta.py
+```
+
+A single day is ~20 GB on disk and ~5,200 matches. Set `PTCG_EPISODE_DIR` if the
+kagglehub cache lives elsewhere.
+
 ## Status
 
 - [x] Data downloaded and normalized
 - [x] EDA pass 1 — pool composition, efficiency, weakness graph, Trainer taxonomy
-- [ ] **Blocked:** Simulation-category access (403 — competition rules not yet
-      accepted). Strategy entry requires a Simulation submission.
+- [x] EDA pass 2 — live metagame from 5,197 replays (archetypes, card win rates)
+- [ ] **Blocked:** Simulation-category access. Accept the rules at
+      <https://www.kaggle.com/competitions/pokemon-tcg-ai-battle> — Strategy
+      entry requires a Simulation submission.
+- [ ] Mine more of the 51 available days for meta trend
 - [ ] Effective-cost model for attack evaluation
 - [ ] Deck concept + agent policy
-- [ ] Writeup
+- [ ] Writeup (not submitted — draft only)

@@ -171,12 +171,112 @@ opponent, not your own.
 4. **Assume a race.** With four disruption cards in the pool, consistency
    (search/draw density) will beat interaction.
 
+---
+
+# EDA pass 2 — the live metagame, from replays
+
+Kaggle publishes the Simulation-category episodes as **public datasets**, one per
+day, indexed at `kaggle/pokemon-tcg-ai-battle-episodes-index` (51 days,
+2026-06-16 to 2026-08-05, ~21 GB each). These are readable without competition
+access, and each replay contains **both players' full 60-card decks and who
+won**. That makes the dumps a direct readout of the live metagame.
+
+The join that unlocks this: episode card `id` values are the CSV's `Card ID`.
+Verified against max HP — id 164 = Comfey (70), 343 = Shaymin (80), 689 =
+Yveltal (110), 743 = Alakazam (140), all exact. `ptcg/episodes.py` parses the
+replays; `scripts/mine_meta.py` aggregates them.
+
+Everything below is one day — **2026-07-08: 5,197 matches, 10,394 deck
+instances, 172 distinct agents**, median match 146 steps.
+
+## 8. The playable pool is 16% of the printed pool
+
+**197 of 1,267 cards (15.5%) appear in any deck.** The other 1,070 are never
+played once across 10,394 decks. Deckbuilding search space is far smaller than
+the card list suggests — and the EDA above analyzes a pool that is mostly dead
+weight in practice.
+
+## 9. Staples are ubiquitous and therefore worthless as edge
+
+| Card | Play rate | Avg copies | Win rate |
+|---|---|---|---|
+| Boss's Orders | 83.9% | 2.6 | 49.4% |
+| Poké Pad | 83.8% | 4.0 | 49.4% |
+| Buddy-Buddy Poffin | 83.5% | 3.9 | 50.0% |
+| Night Stretcher | 73.7% | 2.4 | 49.0% |
+| Lillie's Determination | 65.3% | 4.0 | 50.6% |
+| Xerosic's Machinations | 60.3% | 1.7 | 50.9% |
+
+Every card above 60% play rate sits within one point of an even win rate — by
+construction, since a card in most decks is in both winners and losers. **Play
+rate and win rate form a funnel**: variance collapses toward 50% as play rate
+rises. The edge lives in the sparse left-hand side of the chart.
+![](figures/08_meta_card_map.png) ![](figures/09_meta_staples.png)
+
+## 10. The most-played archetype is a losing one
+
+| Archetype (biggest attacker) | Decks | Win rate |
+|---|---|---|
+| **Bloodmoon Ursaluna** | 226 | **60.6%** |
+| **Mega Starmie ex** | 712 | **57.2%** |
+| **Cynthia's Garchomp ex** | 726 | **55.8%** |
+| Mega Kangaskhan ex | 1,169 | 52.7% |
+| Cornerstone Mask Ogerpon ex | 555 | 49.9% |
+| Marnie's Grimmsnarl ex | 1,733 | 49.0% |
+| Fezandipiti ex | 1,390 | 49.4% |
+| Dudunsparce | 1,345 | 47.8% |
+| Alakazam | 612 | 45.6% |
+| Mega Lucario ex | 443 | 45.8% |
+| Yveltal | 222 | 43.7% |
+
+The single most common archetype — Marnie's Grimmsnarl ex, 1,733 decks — wins
+49.0%. Bloodmoon Ursaluna wins 60.6% off 226 decks, an eighth of the play. The
+field has not converged on the best deck, which is the opening a Strategy
+submission can argue from. ![](figures/10_archetype_winrate.png)
+
+Card-level, the same pattern: **Froslass is played in 7.8% of decks and wins
+41.3%** — popular *and* bad. Bloodmoon Ursaluna (2.3% play) and Mega Starmie ex
+(6.9%) are the under-adopted winners.
+
+Top agents by win rate (≥100 games): Yushin Ito 61.3% (644), Majkel1337 60.1%
+(661), nasuo445 58.4% (596).
+
+## 11. Correction to §6 — this is not a race, and disruption is everywhere
+
+My §6 keyword taxonomy found 4 disruption Trainers and I concluded the metagame
+would be "a race, not a control matchup." **The replays say otherwise.**
+Xerosic's Machinations is in 60.3% of decks and Enhanced Hammer in 33.6%;
+Crushing Hammer shows up in the very first deck I decoded. Energy denial is a
+core meta pillar.
+
+The regex undercounted because it only looked for hand/deck disruption —
+Enhanced Hammer's "Discard a Special Energy from 1 of your opponent's Pokémon"
+matches none of my patterns. **The lesson is methodological: a keyword taxonomy
+over card text is a weak proxy for what a card does, and the replays are the
+ground truth.** Prefer measured play rates over inferred card roles.
+
+Similarly, §1's "Stage 2 lines are a thin slice" understates them: Rare Candy is
+in 50.9% of decks and the Abra/Kadabra/Alakazam line in 31.6%. Thin in the card
+list, common at the table.
+
+## Where pass 2 points
+
+1. **Target the Ursaluna / Starmie / Garchomp cluster**, not the popular
+   Grimmsnarl and Fezandipiti decks. The field is misallocated.
+2. **Staples are non-negotiable** — Boss's Orders, Poké Pad, Buddy-Buddy Poffin,
+   Night Stretcher are ~4-of in most decks. Spend design effort elsewhere.
+3. **Mine more days.** One day is a snapshot; the index covers 51. A win-rate
+   trend per archetype would show what is rising, and whether Ursaluna's edge
+   survives contact with a field that adapts.
+4. **Match-length and turn-order effects** are unexplored and sitting in the
+   replays.
+
 ## Open blocker
 
-The Simulation-category data is **not accessible** with the current credentials —
-both `pokemon-tcg-ai-battle-challenge-simulation` and
-`pokemon-tcg-ai-battle-challenge` return 403 ("make sure you are authenticated
-and have accepted the competition rules"). Strategy-category entry *requires*
-a Simulation-category submission, and the battle engine / API almost certainly
-lives there. Accepting the rules on that competition page is the next step;
-until then there is no simulator to test any of the above against.
+Competition data for the Simulation category is still **403**. The correct slug
+is `pokemon-tcg-ai-battle` (not `-simulation`) — the API confirms the
+competition exists at that URL but reports rules not accepted. Accepting the
+rules at <https://www.kaggle.com/competitions/pokemon-tcg-ai-battle> is what
+unblocks the battle engine and the ability to submit an agent. The public
+episode datasets above need no such access, so metagame analysis can continue
+regardless.
