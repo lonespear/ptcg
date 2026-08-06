@@ -14,6 +14,7 @@ the licensed engine library.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -155,11 +156,16 @@ def main() -> None:
 
     if args.submit:
         # Never submit without reproducing the grader's validation episode.
+        # PYTHONIOENCODING keeps the child's own prints from dying on "Pokémon"
+        # under the Windows console codepage — a crash there would look like a
+        # validation failure, or worse, be mistaken for noise.
+        env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
         rc = subprocess.run(
             [sys.executable, str(Path(__file__).parent / "validate_submission.py")],
-            text=True).returncode
+            text=True, env=env).returncode
         if rc != 0:
-            sys.exit("validation failed — not submitting")
+            sys.exit("validation failed - not submitting")
+        print("  validation episode passed")
     if args.submit:
         rc = submit(archive, args.message)
         sys.exit(rc)

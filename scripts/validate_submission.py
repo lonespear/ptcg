@@ -43,7 +43,10 @@ def main() -> None:
             if required not in root_entries:
                 sys.exit(f"FAIL: {required} must be at the archive root")
 
-        src = (tmp / "main.py").read_text()
+        # Explicit encoding: the file contains "Pokémon", and Windows would
+        # otherwise decode it as cp1252 and raise — which silently skipped this
+        # whole gate once.
+        src = (tmp / "main.py").read_text(encoding="utf-8")
         if "__file__" in src and "except NameError" not in src:
             sys.exit("FAIL: main.py uses __file__ without a NameError guard — "
                      "the grader exec()s the file and __file__ is undefined")

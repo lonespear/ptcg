@@ -404,6 +404,20 @@ def _side_hp(player) -> float:
     return total
 
 
+def _side_energy(player) -> float:
+    total = 0.0
+    for zone in ("active", "bench"):
+        for mon in getattr(player, zone, None) or []:
+            if mon is not None:
+                total += len(getattr(mon, "energies", None) or [])
+    return total
+
+
+# An Energy in play is worth roughly this much board value. It is deliberately
+# on the scale of HP rather than prizes, so it can never outweigh a knockout.
+ENERGY_WEIGHT = 30.0
+
+
 def _evaluate(observation, me: int) -> float:
     """Score a simulated position from our seat.
 
@@ -419,6 +433,12 @@ def _evaluate(observation, me: int) -> float:
     # Our prize pile shrinking means we have been taking prizes.
     score = (len(theirs.prize or []) - len(mine.prize or [])) * 1000.0
     score += _side_hp(mine) - _side_hp(theirs)
+    # Energy in play is board progress the rollout horizon usually cannot see.
+    # Without this term two different attachment targets evaluate identically
+    # unless one happens to enable a knockout this turn — which is why search
+    # alone never fixed our worst decision. It matters most for an attacker
+    # whose damage is a linear function of Energy, which ours is.
+    score += ENERGY_WEIGHT * (_side_energy(mine) - _side_energy(theirs))
     score += (getattr(mine, "handCount", 0) or 0) * 5.0
     return score
 
