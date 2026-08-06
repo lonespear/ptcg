@@ -582,6 +582,72 @@ Three benchmarks, three different biases, all now named:
 The fourth and only unbiased one is the leaderboard, which is slow and costs a
 submission to query.
 
+## 25. Scoring the opponent model against ground truth instead of through games
+
+Every replay contains **both** players' real decklists. So the opponent model
+can be graded directly, rather than inferred from whether games were won — which
+is the noisiest instrument available and the one that had been consuming SPRT
+budget. 300 replays, zero games played.
+
+**Coverage.** Our 226-list prior contains the opponent's actual deck for
+**99.7%** of player-slots. Only 0.3% are decks we could not name in principle.
+
+**Accuracy by turn** (over slots whose deck is in the prior):
+
+| Turn | Top-1 correct | Truth in top-3 |
+|---|---|---|
+| 1 | 0.63 | **0.86** |
+| 3 | 0.84 | 0.95 |
+| 5 | 0.88 | 0.97 |
+| 10 | 0.94 | 0.97 |
+| 14 | 0.96 | 0.98 |
+
+**Calibration** is sound: the posterior claims 0.6–0.7 and is right 0.70; claims
+0.9+ and is right 0.98. Mildly over-confident when uncertain (claims ~0.35,
+right 0.26).
+
+That produced the design: **gate determinization on the posterior's own
+confidence** — above 0.80 search one candidate, below it average three. Buys
+early-game accuracy at near single-determinization cost.
+
+## 26. Frequency of error is not cost of error
+
+The turn-1 top-1 miss rate is 37%, which looks alarming. It mostly is not.
+
+When the top pick is wrong, it shares a **median 53 of 60 cards** with the true
+list (p25 43, p75 58), and **80.6% of the time it is the same archetype** — the
+metagame holds near-duplicate builds, and the two Marnie's Grimmsnarl ex lists at
+41% and 6% of play differ by a handful of cards and play identically.
+
+Only **19.4%** of misidentifications are cross-archetype, where the search would
+defend against the wrong game plan. Combined with the miss rate, genuinely
+harmful misidentification at turns 1–3 runs about **5–6%**, not 37%.
+
+This is why multi-determinization measured at only ~+2 points: most of the
+uncertainty it averages over is aliasing between lists that play the same way.
+The 0.519 was a fair reading after all, not a broken test.
+
+## 27. The prior is weaker against exactly the opponents we are climbing toward
+
+Coverage is measured against the field *as played*, which is dominated by the
+copy-paste middle of the leaderboard. Splitting by opponent strength (agents
+with ≥50 games and ≥55% win rate):
+
+| Opponent band | Coverage | Top-1 accuracy, turns 1–3 |
+|---|---|---|
+| Field | 0.997 | **0.715** |
+| Strong | **1.000** | **0.609** |
+
+Coverage does **not** degrade — strong players are not playing unlisted decks.
+But top-1 accuracy is **10 points worse** against them, so their lists are
+harder to disambiguate early. Since matchmaking pairs us with more of that
+population as our rating climbs, inference quality will *decline* as we improve.
+
+The confidence gate handles this without further work: it fires on low
+confidence, which is precisely when we are facing an opponent we cannot pin
+down. The adaptive behaviour is already correct — but the honest expectation is
+that the gate earns more at rank 500 than it does at rank 4500.
+
 ## Open blocker
 
 ~~Competition data for the Simulation category is still **403**.~~ **Resolved** —

@@ -296,6 +296,13 @@ SEARCH_ROLLOUT_STEPS = 24     # enough to finish a turn; caps the cost
 # 0.9+ and is right 0.98), so its own confidence is a trustworthy gate.
 N_DETERMINIZATIONS = 3
 CONFIDENCE_GATE = 0.80
+
+# Roll the opponent's reply into the rollout before scoring. Tested once on a
+# single point-estimate determinization and rejected (0.467) — the extra depth
+# was spent defending against a reply generated from one guessed deck treated as
+# certain. Worth re-testing now that determinization is honest, which is the
+# configuration that diagnosis actually implies.
+TWO_PLY = False
 SEARCH_ENABLED = True
 
 
@@ -543,13 +550,20 @@ def _rollout_value(state, me: int, rules_choice) -> float:
     """Play our own turn out with the rule policy, then score the position."""
     from cg.api import search_step
     steps = 0
-    while steps < SEARCH_ROLLOUT_STEPS:
+    cap = SEARCH_ROLLOUT_STEPS * (3 if TWO_PLY else 1)
+    saw_opponent = False
+    while steps < cap:
         o = state.observation
         sel = o.select
         if sel is None or not sel.option:
             break
-        if o.current.yourIndex != me:
-            break                      # our turn is over; stop here
+        their_turn = o.current.yourIndex != me
+        if their_turn:
+            if not TWO_PLY:
+                break                  # score the board at end of our turn
+            saw_opponent = True
+        elif saw_opponent:
+            break                      # their reply is done; score here
         try:
             state = search_step(state.searchId, rules_choice(o))
         except Exception:

@@ -69,6 +69,8 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--a", required=True)
     ap.add_argument("--b", required=True)
+    ap.add_argument("--opponent", default="build/agents/v9_energy.py",
+                    help="fixed policy that pilots the field decks")
     ap.add_argument("--deck", default="agent/deck.csv")
     ap.add_argument("--field", type=int, default=4)
     ap.add_argument("--max-games", type=int, default=3000)
@@ -80,10 +82,20 @@ def main() -> None:
     field = build_field(args.field)
     a = load_agent(ROOT / args.a, "cand_a")
     b = load_agent(ROOT / args.b, "cand_b")
+    opponent = load_agent(ROOT / args.opponent, "fixed_opp")
 
     print(f"field ({len(field)} decks): "
           + ", ".join(f"{f['name']} {f['share']:.0%}" for f in field))
+    print(f"opponent policy: {args.opponent}")
     print(f"paired seeds, SPRT p0={args.p0} p1={args.p1}\n")
+
+    def run(cand, opp_deck, seed, second: bool) -> bool:
+        """One game of `cand` (on our deck) against the fixed opponent."""
+        if second:
+            r = play_game(opponent, cand, opp_deck, deck, seed=seed)
+            return r.winner == 1
+        r = play_game(cand, opponent, deck, opp_deck, seed=seed)
+        return r.winner == 0
 
     test = SPRT(p0=args.p0, p1=args.p1)
     paired = ties = 0
@@ -91,23 +103,14 @@ def main() -> None:
 
     for g in range(args.max_games):
         opp = field[g % len(field)]
-        seed = 10_000 + g // len(field)
-        flip = (g // len(field)) % 2 == 1
+        round_no = g // len(field)
+        seed = 10_000 + round_no
+        second = round_no % 2 == 1     # alternate which seat we take
 
-        outcomes = []
-        for agent in (a, b):
-            # Identical seed, identical opponent deck, identical seat.
-            if flip:
-                r = play_game(agent, b if agent is a else a,
-                              deck, opp["deck"], seed=seed)
-                won = r.winner == 0
-            else:
-                r = play_game(agent, b if agent is a else a,
-                              deck, opp["deck"], seed=seed)
-                won = r.winner == 0
-            outcomes.append(bool(won))
-
-        a_won, b_won = outcomes
+        # Both candidates face the same opponent, deck, seed and seat, so the
+        # deal and the opponent's line are identical and only the policy differs.
+        a_won = run(a, opp["deck"], seed, second)
+        b_won = run(b, opp["deck"], seed, second)
         a_raw += a_won
         b_raw += b_won
         if a_won == b_won:

@@ -469,6 +469,13 @@ Copy `sample_submission/` from the competition download into `engine/`. It is
 not redistribute*, and this repo is public. `engine/`, `build/`, all binaries,
 the card CSVs and `agent/deck.csv` are gitignored for that reason.
 
+**Provenance.** The files under `data/` and `agent/deck_priors.json` are
+*aggregate statistics* — decklist frequencies and win counts — computed from the
+public competition replay datasets published by Kaggle. No replay content, card
+text, or engine code is redistributed here. The MIT `LICENSE` covers this
+repository's own code only; Pokémon and all associated names are trademarks of
+Nintendo/Creatures/GAME FREAK.
+
 ## Submitting
 
 ```bash
