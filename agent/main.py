@@ -21,6 +21,7 @@ NameError and kills the episode.
 
 from __future__ import annotations
 
+import math
 import os
 import random
 import time
@@ -339,33 +340,61 @@ def _rank_card_options(options: list[dict], obs: dict) -> list[int]:
 # we supply the hidden information: the opponent's deck, hand and prizes. That
 # would be hopeless guesswork except the mined replays show the whole metagame
 # is ~120 decklists, and the 40 shipped in deck_priors.json cover 94% of it.
-# So we identify which known list the opponent is playing, fill in the rest,
-# and actually simulate our candidate turns instead of guessing at them.
+# So we hold a posterior over which known list the opponent is playing, fill in
+# the rest, and actually simulate our candidate turns instead of guessing.
 #
 # Which cards of that list sit in the deck rather than the hand or the prizes
-# is still unknown, so each candidate is played out in several shuffles of it
-# and averaged. Each play-out runs our turn to its end, then takes the worst
-# of the opponent's three most likely replies.
+# is still unknown, so each candidate is played out over a small budget of
+# candidate lists and shuffles and averaged under the posterior weights. Each
+# play-out runs our turn to its end and scores the position we hand over.
 # =========================================================================
 
 _PRIORS: list[tuple[dict, int]] | None = None
 _MY_DECK: list[int] | None = None
 SEARCH_ROLLOUT_STEPS = 24     # enough to finish a turn; caps the cost
+# How many candidate opponent decklists to average each option over, and when.
+#
+# Measured against ground truth over 300 replays (scripts/validate_posterior.py),
+# the posterior's top pick is right:
+#
+#   turn 1: 0.63   turn 3: 0.84   turn 5: 0.88   turn 10: 0.94
+#
+# while the true deck is somewhere in the top 3:
+#
+#   turn 1: 0.86   turn 3: 0.95   turn 5: 0.97   turn 10: 0.97
+#
+# So there is a real early-game window where a point estimate is wrong about a
+# third of the time and averaging over three candidates recovers most of it —
+# and a long later phase where the top pick is already right and the extra two
+# determinizations are pure cost.
+#
+# The posterior is well calibrated (it claims 0.6-0.7 and is right 0.70; claims
+# 0.9+ and is right 0.98), so its own confidence is a trustworthy gate.
+POSTERIOR_TOP_K = 3
+CONFIDENCE_GATE = 0.80
 SEARCH_ENABLED = True
-SEARCH_N_DET = 3              # determinizations averaged per candidate
+# Total determinizations per decision, split across two axes: which decklist,
+# and how its unseen cards are dealt. Deck identity turned out to be the easy
+# half — 80% of misidentifications are between sister lists that play the same —
+# so when the posterior is confident the whole budget goes to shuffles instead.
+# Held at 3 because fair sampling at N=3 measured neutral (51.3%) against the
+# pre-port agent over 200 games, and the cost is linear in it.
+SEARCH_N_DET = 3
 SEARCH_TIME_BUDGET = 0.80     # seconds per main-phase decision
 # Opponent replies minimized over at ply 2. Off, because playing their turn
 # out costs 9 points of win rate against the same agent at 0 (40.7% over 200
 # games) and 14 at one reply (36.2%) — a single reply with no minimum taken is
 # the worse of the two, so what fails is the model of how they play, not the
-# branching or the pessimism. Turn it on once the opponent rollout uses
-# something better than our own priority table on a guessed decklist.
+# branching or the pessimism. A separate one-reply test on a single
+# point-estimate determinization landed in the same place (0.467). The shuffled
+# hand model has since made determinization honest without moving the number,
+# so what is left to fix is the policy the opponent's turn is rolled out under —
+# ours, on a guessed decklist. Turn this on once that is better.
 SEARCH_OPP_BRANCH = 0
 # WEIGHTS["search_margin"] is the override hysteresis. A half-prize (500)
 # costs 14 points of win rate here — 35.1% against the unported agent versus
 # 48.7% at margin 0 — because this rules policy is the weaker of the two
 # (search-on beats rules-only 58.7%). Tunable, defaulted off.
-_RNG = random.Random(20260806)
 
 
 def _load_priors() -> list[tuple[dict, int]]:
@@ -411,54 +440,145 @@ def _visible(player: dict, include_hand: bool) -> dict:
     return seen
 
 
-def _predict_opponent(
-        obs: dict, rng=None) -> tuple[list[int], list[int], list[int]]:
-    """(deck, hand, prize) card ids for the opponent's hidden cards.
+def _log_choose(n: int, k: int) -> float:
+    """log C(n, k), or -inf when the draw is impossible."""
+    if k < 0 or n < 0 or k > n:
+        return float("-inf")
+    return (math.lgamma(n + 1) - math.lgamma(k + 1) - math.lgamma(n - k + 1))
 
-    With `rng` the hidden pool is shuffled before it is split, which is what
-    makes two determinizations of the same position differ.
+
+def _deck_posterior(obs: dict, top_k: int = 3) -> list[tuple[dict, float]]:
+    """Posterior over the opponent's decklist, as (counts, weight) pairs.
+
+    Prior is the empirical play frequency from the mined replays. The likelihood
+    of having revealed a multiset S of cards from a 60-card list D is
+    multivariate hypergeometric:
+
+        P(S | D)  proportional to  product over cards c of  C(D_c, S_c)
+
+    The C(60, |S|) denominator is identical for every candidate, so it cancels.
+
+    This generalises the hard consistency filter we used before: a deck that
+    cannot contain what we have seen gets C(D_c, S_c) = 0 and drops out on its
+    own, but now a deck running four copies of a card we have seen once is also
+    correctly preferred over one running a single copy, instead of the two being
+    treated as equally plausible.
     """
     cur = obs.get("current") or {}
     me = cur.get("yourIndex", 0)
     players = cur.get("players") or []
     if len(players) < 2:
-        return [], [], []
-    opp = players[1 - me]
-    n_deck = opp.get("deckCount", 0) or 0
-    n_hand = opp.get("handCount", 0) or 0
-    n_prize = len(opp.get("prize") or [])
+        return []
+    seen = _visible(players[1 - me], include_hand=False)
 
-    seen = _visible(opp, include_hand=False)
-    priors = _load_priors()
-    best, best_plays = None, -1
-    for counts, plays in priors:
-        if all(counts.get(cid, 0) >= n for cid, n in seen.items()):
-            if plays > best_plays:
-                best, best_plays = counts, plays
-    if best is None and priors:
-        # Nothing consistent — assume the most-played list anyway. Padding with
-        # Energy instead would risk an opponent deck holding no Basic Pokémon,
-        # which search_begin rejects outright.
-        best = max(priors, key=lambda cp: cp[1])[0]
+    scored: list[tuple[float, dict]] = []
+    for counts, plays in _load_priors():
+        loglik = 0.0
+        for cid, k in seen.items():
+            loglik += _log_choose(counts.get(cid, 0), k)
+            if loglik == float("-inf"):
+                break
+        if loglik == float("-inf"):
+            continue
+        scored.append((math.log(max(plays, 1)) + loglik, counts))
 
-    hidden: list[int] = []
-    if best is not None:
-        for cid, n in best.items():
-            hidden.extend([cid] * max(n - seen.get(cid, 0), 0))
+    if not scored:
+        # Nothing explains what we have seen — fall back to the most-played
+        # list. Padding with Energy instead risks an opponent deck with no
+        # Basic Pokémon, which search_begin rejects outright.
+        priors = _load_priors()
+        if not priors:
+            return []
+        return [(max(priors, key=lambda cp: cp[1])[0], 1.0)]
 
+    scored.sort(key=lambda t: -t[0])
+    scored = scored[:max(top_k, 1)]
+    hi = scored[0][0]
+    weights = [math.exp(s - hi) for s, _ in scored]      # softmax, shift-stable
+    total = sum(weights) or 1.0
+    return [(counts, w / total) for (_, counts), w in zip(scored, weights)]
+
+
+def _hidden_from(counts: dict, seen: dict, n_deck: int, n_hand: int,
+                 n_prize: int, rng=None) -> tuple[list[int], list[int], list[int]]:
+    """Split one candidate decklist's unseen cards into (deck, hand, prize).
+
+    The split must be SHUFFLED. Knowing the opponent's 60-card list still leaves
+    the harder question of which unseen cards are in hand, deck, or prizes — and
+    that is the variable that actually changes game to game.
+
+    This previously took the pool in dict order, which the priors file stores
+    sorted by card id, so the simulated opponent hand was deterministically the
+    lowest-numbered cards in their list — basic Energy, every rollout, every
+    game. Every simulated reply was made by an opponent holding a hand of pure
+    Energy and no Pokémon or Trainers.
+    """
+    pool: list[int] = []
+    for cid, n in counts.items():
+        pool.extend([cid] * max(n - seen.get(cid, 0), 0))
     need = n_deck + n_hand + n_prize
-    if len(hidden) < need and best is not None:
-        # Top up with the assumed list's own cards rather than a foreign one.
-        cycle = [cid for cid, n in best.items() for _ in range(n)] or [3]
-        while len(hidden) < need:
-            hidden.append(cycle[len(hidden) % len(cycle)])
-    elif len(hidden) < need:
-        hidden.extend([3] * (need - len(hidden)))
+    if len(pool) < need:
+        cycle = [cid for cid, n in counts.items() for _ in range(n)] or [3]
+        while len(pool) < need:
+            pool.append(cycle[len(pool) % len(cycle)])
     if rng is not None:
-        rng.shuffle(hidden)
-    hidden = hidden[:need]
-    return (hidden[n_hand + n_prize:], hidden[:n_hand],
-            hidden[n_hand:n_hand + n_prize])
+        rng.shuffle(pool)
+    pool = pool[:need]
+    return (pool[n_hand + n_prize:], pool[:n_hand],
+            pool[n_hand:n_hand + n_prize])
+
+
+def _opponent_counts(obs: dict) -> tuple[dict, int, int, int]:
+    """(seen counts, deck size, hand size, prize count) for the opponent."""
+    cur = obs.get("current") or {}
+    me = cur.get("yourIndex", 0)
+    players = cur.get("players") or []
+    if len(players) < 2:
+        return {}, 0, 0, 0
+    opp = players[1 - me]
+    return (_visible(opp, include_hand=False),
+            opp.get("deckCount", 0) or 0,
+            opp.get("handCount", 0) or 0,
+            len(opp.get("prize") or []))
+
+
+def _position_rng(obs: dict) -> random.Random:
+    """A deterministic RNG keyed to the position.
+
+    Seeding from the position rather than a module-global stream means two runs
+    of the same game see the same deals, so both arms of a paired A/B test are
+    compared on identical simulated worlds and a rollout is reproducible.
+
+    `step` is a kaggle_environments field and is absent from the raw engine
+    observation the local harness passes, so the key also carries
+    `turnActionCount` and the option count. Without them the seed is constant
+    for every decision inside one of our turns, and all three determinizations
+    of every decision replay the same deal.
+    """
+    cur = obs.get("current") or {}
+    step = obs.get("step") or 0
+    turn = cur.get("turn") or 0
+    action = cur.get("turnActionCount") or 0
+    n_opts = len((obs.get("select") or {}).get("option") or [])
+    _, n_deck, _, _ = _opponent_counts(obs)
+    return random.Random((step * 8191) ^ (turn * 131) ^ (action * 17)
+                         ^ (n_opts * 3) ^ n_deck)
+
+
+def _predict_opponent(
+        obs: dict, rng=None) -> tuple[list[int], list[int], list[int]]:
+    """(deck, hand, prize) card ids for the opponent's hidden cards.
+
+    The posterior's single most likely decklist, dealt out. `_search_main` goes
+    through `_deck_posterior` and `_hidden_from` directly so it can average over
+    several candidates; this is the point-estimate entry point for callers that
+    want one world.
+    """
+    seen, n_deck, n_hand, n_prize = _opponent_counts(obs)
+    posterior = _deck_posterior(obs, top_k=1)
+    if not posterior:
+        return [], [], []
+    return _hidden_from(posterior[0][0], seen, n_deck, n_hand, n_prize, rng)
 
 
 def _own_hidden(obs: dict, rng=None) -> tuple[list[int], list[int]]:
@@ -685,8 +805,15 @@ def _rollout_value(state, me: int, rules_choice, deadline=None) -> float:
 def _search_main(obs: dict, options: list[dict]) -> int | None:
     """1-ply search over N determinizations; None means "rules policy decides".
 
-    Search only overrides the rule policy when it can show a margin of half a
-    prize, and only against candidates it sampled as often as the rules pick —
+    Each option's value is averaged over the determinization plan, weighted by
+    posterior mass, instead of committing to the single most likely opponent
+    list. Searching a point estimate is Perfect Information Monte Carlo, and it
+    is over-confident exactly when the inference is weakest — early, before they
+    have shown much. Weighting over the surviving decklists is the
+    determinization step of Information Set MCTS.
+
+    Search only overrides the rule policy when it can show the configured
+    margin, and only against candidates it sampled as often as the rules pick —
     an unfair sample is how a noisy average steals a decision.
     """
     if not SEARCH_ENABLED or not obs.get("search_begin_input"):
@@ -701,26 +828,51 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
         o = to_observation_class(obs)
         me = o.current.yourIndex
         rules_i = _choose_main(options, obs)
+        seen, n_deck, n_hand, n_prize = _opponent_counts(obs)
+        posterior = _deck_posterior(obs, top_k=POSTERIOR_TOP_K)
+        # Once the posterior is confident it is right ~98% of the time, so the
+        # extra candidate decklists buy nothing and cost 3x. Spend them only in
+        # the early window where the top pick is genuinely unreliable.
+        if posterior and posterior[0][1] >= CONFIDENCE_GATE:
+            posterior = posterior[:1]
     except Exception:
         return None
+
+    if not posterior:
+        return None
+
+    # Fixed budget, reallocated rather than multiplied: confident about the
+    # decklist means spending all of it on shuffles of that one list; uncertain
+    # means splitting it across the candidate lists. Cost stays flat either way.
+    # Deck identity is the easy half — 80% of misidentifications are between
+    # sister lists that play identically — while how the unseen cards split into
+    # hand / deck / prizes is what genuinely differs game to game.
+    per_deck = max(1, SEARCH_N_DET // max(len(posterior), 1))
+    plan: list[tuple[dict, float]] = []
+    for counts, weight in posterior:
+        for _ in range(per_deck):
+            plan.append((counts, weight / per_deck))
 
     # One deadline governs every loop below, so running short of time costs
     # determinizations or candidates rather than producing a garbage answer.
     deadline = time.monotonic() + SEARCH_TIME_BUDGET
+    rng = _position_rng(obs)
     cand = list(range(len(options)))
-    acc = {i: 0.0 for i in cand}
-    n_eval = {i: 0 for i in cand}
+    acc = {i: 0.0 for i in cand}       # posterior-weighted value
+    mass = {i: 0.0 for i in cand}      # weight actually spent on i
+    n_eval = {i: 0 for i in cand}      # determinizations i survived
     try:
-        for _ in range(SEARCH_N_DET):
+        for counts, weight in plan:
             if time.monotonic() > deadline:
                 break
             try:
-                my_deck, my_prize = _own_hidden(obs, _RNG)
-                opp_deck, opp_hand, opp_prize = _predict_opponent(obs, _RNG)
+                my_deck, my_prize = _own_hidden(obs, rng)
+                opp_deck, opp_hand, opp_prize = _hidden_from(
+                    counts, seen, n_deck, n_hand, n_prize, rng)
                 root = search_begin(o, my_deck, my_prize, opp_deck, opp_prize,
                                     opp_hand, [])
             except Exception:
-                break
+                continue   # one bad decklist, not a dead search
             try:
                 for i in cand:
                     if time.monotonic() > deadline:
@@ -731,7 +883,8 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
                                            deadline)
                     except Exception:
                         continue   # one bad candidate, not a dead search
-                    acc[i] += v
+                    acc[i] += weight * v
+                    mass[i] += weight
                     n_eval[i] += 1
             finally:
                 try:
@@ -742,8 +895,10 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
         n_top = n_eval.get(rules_i, 0)
         if not n_top:
             return None
-        evaluated = [i for i in cand if n_eval[i] == n_top]
-        avg = {i: acc[i] / n_eval[i] for i in evaluated}
+        evaluated = [i for i in cand if n_eval[i] == n_top and mass[i] > 0.0]
+        if rules_i not in evaluated:
+            return None
+        avg = {i: acc[i] / mass[i] for i in evaluated}
         best = max(evaluated, key=lambda i: avg[i])
         if best == rules_i:
             return None

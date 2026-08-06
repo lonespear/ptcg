@@ -202,6 +202,13 @@ This is the whole thesis in one card. The field has concentrated a third of its
 play into a deck that is *already losing* (46.4% win rate across 57,000 games)
 **and** is weak to Grass — and almost nobody is punishing it.
 
+**Caveat, and it is a serious one.** This list runs **4 Pokémon in 60 cards**.
+Real players hold a 52.8% win rate with it by protecting those four; our agent
+does not, and **70% of our games end with no Pokémon left to promote**. The deck
+is right about the metagame and wrong about its pilot — see
+[the fragility section](#the-deck-is-fragile-in-our-hands-and-no-relative-test-could-see-it)
+below. Fixing that is now ahead of every search improvement in the queue.
+
 The story of how we got here is the more useful part, because we got it wrong
 twice first.
 
@@ -324,6 +331,31 @@ refuses to submit unless it passes.
 
 ---
 
+# The deck is fragile in our hands, and no relative test could see it
+
+Comparing our self-play games against real replays *distributionally* — not
+against another agent, against the field's actual statistics — flags them at
+7-8 turns where real games run 13. Naming how they end explains it:
+
+| Game ends because | Real replays | Our self-play |
+|---|---|---|
+| A player ran out of Pokémon | 8% | **70%** |
+
+**Our deck holds 4 Pokémon in 60 cards.** Four copies of Teal Mask Ogerpon ex
+and nothing else — four knockouts and you lose regardless of prizes. Real
+players run this exact list at 52.8% because they protect those four; our agent
+does not.
+
+The important part is *why nothing caught it*. The gauntlet pilots both sides
+with our own agent, so a weakness that hurts us and the opponent equally cancels
+out — every deck in it was dying the same way, the ranking held, and the
+absolute behaviour was nowhere near the real field. **Relative tests are blind
+to errors common to both arms.** Only checking against an external distribution
+exposes them.
+
+That makes four distinct ways a benchmark has misled us in this project, and
+this is the subtlest.
+
 # What we know is still wrong
 
 Playing the *same* deck, the reference agent beats us roughly 2:1. The gap is
@@ -371,24 +403,48 @@ the agent:
 
 1. Collects every opponent card it can see (Active, Bench, discard, attached
    Energy, evolution chains, Stadium).
-2. Keeps only the known decklists **consistent** with that — a list is ruled out
-   if we have seen more copies of a card than it runs.
-3. Takes the most-played survivor and fills in the remainder as their deck,
-   hand and prizes.
+2. Computes a **posterior** over the known decklists. The prior is how often
+   each is really played; the likelihood of having revealed a multiset *S* from
+   a 60-card list *D* is multivariate hypergeometric, `∏ C(D_c, S_c)`, in log
+   space. A list that cannot contain what we have seen gets likelihood zero and
+   drops out on its own, and a list running four copies of a card we have seen
+   once is correctly preferred over one running a single copy.
+3. Deals the unseen remainder into their deck, hand and prizes — **shuffled**,
+   which is not a detail (see below).
 
-Our own hidden cards need no guessing at all: we know our 60-card list, and
-everything except deck and prizes is visible to us, so we subtract.
+Our own hidden cards need no guessing: we know our 60-card list, and everything
+but deck and prizes is visible to us, so we subtract.
 
-In testing this found a consistent decklist on **30/30 attempts**, at a mean
-confidence of 0.71 (the top candidate's share of the surviving plays).
+**Graded against ground truth**, not against game outcomes — every replay
+contains both real decklists, so the model can be scored directly. Over 300
+replays the prior covers 99.7% of opponents, and the top pick is right 0.63 at
+turn 1, 0.84 by turn 3, 0.94 by turn 10. It is well calibrated: it claims 0.6–0.7
+and is right 0.70; claims 0.9+ and is right 0.98.
 
 Then, for each option on the main menu, the agent simulates taking it, plays the
 rest of its own turn out with the rules above, and scores the position:
 
 ```
-score = 1000 × (their prizes left − our prizes left)   # prizes are the win condition
-      + (our board HP − their board HP)                # tie-break toward the next one
+score = 1000 × (their prizes left − our prizes left)   # the win condition
+      +        (our board HP − their board HP)
+      +   30 × (our Energy in play − their Energy in play)
 ```
+
+### The part that was quietly broken
+
+Knowing the 60-card list still leaves *which* unseen cards are in hand versus
+deck versus prizes — and that is what actually varies game to game. That split
+used to be taken in dictionary order, and the priors file stores card IDs sorted
+ascending, so the simulated opponent's hand was deterministically their
+lowest-numbered cards: **basic Energy, every rollout, every game.** Every
+simulated reply came from an opponent holding no Pokémon and no Trainers, so the
+search was systematically fearless.
+
+It is now shuffled, seeded from the position so paired A/B tests see identical
+deals. Every search measurement taken before that fix ran against this fiction —
+comparisons between candidates stay internally fair, since both arms shared it,
+but anything whose value depended on modelling the opponent's reply was measured
+through a broken channel.
 
 It is essentially free: `search_begin` plus branching every option costs **4.4 ms
 per decision**, about 0.3 s across a whole episode against a 600 s budget. Any
@@ -418,6 +474,16 @@ What SPRT bought, in one session:
 | Search on every sub-selection too | reject, 0.461 | 230 |
 | Static correction for scaling damage | reject, 0.462 | 234 |
 | 2-ply rollouts (simulate the reply) | reject, 0.467 | 259 |
+| Multi-determinization over decklists | no decision, 0.519 | 1500 |
+| …gated on posterior confidence | **reject, 0.485** | 373 paired |
+
+The last one is the useful negative. Averaging the search over several candidate
+*decklists* does nothing, and we know why: measured against ground truth, **80%
+of misidentifications are between sister lists that play identically** (median
+53 of 60 cards shared). We built the Bayesian machinery, graded it against real
+decklists, and found the metagame's near-duplicate structure caps what it can be
+worth. The hidden variable that matters is not *which* deck — it is how that
+deck was shuffled.
 
 Three plausible ideas killed for ~230 games each instead of 500+, and the one
 that worked confirmed in 82.
@@ -469,6 +535,13 @@ Copy `sample_submission/` from the competition download into `engine/`. It is
 not redistribute*, and this repo is public. `engine/`, `build/`, all binaries,
 the card CSVs and `agent/deck.csv` are gitignored for that reason.
 
+**Provenance.** The files under `data/` and `agent/deck_priors.json` are
+*aggregate statistics* — decklist frequencies and win counts — computed from the
+public competition replay datasets published by Kaggle. No replay content, card
+text, or engine code is redistributed here. The MIT `LICENSE` covers this
+repository's own code only; Pokémon and all associated names are trademarks of
+Nintendo/Creatures/GAME FREAK.
+
 ## Submitting
 
 ```bash
@@ -485,14 +558,19 @@ This will not send anything unless the local validation episode passes.
 - [x] Forward search via `search_begin` / `search_step`
 - [x] SPRT so every change is judged on evidence, not on a game count
 - [x] **Agent live at 656.4 — above median, ~rank 2905/6421**
-- [ ] **Multi-determinization**: sample from the posterior over consistent
-      decklists per rollout instead of taking the mode. The 2-ply rejection is
-      evidence that determinization error is now the binding constraint, which
-      makes this the right next move rather than more depth.
-- [ ] **Confidence-gated depth**: 2-ply failed on average, which is consistent
-      with it helping once deck inference is confident and hurting before that.
-      Testable by splitting the result early-game vs late-game — no submission
-      needed.
+- [x] Bayesian decklist posterior, graded against ground truth
+- [x] Multi-determinization over decklists — **built, measured, rejected**
+      (0.485 on 373 paired games). 80% of misidentifications are between sister
+      lists that play identically, so there was little to average over.
+- [ ] **Fix the deck's 4-Pokémon fragility — ahead of everything below.**
+      70% of our games end with no Pokémon left. Rebuild the list with backup
+      attackers while keeping the Grass advantage, and add termination mode as a
+      gauntlet output so no future deck can hide the same flaw.
+- [ ] Re-test 2-ply on the fixed hand model — the configuration the original
+      2-ply diagnosis actually implies, and never yet run.
+- [ ] Re-test sub-selection search: it was rejected for not seeing a fetched
+      card's payoff, but the competing explanation was that the simulated
+      opponent posed no threat to fetch against.
 - [ ] **Matchup matrix over the top archetypes** (empirical game theory). Our
       deck is a best response to today's field, and the field moves — Marnie's
       Grimmsnarl ex went 64% → 30% in a week. This says whether the counter is

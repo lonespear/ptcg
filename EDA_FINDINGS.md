@@ -582,6 +582,111 @@ Three benchmarks, three different biases, all now named:
 The fourth and only unbiased one is the leaderboard, which is slow and costs a
 submission to query.
 
+## 25. Scoring the opponent model against ground truth instead of through games
+
+Every replay contains **both** players' real decklists. So the opponent model
+can be graded directly, rather than inferred from whether games were won — which
+is the noisiest instrument available and the one that had been consuming SPRT
+budget. 300 replays, zero games played.
+
+**Coverage.** Our 226-list prior contains the opponent's actual deck for
+**99.7%** of player-slots. Only 0.3% are decks we could not name in principle.
+
+**Accuracy by turn** (over slots whose deck is in the prior):
+
+| Turn | Top-1 correct | Truth in top-3 |
+|---|---|---|
+| 1 | 0.63 | **0.86** |
+| 3 | 0.84 | 0.95 |
+| 5 | 0.88 | 0.97 |
+| 10 | 0.94 | 0.97 |
+| 14 | 0.96 | 0.98 |
+
+**Calibration** is sound: the posterior claims 0.6–0.7 and is right 0.70; claims
+0.9+ and is right 0.98. Mildly over-confident when uncertain (claims ~0.35,
+right 0.26).
+
+That produced the design: **gate determinization on the posterior's own
+confidence** — above 0.80 search one candidate, below it average three. Buys
+early-game accuracy at near single-determinization cost.
+
+## 26. Frequency of error is not cost of error
+
+The turn-1 top-1 miss rate is 37%, which looks alarming. It mostly is not.
+
+When the top pick is wrong, it shares a **median 53 of 60 cards** with the true
+list (p25 43, p75 58), and **80.6% of the time it is the same archetype** — the
+metagame holds near-duplicate builds, and the two Marnie's Grimmsnarl ex lists at
+41% and 6% of play differ by a handful of cards and play identically.
+
+Only **19.4%** of misidentifications are cross-archetype, where the search would
+defend against the wrong game plan. Combined with the miss rate, genuinely
+harmful misidentification at turns 1–3 runs about **5–6%**, not 37%.
+
+This is why multi-determinization measured at only ~+2 points: most of the
+uncertainty it averages over is aliasing between lists that play the same way.
+The 0.519 was a fair reading after all, not a broken test.
+
+## 27. The prior is weaker against exactly the opponents we are climbing toward
+
+Coverage is measured against the field *as played*, which is dominated by the
+copy-paste middle of the leaderboard. Splitting by opponent strength (agents
+with ≥50 games and ≥55% win rate):
+
+| Opponent band | Coverage | Top-1 accuracy, turns 1–3 |
+|---|---|---|
+| Field | 0.997 | **0.715** |
+| Strong | **1.000** | **0.609** |
+
+Coverage does **not** degrade — strong players are not playing unlisted decks.
+But top-1 accuracy is **10 points worse** against them, so their lists are
+harder to disambiguate early. Since matchmaking pairs us with more of that
+population as our rating climbs, inference quality will *decline* as we improve.
+
+The confidence gate handles this without further work: it fires on low
+confidence, which is precisely when we are facing an opponent we cannot pin
+down. The adaptive behaviour is already correct — but the honest expectation is
+that the gate earns more at rank 500 than it does at rank 4500.
+
+## 28. The gauntlet has a symmetric blind spot — and it hid a fragile deck
+
+Validating the rollout world model distributionally against real replays flagged
+our self-play games at ~7-8 turns against a real median of 13. Naming the
+termination mode found why:
+
+| Game ends because | Real replays | Our self-play |
+|---|---|---|
+| A player has no Pokémon left | 8% | **70%** |
+| Prizes taken | — | 30% |
+| Median turn | 13 | **8** |
+
+The cause is not the agent. **Our deck holds 4 Pokémon in 60 cards** — four
+copies of Teal Mask Ogerpon ex and nothing else. Four knockouts and the game is
+over regardless of prizes. Real players run this list at a 52.8% win rate
+because they protect those four (healing, careful trading, fetching); our agent
+does not, and dies to it 70% of the time.
+
+**Why no benchmark caught it.** The field-weighted gauntlet pilots *both sides*
+with our own agent. A failure mode that hurts us and the opponent equally is
+invisible to a symmetric test: every deck in the gauntlet was dying the same way,
+so the relative ranking was undisturbed while the absolute behaviour was far
+outside anything the real field does.
+
+That is a fourth distinct benchmark failure, and the subtlest:
+
+| Benchmark | Bias | How it was caught |
+|---|---|---|
+| Own weak agent, round-robin | opponent too weak | leaderboard contradicted it |
+| Official reference agent | monoculture, one archetype | field-weighted gauntlet |
+| Field gauntlet | field piloted by us | still open — this |
+| Any self-play measure | **symmetric failure modes cancel** | distributional check vs replays |
+
+The general lesson: **relative tests cannot see errors that are common to both
+arms.** Only comparison against an external distribution — the real replays —
+exposes them. That is the same instrument that caught the first broken benchmark
+(turn-5 games against a 146-step median) and it is now a deliberate, repeatable
+script rather than an accident.
+
 ## Open blocker
 
 ~~Competition data for the Simulation category is still **403**.~~ **Resolved** —

@@ -50,6 +50,24 @@ map) and `UTILIZATION.md` (the pilot contract).*
   ready (`scripts/build_submission.py --submit`), ~4 orders of magnitude of
   headroom under the 10-minute clock.
 
+## Answers to two things your README queues
+
+- **The 2-ply retest is already run, on the shuffled hand model.** Playing the
+  opponent's turn out before scoring still costs 9 points of win rate (40.7%
+  over 200 games against the same agent at 1 ply), and a single reply with no
+  minimum taken over it costs 14 (36.2%). Since one reply is the *worse* of the
+  two, the fault is not branching or pessimism, and it is not the determinized
+  hand either — it is the opponent **policy** model, which rolls their turn out
+  under our own priority table on a guessed decklist. Diagnostics in commit
+  `1e1867c`; the mechanism stays live behind `SEARCH_OPP_BRANCH`, defaulted to
+  0, ready to re-enable once an opponent policy model exists.
+- **Termination-mode distributions are already an output on our side.** Every
+  `GameResult` in `ptcg/creation/harness.py` records its end reason (prizes
+  taken, deck-out, no active Pokemon, card effect), so the harness and the
+  36-cell matchup matrix can report the distribution per cell for any deck we
+  generate. Say the word and your 70%-no-Pokemon finding gets checked against
+  the whole field, deck by deck.
+
 ## In flight today
 
 - 8-hour archipelago run vs the specialist panel (Austin's laptop).
