@@ -6,10 +6,12 @@ access_token
 .env
 
 # Competition data / caches
-data/
 cache/
 *.zip
-# ...but the mined metagame summaries are small and worth versioning.
+# Exclude data/ contents, not the directory itself — git cannot re-include a
+# file whose parent directory is excluded, and the mined summaries are small
+# enough to version.
+data/*
 !data/meta_cards.csv
 !data/meta_decks.csv
 
