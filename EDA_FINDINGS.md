@@ -417,6 +417,42 @@ The gap is policy, not deck. Concretely, the trace shows our agent:
 - never retreats deliberately
 - has no notion of prize count, board state, or the opponent's threat
 
+## 19. The benchmark decided the answer, and the benchmark was wrong
+
+§17 concluded the vendor sample deck was the best available, on the strength of
+a 900-game round-robin. That conclusion was an artefact of the opponent.
+
+Once the official rule-based sample agent was wired up as a sparring partner,
+the ranking **reversed**:
+
+| Deck (piloted by our agent) | vs our own weak agent | vs the reference agent |
+|---|---|---|
+| Vendor sample (Mega Abomasnow ex) | **0.883** (round-robin winner) | **0.22** |
+| Mined Mega Lucario ex (69.5% on the leaderboard) | 0.337 (last) | 0.26 |
+| Reference Mega Lucario ex | not tested | **0.33** |
+
+The sample deck's 350 HP wall is unbeatable *for an opponent that cannot knock
+it out*. Against one that can, its core liability shows: Mega Abomasnow ex is a
+`megaEx`, so **every knockout hands the opponent three prizes** — two knockouts
+and the game is over. Our weak benchmark could never punish that, so the metric
+recommended the worst real deck in the set.
+
+Two symptoms were visible before the leaderboard confirmed it, and both were
+ignored: games ended at **turn 5** (real replays median 146 steps), and beating
+a random agent **96.7%** was treated as progress when it only measures the
+floor.
+
+**The lesson generalises past this competition: an evaluation opponent that is
+weaker than the deployment opponent does not just add noise, it inverts
+rankings.** Switching decks on the strength of the better benchmark moved us
+from 0.22 to 0.33 against a competent opponent — an 11-point gain that the
+original metric scored as a catastrophic loss.
+
+Policy work is worth much less than the deck here: v4 (prize-aware, resolves
+card options properly, searches the deck by value) beats v3 only 108–92 on 200
+games — a real but statistically weak edge, and worth ~4 points where the deck
+was worth 11.
+
 ## Open blocker
 
 ~~Competition data for the Simulation category is still **403**.~~ **Resolved** —

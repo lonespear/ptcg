@@ -39,7 +39,7 @@ def main() -> None:
             tar.extractall(tmp)
         root_entries = sorted(p.name for p in tmp.iterdir())
         print(f"bundle root: {root_entries}")
-        for required in ("main.py", "deck.csv"):
+        for required in ("main.py", "deck.csv", "cg"):
             if required not in root_entries:
                 sys.exit(f"FAIL: {required} must be at the archive root")
 

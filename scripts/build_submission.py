@@ -64,7 +64,16 @@ def build() -> Path:
             raise FileNotFoundError(f"missing {src}")
         shutil.copy2(src, staging / name)
 
-    write_tables(staging / "agent_data.json")
+    # The agent reads card/attack metadata through cg.api, exactly as the
+    # official sample does, so the package ships with the bundle. (Importing it
+    # was never the problem — the first two failures were the __file__ bug.)
+    cg_src = ENGINE / "cg"
+    if not cg_src.exists():
+        raise FileNotFoundError(
+            f"missing {cg_src} — copy sample_submission from the competition "
+            f"download into engine/")
+    shutil.copytree(cg_src, staging / "cg",
+                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 
     archive = BUILD / "submission.tar.gz"
     if archive.exists():
