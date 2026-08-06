@@ -354,9 +354,73 @@ Best agents over six days (≥300 games): Luca 63.8% (632), **Majkel1337 61.4%
 (2,699 — the only player combining high volume with a high rate)**, James Cox &
 Henry Chao 58.1% (716), Yushin Ito 58.0% (1,158).
 
+---
+
+# Build log — first agent on the scoreboard
+
+## 16. The bug that failed two submissions
+
+Submissions v1 and v2 both came back `Validation Episode failed` with no detail.
+The cause, once found, is worth writing down because **no hand-rolled local test
+can catch it**:
+
+> `kaggle_environments` **exec()s** `main.py` rather than importing it, so
+> `__file__` is undefined at run time. Any use of it raises `NameError` and the
+> episode dies.
+
+A normal import always defines `__file__`, so the agent passed every local test
+while being guaranteed to fail in the grader. The official sample avoids this by
+using the literal `/kaggle_simulations/agent/` path instead.
+
+The real fix was not the code change but the test: **`kaggle_environments` ships
+the competition's own `cabt` environment**, so the actual validation episode
+(agent vs a copy of itself) runs locally. `scripts/validate_submission.py` now
+does exactly that and `build_submission.py` refuses to submit unless it passes.
+v3 validated first try.
+
+## 17. Deck design for a greedy pilot — three failed hypotheses
+
+Every deck idea was tested by round-robin with our own agent piloting both
+sides. Three plausible ideas all lost to the vendor sample deck:
+
+| Deck | Idea | Result vs sample |
+|---|---|---|
+| Mined Mega Lucario ex (69.5% on the leaderboard) | copy what wins | **32–88** |
+| Designed Fighting aggro (24 Basics, unconditional attacks) | pilotability | 9–51 |
+| Thickened Abomasnow (20 Basics, 24 Energy) | never run out of Pokémon | **40–160** |
+| Energy sweep: 52 / 44 / 40 Energy variants | attachment tempo | best 39–41 |
+
+The sample deck (6 Basics, 35 Energy, Snover → Mega Abomasnow ex) won the
+round-robin at 0.666 and beat our best designed variant 41–39.
+
+Why: with one Energy attachment per turn, the entire game is *how fast the 350
+HP / 200 damage attacker comes online*. Adding Basics for resilience dilutes
+Energy and the attacker arrives later — and arriving later loses more games than
+running out of Pokémon does. The "absurd" 35 Energy is the deck's engine, not a
+placeholder.
+
+**Deck tinkering has hit diminishing returns; the policy is now the bigger
+lever.**
+
+## 18. Where we actually stand
+
+`Heuristic v3` is live on the Simulation leaderboard. Starting rating 600; after
+its first episodes it settled to **445.8**, against a leaderboard top of
+**~1205.8** (flg). So the agent is losing to real opposition — which is the
+honest baseline to improve from, and exactly what the internal metric predicted:
+beating a *random* agent 96.7% says nothing about beating a *competent* one.
+
+The gap is policy, not deck. Concretely, the trace shows our agent:
+- plays cards greedily in hand order rather than by value
+- picks index 0 for every card-selection context (`TO_HAND` is 11.7% of all
+  decisions — the second most common after `MAIN`)
+- never retreats deliberately
+- has no notion of prize count, board state, or the opponent's threat
+
 ## Open blocker
 
-Competition data for the Simulation category is still **403**. The correct slug
+~~Competition data for the Simulation category is still **403**.~~ **Resolved** —
+rules accepted, engine downloaded, agent submitted. The correct slug
 is `pokemon-tcg-ai-battle` (not `-simulation`) — the API confirms the
 competition exists at that URL but reports rules not accepted. Accepting the
 rules at <https://www.kaggle.com/competitions/pokemon-tcg-ai-battle> is what

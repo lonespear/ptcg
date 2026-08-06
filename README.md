@@ -55,15 +55,30 @@ python scripts/mine_meta.py
 A single day is ~20 GB on disk and ~5,200 matches. Set `PTCG_EPISODE_DIR` if the
 kagglehub cache lives elsewhere.
 
+## Submitting
+
+```bash
+python scripts/build_submission.py                      # build + inspect
+python scripts/build_submission.py --submit -m "note"   # validates, then submits
+```
+
+`build_submission.py --submit` will not send anything unless
+`scripts/validate_submission.py` passes. That script runs the competition's own
+`cabt` environment from `kaggle_environments` — the real validation episode,
+agent against a copy of itself. Two submissions were lost to a bug a hand-rolled
+test could not see (see `EDA_FINDINGS.md` §16), so this gate is not optional.
+
 ## Status
 
 - [x] Data downloaded and normalized
 - [x] EDA pass 1 — pool composition, efficiency, weakness graph, Trainer taxonomy
-- [x] EDA pass 2 — live metagame from 5,197 replays (archetypes, card win rates)
-- [ ] **Blocked:** Simulation-category access. Accept the rules at
-      <https://www.kaggle.com/competitions/pokemon-tcg-ai-battle> — Strategy
-      entry requires a Simulation submission.
-- [ ] Mine more of the 51 available days for meta trend
-- [ ] Effective-cost model for attack evaluation
-- [ ] Deck concept + agent policy
-- [ ] Writeup (not submitted — draft only)
+- [x] EDA pass 2 — live metagame from 5,197 replays
+- [x] EDA pass 3 — six days, 57,108 deck instances, decklist-level win rates
+- [x] Local battle engine + self-play arena
+- [x] **Agent live on the Simulation leaderboard** (Heuristic v3, rating ~446
+      vs a top of ~1206 — a working baseline, not a competitive one)
+- [ ] Improve the policy: card-selection contexts (`TO_HAND` is 11.7% of
+      decisions and currently answered with index 0), deliberate retreat,
+      prize/board awareness
+- [ ] Search-based policy (the engine exposes `SearchBegin`/`SearchStep`)
+- [ ] Writeup for the Strategy track (**not submitted — draft only**)
