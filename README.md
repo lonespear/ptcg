@@ -231,10 +231,45 @@ at 500 games put it at **0.276**, where 100-game runs had read anywhere from
 noise. Everything here is now measured at 500 games minimum, and that policy
 work is parked until it can be judged properly.
 
-The bigger untapped lever: the engine exposes `search_begin` / `search_step`,
-which simulate forward from the current position. That allows real lookahead
-instead of fixed rules. It needs a guess at the opponent's deck — and since only
-~120 decklists exist in the entire metagame, we can supply exactly that.
+---
+
+# Lookahead: guessing the opponent's deck
+
+The rules above are all *reflex* — they never ask "what happens if I do this?"
+The engine can answer that: `search_begin` / `search_step` roll the game forward
+from the current position.
+
+The catch is that simulating requires the hidden information — the opponent's
+deck, hand and prizes. Guessing 60 unknown cards should be hopeless.
+
+**It isn't, because we mined the metagame.** Only ~120 distinct decklists exist,
+and the 40 most common cover **94.4% of all observed play** — 9 KB of JSON. So
+the agent:
+
+1. Collects every opponent card it can see (Active, Bench, discard, attached
+   Energy, evolution chains, Stadium).
+2. Keeps only the known decklists **consistent** with that — a list is ruled out
+   if we have seen more copies of a card than it runs.
+3. Takes the most-played survivor and fills in the remainder as their deck,
+   hand and prizes.
+
+Our own hidden cards need no guessing at all: we know our 60-card list, and
+everything except deck and prizes is visible to us, so we subtract.
+
+In testing this found a consistent decklist on **30/30 attempts**, at a mean
+confidence of 0.71 (the top candidate's share of the surviving plays).
+
+Then, for each option on the main menu, the agent simulates taking it, plays the
+rest of its own turn out with the rules above, and scores the position:
+
+```
+score = 1000 × (their prizes left − our prizes left)   # prizes are the win condition
+      + (our board HP − their board HP)                # tie-break toward the next one
+```
+
+It is essentially free: `search_begin` plus branching every option costs **4.4 ms
+per decision**, about 0.3 s across a whole episode against a 600 s budget. Any
+failure anywhere falls straight back to the rules.
 
 ---
 
