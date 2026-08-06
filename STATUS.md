@@ -1,6 +1,6 @@
 # Status — Austin's side (deck creation + shared infra)
 
-*2026-08-07. For Jon: where chunk 1 stands, what we measured, what's in
+*2026-08-06. For Jon: where chunk 1 stands, what we measured, what's in
 flight, and the asks. Companion contracts: `ARCHITECTURE.md` (the three-chunk
 map) and `UTILIZATION.md` (the pilot contract).*
 
