@@ -99,7 +99,33 @@ class GreedyPilot:
             pass
         return None
 
-    def _card_value(self, card_id: int | None) -> float:
+    # Card-selection primitives, at this file's scale (values run ~1-8, where
+    # agent/main.py runs on the scale of HP). Metadata only: no card is named.
+    DUPLICATE_PENALTY = 0.5   # per copy already in hand
+    EVOLUTION_BONUS = 0.7     # evolves something we already have in play
+    BENCH_EMERGENCY = 100.0   # one Pokemon left: a Basic outranks everything
+
+    def _board_context(self, obs: dict) -> dict:
+        """Our own side, read once per decision."""
+        me = self._me(obs)
+        p = self._player(obs, me)
+        hand: dict = {}
+        for c in p.get("hand") or []:
+            if c and c.get("id") is not None:
+                hand[c["id"]] = hand.get(c["id"], 0) + 1
+        names, in_play = set(), 0
+        for zone in ("active", "bench"):
+            for pkm in p.get(zone) or []:
+                if not pkm:
+                    continue
+                in_play += 1
+                c = self.pool.card(pkm.get("id"))
+                if c:
+                    names.add(c["name"])
+        return {"hand": hand, "in_play": in_play, "names": names}
+
+    def _card_value(self, card_id: int | None, board: dict | None = None,
+                    in_hand: bool = False) -> float:
         """Generic desirability of a card, for pick/discard decisions."""
         if card_id is None:
             return 1.0
@@ -110,9 +136,22 @@ class GreedyPilot:
             v = 5.0 + c["hp"] / 100.0
             if c["basic"]:
                 v += 1.5
+        else:
+            v = {SUPPORTER: 5.0, ITEM: 4.0, TOOL: 3.0, STADIUM: 2.0,
+                 BASIC_ENERGY: 3.0, SPECIAL_ENERGY: 3.5}.get(c["cardType"], 2.0)
+        if board is None:
             return v
-        return {SUPPORTER: 5.0, ITEM: 4.0, TOOL: 3.0, STADIUM: 2.0,
-                BASIC_ENERGY: 3.0, SPECIAL_ENERGY: 3.5}.get(c["cardType"], 2.0)
+        try:
+            copies = board["hand"].get(card_id, 0) - (1 if in_hand else 0)
+            v -= self.DUPLICATE_PENALTY * max(copies, 0)
+            if c["evolvesFrom"] and c["evolvesFrom"] in board["names"]:
+                v += self.EVOLUTION_BONUS
+            if (board["in_play"] <= 1 and c["basic"]
+                    and c["cardType"] == POKEMON):
+                v += self.BENCH_EMERGENCY
+        except (KeyError, TypeError):
+            pass
+        return v
 
     def _needs_energy(self, pkm: dict) -> bool:
         c = self.pool.card(pkm["id"])
@@ -277,7 +316,12 @@ class GreedyPilot:
             order = sorted(range(len(options)), key=dmg_key)
             return order[:hi]
 
-        values = [(self._card_value(self._resolve_card_id(obs, o)), i)
+        try:
+            board = self._board_context(obs)
+        except (IndexError, KeyError, TypeError):
+            board = None
+        values = [(self._card_value(self._resolve_card_id(obs, o), board,
+                                    o.get("area") == AREA_HAND), i)
                   for i, o in enumerate(options)]
         if ctx in COSTLY_CONTEXTS:
             values.sort(key=lambda v: v[0])
@@ -297,16 +341,20 @@ class JonDayPilot:
       from deck.csv, but GA matches pit two arbitrary decks; the harness
       calls bind_deck() per game and we re-point the global on every call
       (both seats share the module, so per-call re-pointing is required).
-    - search throttle: forward search (~4.4 ms/decision) is ladder-grade
-      but ~300x too slow for the GA inner loop. search=False gives the
-      rules-only policy for fitness; use search=True for gates and
-      tournaments.
+    - search throttle: forward search (~60 ms/decision at 3 determinizations
+      and 2-ply) is ladder-grade but orders of magnitude too slow for the GA
+      inner loop. search=False gives the rules-only policy for fitness; use
+      search=True for gates and tournaments.
+    - weight injection: agent.main's eval vector is a module global, so a
+      weights dict is re-pointed per call the same way _MY_DECK is.
     """
 
-    def __init__(self, seed: int | None = None, search: bool = False):
+    def __init__(self, seed: int | None = None, search: bool = False,
+                 weights: dict | None = None):
         import agent.main as _jon  # real import (not exec): __file__ works,
         self._jon = _jon           # so priors resolve next to the module
         self.search = search
+        self.weights = weights
         self.deck: list[int] | None = None
 
     def bind_deck(self, deck: list[int]) -> None:
@@ -315,6 +363,9 @@ class JonDayPilot:
     def __call__(self, obs: dict) -> list[int]:
         self._jon._MY_DECK = self.deck
         self._jon.SEARCH_ENABLED = self.search
+        # unconditional: both seats share the module, so a seat with no vector
+        # would otherwise inherit the other seat's
+        self._jon.set_weights(self.weights)
         return self._jon.agent(obs)
 
 

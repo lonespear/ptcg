@@ -12,9 +12,20 @@ The adapter `ptcg/creation/pilots.py::JonDayPilot` already wires the current
   (`_MY_DECK`) cannot come from `deck.csv`. The harness calls
   `bind_deck(deck)` per game and the adapter re-points the module global on
   every call. Nothing to change unless `_MY_DECK` handling moves.
-- **Search throttle.** Rules-only mode (~14 ms/game) is the GA inner-loop
-  pilot; search mode (~0.25 s/game) is for elite gates, tournaments, and
-  the ladder. The adapter toggles `SEARCH_ENABLED`.
+- **Search throttle.** Rules-only mode (~16 ms/game) is the GA inner-loop
+  pilot; search mode (~3.7 s/game at 3 determinizations and 2-ply) is for
+  elite gates, tournaments, and the ladder. The adapter toggles
+  `SEARCH_ENABLED`.
+- **Weight vector.** `agent.main.WEIGHTS` holds every eval constant
+  (`prize`, `hp`, `energy`, `hand`, `no_active`, `search_margin`);
+  `set_weights(dict)` re-points it, `set_weights(None)` restores defaults,
+  and partial or malformed vectors degrade rather than raise.
+  `JonDayPilot(weights=...)` re-points per call, like `_MY_DECK`.
+- **Determinization hook.** `_predict_opponent(obs, rng=None)` and
+  `_own_hidden(obs, rng=None)` shuffle the hidden pool before splitting it,
+  so calling them k times per decision yields k distinct worlds. Chunk 3's
+  posterior replaces the body of `_predict_opponent`; the k-sample call site
+  in `_search_main` already exists.
 
 ## Requested (the chunk-2 work that unblocks the rest)
 
@@ -32,17 +43,14 @@ The adapter `ptcg/creation/pilots.py::JonDayPilot` already wires the current
    backbone is "here is a decision, here is the printed reasoning" — the
    rule policy already articulates its reasons; this just captures them.
 
-3. **Weight vector as a parameter.** The eval constants (1000 prize,
-   1 HP, 30 energy, 5 hand) become an injectable vector with these
-   defaults. That single change lets the Trainer tune weights by self-play
-   and lets plan modules apply per-archetype deltas (decisions D7/D10)
-   with zero further coupling.
+3. **Tune the weights.** The vector is injectable; nothing has tuned it.
+   `search_margin` is the one term with a measured optimum so far (0, not
+   the half-prize hysteresis a stronger heuristic would want).
 
-4. **Keep the `_predict_opponent` boundary.** Chunk 3's upgrade (posterior
-   over consistent lists, hypergeometric likelihood, sampled per
-   determinization instead of the mode) replaces exactly that function.
-   Signature stays `(obs) -> (deck, hand, prize)`; multi-determinization
-   would call it k times per decision.
+4. **Posterior over opponent lists.** Chunk 3 replaces the body of
+   `_predict_opponent` — hypergeometric likelihood over consistent lists
+   instead of the single most-played mode, which is what the shuffle
+   currently stands in for.
 
 ## What creation returns
 
