@@ -5,6 +5,21 @@ access_token
 *.env
 .env
 
+# The PTCG battle engine and the sample submission are licensed
+# "competition use only — do not redistribute or post publicly".
+# This repo is public, so they must never be committed.
+engine/
+submission/
+cg/
+*.dll
+*.so
+*.dylib
+*Card*Data*.csv
+*Card_ID*List*.pdf
+# The sample deck ships with the licensed sample_submission. Our own deck list
+# replaces it and can be committed; the vendor sample cannot.
+agent/deck.csv
+
 # Competition data / caches
 cache/
 *.zip
