@@ -418,6 +418,16 @@ What SPRT bought, in one session:
 | Search on every sub-selection too | reject, 0.461 | 230 |
 | Static correction for scaling damage | reject, 0.462 | 234 |
 | 2-ply rollouts (simulate the reply) | reject, 0.467 | 259 |
+| Multi-determinization over decklists | no decision, 0.519 | 1500 |
+| …gated on posterior confidence | **reject, 0.485** | 373 paired |
+
+The last one is the useful negative. Averaging the search over several candidate
+*decklists* does nothing, and we know why: measured against ground truth, **80%
+of misidentifications are between sister lists that play identically** (median
+53 of 60 cards shared). We built the Bayesian machinery, graded it against real
+decklists, and found the metagame's near-duplicate structure caps what it can be
+worth. The hidden variable that matters is not *which* deck — it is how that
+deck was shuffled.
 
 Three plausible ideas killed for ~230 games each instead of 500+, and the one
 that worked confirmed in 82.
