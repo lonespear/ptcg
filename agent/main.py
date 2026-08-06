@@ -398,7 +398,6 @@ SEARCH_ENABLED = True
 # Held at 3 because fair sampling at N=3 measured neutral (51.3%) against the
 # pre-port agent over 200 games, and the cost is linear in it.
 SEARCH_N_DET = 3
-SEARCH_TIME_BUDGET = 0.80     # seconds per main-phase decision
 # Opponent replies minimized over at ply 2. Off, because playing their turn
 # out costs 9 points of win rate against the same agent at 0 (40.7% over 200
 # games) and 14 at one reply (36.2%) — a single reply with no minimum taken is
@@ -413,6 +412,60 @@ SEARCH_OPP_BRANCH = 0
 # costs 14 points of win rate here — 35.1% against the unported agent versus
 # 48.7% at margin 0 — because this rules policy is the weaker of the two
 # (search-on beats rules-only 58.7%). Tunable, defaulted off.
+
+# --- episode time bank ------------------------------------------------------
+# The grader gives each agent a 600-second bank per episode (cabt.json
+# observation.remainingOverageTime) and sets no per-move deadline (actTimeout
+# is 0), so the old flat 0.80s cap was an arbitrary number rather than a
+# metered one. Replace it: each decision may spend what is left of the bank
+# divided by the decisions still expected, clamped at both ends, and nothing
+# at all once the bank is nearly gone.
+#
+# Measured caveat, so nobody reads more into this than is there: at
+# SEARCH_N_DET = 3 a search finishes in 16 ms on average and 176 ms at worst,
+# so neither the old 0.80s cap nor the ~1.9s this yields is ever the binding
+# constraint. Zero of 7,936 searches over 200 rank-0 Marnie mirror games
+# reached either deadline, and a full kaggle_environments episode spends 0.8
+# of its 600 seconds. What holds spending down is the fixed determinization
+# count, not the clock, and the two agents therefore played to 0.505 over
+# those 200 games. This is the meter; the work has to be scaled to it before
+# the bank is worth anything.
+try:
+    BANK_SECONDS = float(os.environ.get("CABT_LOCAL_BANK") or 600.0)
+except Exception:
+    BANK_SECONDS = 600.0
+BANK_SAFETY = 0.80        # fraction of the bank we ever plan against
+BANK_MIN_BUDGET = 0.20    # seconds; a search shorter than this buys nothing
+BANK_MAX_BUDGET = 5.00    # seconds; ceiling on any one decision
+BANK_RESERVE = 5.00       # below this the bank is closed and the rules decide
+# Episodes measured at 85 agent calls on average and 151 at the longest. The
+# estimate only has to stay conservative — over-counting what is left just
+# means underspending — so it decays linearly from a high start and floors.
+BANK_DECISIONS_MAX = 260
+BANK_DECISIONS_MIN = 40
+BANK_DIVISOR_FLOOR = 20   # never divide by less than this
+
+_bank_remaining = BANK_SECONDS
+_bank_decisions = 0
+
+
+def _reset_bank() -> None:
+    """Every episode opens with the deck-selection call, where select is None."""
+    global _bank_remaining, _bank_decisions
+    _bank_remaining = BANK_SECONDS
+    _bank_decisions = 0
+
+
+def _decision_budget() -> float:
+    """Seconds this decision may search for; 0.0 means the rules policy only."""
+    try:
+        if _bank_remaining < BANK_RESERVE:
+            return 0.0
+        est = max(BANK_DECISIONS_MIN, BANK_DECISIONS_MAX - _bank_decisions)
+        budget = _bank_remaining * BANK_SAFETY / max(est, BANK_DIVISOR_FLOOR)
+        return min(max(budget, BANK_MIN_BUDGET), BANK_MAX_BUDGET)
+    except Exception:
+        return BANK_MIN_BUDGET
 
 
 def _load_priors() -> list[tuple[dict, int]]:
@@ -838,6 +891,9 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
         return None
     if not CG_AVAILABLE:
         return None
+    budget = _decision_budget()
+    if budget <= 0.0:
+        return None            # bank spent; the rules policy plays it out
 
     try:
         o = to_observation_class(obs)
@@ -870,7 +926,7 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
 
     # One deadline governs every loop below, so running short of time costs
     # determinizations or candidates rather than producing a garbage answer.
-    deadline = time.monotonic() + SEARCH_TIME_BUDGET
+    deadline = time.monotonic() + budget
     rng = _position_rng(obs)
     cand = list(range(len(options)))
     acc = {i: 0.0 for i in cand}       # posterior-weighted value
@@ -1013,8 +1069,20 @@ def agent(obs_dict: dict) -> list[int]:
     Defined last on purpose: kaggle_environments binds the *last* callable in
     the exec'd file as the entrypoint, so anything below this line would be
     called instead and this guard would never run.
+
+    Also the one place the episode time bank is kept: reset on the
+    deck-selection call that opens every episode, and charged the measured
+    wall time of every call, so what `_decision_budget` divides up is what the
+    grader will actually still be holding.
     """
+    global _bank_remaining, _bank_decisions
+    started = time.monotonic()
     try:
+        try:
+            if (obs_dict or {}).get("select") is None:
+                _reset_bank()
+        except Exception:
+            pass
         return _agent(obs_dict)
     except Exception:
         sel = (obs_dict or {}).get("select")
@@ -1023,3 +1091,9 @@ def agent(obs_dict: dict) -> list[int]:
         n = len(sel.get("option") or [1])
         k = max(1, min(sel.get("minCount", 1) or 1, n))
         return list(range(k))
+    finally:
+        try:
+            _bank_remaining -= time.monotonic() - started
+            _bank_decisions += 1
+        except Exception:
+            pass
