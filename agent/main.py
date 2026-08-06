@@ -21,6 +21,7 @@ NameError and kills the episode.
 
 from __future__ import annotations
 
+import math
 import os
 
 # --- option / area / context constants (see cg/api.py) ----------------------
@@ -275,6 +276,10 @@ def _rank_card_options(options: list[dict], obs: dict) -> list[int]:
 _PRIORS: list[tuple[dict, int]] | None = None
 _MY_DECK: list[int] | None = None
 SEARCH_ROLLOUT_STEPS = 24     # enough to finish a turn; caps the cost
+# How many candidate opponent decklists to average each option over. Search
+# costs ~4.4 ms per determinization against a 600 s episode budget, so this is
+# affordable; the constraint is variance, not time.
+N_DETERMINIZATIONS = 3
 SEARCH_ENABLED = True
 
 
@@ -319,6 +324,81 @@ def _visible(player: dict, include_hand: bool) -> dict:
     if include_hand:
         _counter_from_zone(player.get("hand"), seen)
     return seen
+
+
+def _log_choose(n: int, k: int) -> float:
+    """log C(n, k), or -inf when the draw is impossible."""
+    if k < 0 or n < 0 or k > n:
+        return float("-inf")
+    return (math.lgamma(n + 1) - math.lgamma(k + 1) - math.lgamma(n - k + 1))
+
+
+def _deck_posterior(obs: dict, top_k: int = 3) -> list[tuple[dict, float]]:
+    """Posterior over the opponent's decklist, as (counts, weight) pairs.
+
+    Prior is the empirical play frequency from the mined replays. The likelihood
+    of having revealed a multiset S of cards from a 60-card list D is
+    multivariate hypergeometric:
+
+        P(S | D)  proportional to  product over cards c of  C(D_c, S_c)
+
+    The C(60, |S|) denominator is identical for every candidate, so it cancels.
+
+    This generalises the hard consistency filter we used before: a deck that
+    cannot contain what we have seen gets C(D_c, S_c) = 0 and drops out on its
+    own, but now a deck running four copies of a card we have seen once is also
+    correctly preferred over one running a single copy, instead of the two being
+    treated as equally plausible.
+    """
+    cur = obs.get("current") or {}
+    me = cur.get("yourIndex", 0)
+    players = cur.get("players") or []
+    if len(players) < 2:
+        return []
+    seen = _visible(players[1 - me], include_hand=False)
+
+    scored: list[tuple[float, dict]] = []
+    for counts, plays in _load_priors():
+        loglik = 0.0
+        for cid, k in seen.items():
+            loglik += _log_choose(counts.get(cid, 0), k)
+            if loglik == float("-inf"):
+                break
+        if loglik == float("-inf"):
+            continue
+        scored.append((math.log(max(plays, 1)) + loglik, counts))
+
+    if not scored:
+        # Nothing explains what we have seen — fall back to the most-played
+        # list. Padding with Energy instead risks an opponent deck with no
+        # Basic Pokémon, which search_begin rejects outright.
+        priors = _load_priors()
+        if not priors:
+            return []
+        return [(max(priors, key=lambda cp: cp[1])[0], 1.0)]
+
+    scored.sort(key=lambda t: -t[0])
+    scored = scored[:max(top_k, 1)]
+    hi = scored[0][0]
+    weights = [math.exp(s - hi) for s, _ in scored]      # softmax, shift-stable
+    total = sum(weights) or 1.0
+    return [(counts, w / total) for (_, counts), w in zip(scored, weights)]
+
+
+def _hidden_from(counts: dict, seen: dict, n_deck: int, n_hand: int,
+                 n_prize: int) -> tuple[list[int], list[int], list[int]]:
+    """Split one candidate decklist's unseen cards into (deck, hand, prize)."""
+    hidden: list[int] = []
+    for cid, n in counts.items():
+        hidden.extend([cid] * max(n - seen.get(cid, 0), 0))
+    need = n_deck + n_hand + n_prize
+    if len(hidden) < need:
+        cycle = [cid for cid, n in counts.items() for _ in range(n)] or [3]
+        while len(hidden) < need:
+            hidden.append(cycle[len(hidden) % len(cycle)])
+    hidden = hidden[:need]
+    return (hidden[n_hand + n_prize:], hidden[:n_hand],
+            hidden[n_hand:n_hand + n_prize])
 
 
 def _predict_opponent(obs: dict) -> tuple[list[int], list[int], list[int]]:
@@ -476,28 +556,60 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
         o = to_observation_class(obs)
         me = o.current.yourIndex
         my_deck, my_prize = _own_hidden(obs)
-        opp_deck, opp_hand, opp_prize = _predict_opponent(obs)
 
-        root = search_begin(o, my_deck, my_prize, opp_deck, opp_prize,
-                            opp_hand, [])
+        cur = obs.get("current") or {}
+        players = cur.get("players") or []
+        opp = players[1 - me]
+        seen = _visible(opp, include_hand=False)
+        n_deck = opp.get("deckCount", 0) or 0
+        n_hand = opp.get("handCount", 0) or 0
+        n_prize = len(opp.get("prize") or [])
+        posterior = _deck_posterior(obs, top_k=N_DETERMINIZATIONS)
     except Exception:
         return None
 
-    best_i, best_v = None, None
-    try:
-        for i in range(len(options)):
-            try:
-                child = search_step(root.searchId, [i])
-            except Exception:
-                continue
-            v = _rollout_value(child, me, _rules_choice_for)
-            if best_v is None or v > best_v:
-                best_i, best_v = i, v
-    finally:
+    if not posterior:
+        return None
+
+    # Average each option's value over several candidate opponent decks,
+    # weighted by posterior mass, instead of committing to the single most
+    # likely one. Searching a point estimate is Perfect Information Monte Carlo,
+    # and it is over-confident exactly when the inference is weakest — early,
+    # before they have shown much. Weighting over the surviving decklists is the
+    # determinization step of Information Set MCTS.
+    totals = [0.0] * len(options)
+    reached = [0.0] * len(options)
+
+    for counts, weight in posterior:
+        opp_deck, opp_hand, opp_prize = _hidden_from(
+            counts, seen, n_deck, n_hand, n_prize)
         try:
-            search_end()
+            root = search_begin(o, my_deck, my_prize, opp_deck, opp_prize,
+                                opp_hand, [])
         except Exception:
-            pass
+            continue
+        try:
+            for i in range(len(options)):
+                try:
+                    child = search_step(root.searchId, [i])
+                except Exception:
+                    continue
+                totals[i] += weight * _rollout_value(child, me,
+                                                     _rules_choice_for)
+                reached[i] += weight
+        finally:
+            try:
+                search_end()
+            except Exception:
+                pass
+
+    best_i, best_v = None, None
+    for i in range(len(options)):
+        if reached[i] <= 0.0:
+            continue
+        v = totals[i] / reached[i]      # renormalise; some decks may have failed
+        if best_v is None or v > best_v:
+            best_i, best_v = i, v
     return best_i
 
 
