@@ -126,6 +126,51 @@ def match(agent0: Agent, agent1: Agent, deck0: list[int], deck1: list[int],
     }
 
 
+def match_sprt(agent0: Agent, agent1: Agent, deck0: list[int], deck1: list[int],
+               p0: float = 0.50, p1: float = 0.55, max_games: int = 4000,
+               seed0: int = 0, report_every: int = 100) -> dict:
+    """Play until the evidence decides, instead of a fixed game count.
+
+    Stops as soon as Wald's test accepts "A is better" or "A is not better",
+    which is both faster than a fixed 500 games when the effect is large and
+    more trustworthy when it is small.
+    """
+    from ptcg.sprt import SPRT
+
+    test = SPRT(p0=p0, p1=p1)
+    draws = 0
+    errors: list[str] = []
+    turns: list[int] = []
+
+    for g in range(max_games):
+        flip = g % 2 == 1
+        a0, a1 = (agent1, agent0) if flip else (agent0, agent1)
+        d0, d1 = (deck1, deck0) if flip else (deck0, deck1)
+        r = play_game(a0, a1, d0, d1, seed=seed0 + g)
+        if r.error:
+            errors.append(r.error)
+        if r.winner is None:
+            draws += 1
+            continue
+        actual = (1 - r.winner) if flip else r.winner
+        turns.append(r.turns)
+        res = test.update(actual == 0)
+        if report_every and (g + 1) % report_every == 0:
+            print(f"    {test.describe()}")
+        if res.decision != "continue":
+            break
+
+    res = test.result()
+    return {
+        "decision": res.decision, "llr": res.llr,
+        "games": res.n, "draws": draws,
+        "agent0_wins": res.wins, "agent1_wins": res.losses,
+        "agent0_win_rate": res.win_rate,
+        "median_turns": sorted(turns)[len(turns) // 2] if turns else None,
+        "errors": errors[:5], "n_errors": len(errors),
+    }
+
+
 def random_agent(obs: dict) -> list[int]:
     """Uniformly random legal choice — the baseline every agent must beat."""
     sel = obs.get("select")

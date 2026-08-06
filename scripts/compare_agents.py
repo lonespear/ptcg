@@ -1,6 +1,6 @@
 ﻿"""Play two agent versions against each other on the same deck.
 
-Same deck both sides means the result is pure policy difference â€” the deck
+Same deck both sides means the result is pure policy difference - the deck
 cannot flatter either one.
 
     python scripts/compare_agents.py --a agent/main.py --b build/agents/v3.py
@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "engine"))
 
-from ptcg.arena import load_deck, match, random_agent  # noqa: E402
+from ptcg.arena import load_deck, match, match_sprt, random_agent  # noqa: E402
 
 
 def load_agent(path: Path, name: str):
@@ -50,6 +50,12 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=0,
                     help="first game seed; change it for an independent sample")
     ap.add_argument("--vs-random", action="store_true")
+    ap.add_argument("--sprt", action="store_true",
+                    help="stop when the evidence decides, not at a game count")
+    ap.add_argument("--p0", type=float, default=0.50,
+                    help="SPRT null: win rate meaning 'no improvement'")
+    ap.add_argument("--p1", type=float, default=0.55,
+                    help="SPRT alternative: win rate worth shipping")
     args = ap.parse_args()
 
     deck = load_deck(ROOT / args.deck)
@@ -57,13 +63,21 @@ def main() -> None:
     a = load_agent(ROOT / args.a, "agent_a")
 
     if args.vs_random:
-        print(f"{args.a} vs random â€” {args.games} games, mirror deck")
+        print(f"{args.a} vs random - {args.games} games, mirror deck")
         res = match(a, random_agent, deck, list(deck), games=args.games, seed0=args.seed)
     else:
         b = load_agent(ROOT / args.b, "agent_b")
         same = "same deck" if args.deck_b is None else "each with its own deck"
-        print(f"{args.a}  vs  {args.b} â€” {args.games} games, {same}")
-        res = match(a, b, deck, deck_b, games=args.games, seed0=args.seed)
+        if args.sprt:
+            print(f"{args.a}  vs  {args.b} - SPRT p0={args.p0} p1={args.p1}, "
+                  f"{same}, max {args.games}")
+            res = match_sprt(a, b, deck, deck_b, p0=args.p0, p1=args.p1,
+                             max_games=args.games, seed0=args.seed)
+            print(f"\n  decision     : {res['decision']}  "
+                  f"(llr {res['llr']:+.2f})")
+        else:
+            print(f"{args.a}  vs  {args.b} - {args.games} games, {same}")
+            res = match(a, b, deck, deck_b, games=args.games, seed0=args.seed)
 
     print(f"  A wins       : {res['agent0_wins']}")
     print(f"  B wins       : {res['agent1_wins']}")
