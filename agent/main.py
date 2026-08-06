@@ -276,10 +276,26 @@ def _rank_card_options(options: list[dict], obs: dict) -> list[int]:
 _PRIORS: list[tuple[dict, int]] | None = None
 _MY_DECK: list[int] | None = None
 SEARCH_ROLLOUT_STEPS = 24     # enough to finish a turn; caps the cost
-# How many candidate opponent decklists to average each option over. Search
-# costs ~4.4 ms per determinization against a 600 s episode budget, so this is
-# affordable; the constraint is variance, not time.
+# How many candidate opponent decklists to average each option over, and when.
+#
+# Measured against ground truth over 300 replays (scripts/validate_posterior.py),
+# the posterior's top pick is right:
+#
+#   turn 1: 0.63   turn 3: 0.84   turn 5: 0.88   turn 10: 0.94
+#
+# while the true deck is somewhere in the top 3:
+#
+#   turn 1: 0.86   turn 3: 0.95   turn 5: 0.97   turn 10: 0.97
+#
+# So there is a real early-game window where a point estimate is wrong about a
+# third of the time and averaging over three candidates recovers most of it —
+# and a long later phase where the top pick is already right and the extra two
+# determinizations are pure cost.
+#
+# The posterior is well calibrated (it claims 0.6-0.7 and is right 0.70; claims
+# 0.9+ and is right 0.98), so its own confidence is a trustworthy gate.
 N_DETERMINIZATIONS = 3
+CONFIDENCE_GATE = 0.80
 SEARCH_ENABLED = True
 
 
@@ -565,6 +581,11 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
         n_hand = opp.get("handCount", 0) or 0
         n_prize = len(opp.get("prize") or [])
         posterior = _deck_posterior(obs, top_k=N_DETERMINIZATIONS)
+        # Once the posterior is confident it is right ~98% of the time, so the
+        # extra determinizations buy nothing and cost 3x. Spend them only in the
+        # early window where the top pick is genuinely unreliable.
+        if posterior and posterior[0][1] >= CONFIDENCE_GATE:
+            posterior = posterior[:1]
     except Exception:
         return None
 

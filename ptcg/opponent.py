@@ -12,6 +12,7 @@ third of it is one deck. So this is a small ranking problem, not a search.
 
 from __future__ import annotations
 
+import math
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -109,6 +110,45 @@ class DeckPredictor:
             if isinstance(card, dict) and card.get("id"):
                 seen[card["id"]] += 1
         return seen
+
+    def posterior(self, obs: dict, top_k: int = 0) -> list[tuple[Candidate, float]]:
+        """Posterior over the opponent's decklist given what they have revealed.
+
+        Prior is empirical play frequency; the likelihood of having revealed a
+        multiset S from a 60-card list D is multivariate hypergeometric,
+
+            P(S | D)  proportional to  product_c  C(D_c, S_c)
+
+        with the C(60, |S|) denominator cancelling across candidates. Kept in
+        log space via lgamma.
+
+        This is the same formula the submitted agent computes inline (it cannot
+        import this module on Kaggle) — change both together.
+        """
+        seen = self.observed_cards(obs)
+        scored: list[tuple[float, Candidate]] = []
+        for c in self.candidates:
+            loglik = 0.0
+            for cid, k in seen.items():
+                have = c.counts.get(cid, 0)
+                if k > have:
+                    loglik = float("-inf")
+                    break
+                loglik += (math.lgamma(have + 1) - math.lgamma(k + 1)
+                           - math.lgamma(have - k + 1))
+            if loglik == float("-inf"):
+                continue
+            scored.append((math.log(max(c.plays, 1)) + loglik, c))
+
+        if not scored:
+            return []
+        scored.sort(key=lambda t: -t[0])
+        if top_k:
+            scored = scored[:top_k]
+        hi = scored[0][0]
+        weights = [math.exp(s - hi) for s, _ in scored]
+        total = sum(weights) or 1.0
+        return [(c, w / total) for (_, c), w in zip(scored, weights)]
 
     def _consistent(self, seen: Counter) -> list[Candidate]:
         out = []
