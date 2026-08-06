@@ -427,9 +427,14 @@ the ranking **reversed**:
 
 | Deck (piloted by our agent) | vs our own weak agent | vs the reference agent |
 |---|---|---|
-| Vendor sample (Mega Abomasnow ex) | **0.883** (round-robin winner) | **0.22** |
-| Mined Mega Lucario ex (69.5% on the leaderboard) | 0.337 (last) | 0.26 |
-| Reference Mega Lucario ex | not tested | **0.33** |
+| Vendor sample (Mega Abomasnow ex) | **0.883** (round-robin winner) | **0.194** |
+| Mined Mega Lucario ex (69.5% on the leaderboard) | 0.337 (last) | 0.26 (n=100) |
+| Reference Mega Lucario ex | not tested | **0.276** |
+
+Both 0.194 and 0.276 are 500-game measurements (±2%); the 8-point gap is ~3σ.
+An earlier 100-game read of the Mega Lucario figure said 0.33 — **100-game
+samples carry ±5% and several conclusions drawn from them during the day were
+inside the noise.** Everything is now measured at 500 games minimum.
 
 The sample deck's 350 HP wall is unbeatable *for an opponent that cannot knock
 it out*. Against one that can, its core liability shows: Mega Abomasnow ex is a
@@ -452,6 +457,14 @@ Policy work is worth much less than the deck here: v4 (prize-aware, resolves
 card options properly, searches the deck by value) beats v3 only 108–92 on 200
 games — a real but statistically weak edge, and worth ~4 points where the deck
 was worth 11.
+
+**Confirmed on the live leaderboard.** The rating moved from **445.8 → 724.9**
+on the same day, against a top of ~1205.8. The local benchmark predicted the
+direction and roughly the magnitude; the discarded one predicted the opposite.
+Validation episode length is the tell that generalises — 15 steps on the sample
+deck versus **144** on the Lucario deck, against a real-replay median of 146.
+A benchmark whose games end in a third of the expected time is not measuring
+the same game.
 
 ## Open blocker
 

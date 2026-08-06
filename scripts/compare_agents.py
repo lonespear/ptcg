@@ -1,6 +1,6 @@
-"""Play two agent versions against each other on the same deck.
+﻿"""Play two agent versions against each other on the same deck.
 
-Same deck both sides means the result is pure policy difference — the deck
+Same deck both sides means the result is pure policy difference â€” the deck
 cannot flatter either one.
 
     python scripts/compare_agents.py --a agent/main.py --b build/agents/v3.py
@@ -47,6 +47,8 @@ def main() -> None:
     ap.add_argument("--deck-b", default=None,
                     help="B's deck; defaults to A's, which isolates policy")
     ap.add_argument("--games", type=int, default=200)
+    ap.add_argument("--seed", type=int, default=0,
+                    help="first game seed; change it for an independent sample")
     ap.add_argument("--vs-random", action="store_true")
     args = ap.parse_args()
 
@@ -55,13 +57,13 @@ def main() -> None:
     a = load_agent(ROOT / args.a, "agent_a")
 
     if args.vs_random:
-        print(f"{args.a} vs random — {args.games} games, mirror deck")
-        res = match(a, random_agent, deck, list(deck), games=args.games)
+        print(f"{args.a} vs random â€” {args.games} games, mirror deck")
+        res = match(a, random_agent, deck, list(deck), games=args.games, seed0=args.seed)
     else:
         b = load_agent(ROOT / args.b, "agent_b")
         same = "same deck" if args.deck_b is None else "each with its own deck"
-        print(f"{args.a}  vs  {args.b} — {args.games} games, {same}")
-        res = match(a, b, deck, deck_b, games=args.games)
+        print(f"{args.a}  vs  {args.b} â€” {args.games} games, {same}")
+        res = match(a, b, deck, deck_b, games=args.games, seed0=args.seed)
 
     print(f"  A wins       : {res['agent0_wins']}")
     print(f"  B wins       : {res['agent1_wins']}")
