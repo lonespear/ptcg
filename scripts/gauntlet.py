@@ -50,9 +50,20 @@ def load_agent(path: Path, name: str):
         os.chdir(cwd)
 
 
-def build_field(n: int) -> list[dict]:
-    """The most-played decklists, with their real share of the metagame."""
+def build_field(n: int, recent_days: int = 0) -> list[dict]:
+    """The most-played decklists, with their real share of the metagame.
+
+    Share is computed over the most recent `recent_days` only when given: the
+    field moves fast. Marnie's Grimmsnarl ex ran at 63% of all decks in late
+    July and 30% by 2026-08-05, so pooling the whole history overstates it by
+    a factor of two and mis-weights every matchup that involves it.
+    """
     df = pd.read_csv(HISTORY)
+    if recent_days:
+        keep = sorted(df["date"].astype(str).unique())[-recent_days:]
+        df = df[df["date"].astype(str).isin(keep)]
+        print(f"field weighted over {len(keep)} most recent days: "
+              f"{keep[0]} .. {keep[-1]}")
     g = (df.groupby("signature", as_index=False)
          .agg(plays=("decks", "sum"), wins=("wins", "sum"),
               archetype=("archetype", "first")))
@@ -69,9 +80,11 @@ def main() -> None:
     ap.add_argument("--games", type=int, default=60)
     ap.add_argument("--field", type=int, default=6)
     ap.add_argument("--agent", default="build/agents/v4.py")
+    ap.add_argument("--recent-days", type=int, default=4,
+                    help="weight the field over the N most recent days (0 = all)")
     args = ap.parse_args()
 
-    field = build_field(args.field)
+    field = build_field(args.field, args.recent_days)
     covered = sum(f["share"] for f in field)
     print(f"field: {len(field)} decks covering {covered:.1%} of real play\n")
     for f in field:
@@ -115,6 +128,10 @@ def main() -> None:
     for w, name, _ in rows:
         print(f"  {name:<28} {w:.3f}")
     print(f"\nbest: {rows[0][1]}")
+    print("\nCaveat: our own agent pilots both sides, so the field is played "
+          "worse than real opponents play it. This ranks decks under *our* "
+          "piloting, which is the right question for what we submit, but the "
+          "absolute win rates are optimistic.")
 
 
 if __name__ == "__main__":

@@ -524,6 +524,64 @@ opponent hides differences; compare them directly.** That is the third distinct
 way a benchmark misled us today, and the reason the search work was nearly
 discarded.
 
+## 23. Sixteen days: the field moves fast, and pooled weights lie
+
+16 days mined (07-08, 07-22 … 08-05): **146,376 deck instances, 204 distinct
+decklists**.
+
+| Archetype | Share (16d) | Win rate |
+|---|---|---|
+| Marnie's Grimmsnarl ex | **46.4%** | 49.0% |
+| Fezandipiti ex | 14.9% | 47.9% |
+| Mega Kangaskhan ex | 9.5% | 50.9% |
+| Team Rocket's Mewtwo ex | 6.2% | 51.2% |
+| **Mega Lopunny ex** | 5.1% | **56.6%** |
+| Cynthia's Garchomp ex | 4.7% | 50.1% |
+| Dragapult ex | 3.6% | 53.6% |
+| Teal Mask Ogerpon ex | 2.8% | 52.8% |
+
+But the pooled share hides a fast-moving field. Share of all decks by date:
+
+| | 07-22 | 07-28 | 07-31 | 08-02 | 08-05 |
+|---|---|---|---|---|---|
+| Marnie's Grimmsnarl ex | 0.38 | **0.64** | 0.62 | 0.44 | **0.30** |
+| Mega Lopunny ex | 0.05 | 0.01 | 0.05 | 0.12 | **0.13** |
+| Teal Mask Ogerpon ex | 0.00 | 0.02 | 0.03 | 0.10 | 0.07 |
+
+**Marnie's Grimmsnarl ex peaked at 64% of the entire field and has halved to
+30% in a week.** Mega Lopunny ex — the highest win rate of the common decks at
+56.6% — is climbing into the gap.
+
+This matters for §21's counter-strategy. The Teal Mask Ogerpon plan is built on
+Grass doubling against Marnie's, and the gauntlet weighted Marnie's at 41–47%
+from pooled history. On the most recent day it is 30%. The counter still points
+at the largest single share, but the edge is roughly half what the pooled
+weighting implied, and shrinking.
+
+**So field weights must come from the most recent days, not the pooled
+history** — `scripts/gauntlet.py --recent-days N` does this now. A metagame
+read that averages a month is describing a field nobody is playing any more.
+
+## 24. Residual bias in the gauntlet, stated plainly
+
+Our own agent pilots both sides of every gauntlet match. Real opponents play
+their decks considerably better than we play them. So the gauntlet answers
+"which deck is best **in our hands**", which is the right question for what to
+submit, but its absolute win rates are optimistic and its matchup spreads are
+probably exaggerated — a deck that beats *our* Marnie's 92–8 will not beat a
+competent Marnie's 92–8.
+
+Three benchmarks, three different biases, all now named:
+
+| Benchmark | Bias | Symptom |
+|---|---|---|
+| Our own weak agent, round-robin | opponent far too weak | 5-turn games, ranked the worst real deck first |
+| Official reference agent | monoculture — one archetype | picked a deck that lost 240 rating points |
+| Field gauntlet | field piloted by us, not by opponents | optimistic absolutes |
+
+The fourth and only unbiased one is the leaderboard, which is slow and costs a
+submission to query.
+
 ## Open blocker
 
 ~~Competition data for the Simulation category is still **403**.~~ **Resolved** —

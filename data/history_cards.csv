@@ -2413,3 +2413,794 @@ date,card_id,name,supertype,decks,wins,copies,day_decks
 2026-07-26,1176,Punk Helmet,Trainer,1,1,2,9100
 2026-07-26,1188,Ciphermaniac’s Codebreaking,Trainer,1,1,1,9100
 2026-07-26,1195,Janine’s Secret Art,Trainer,1,1,1,9100
+2026-07-25,7,Basic {D} Energy,Energy,4688,2335,45873,9090
+2026-07-25,104,Froslass,Pokémon,4559,2279,9118,9090
+2026-07-25,112,Munkidori,Pokémon,4688,2335,18481,9090
+2026-07-25,646,Marnie's Impidimp,Pokémon,4560,2279,18136,9090
+2026-07-25,647,Marnie's Morgrem,Pokémon,4560,2279,13610,9090
+2026-07-25,648,Marnie's Grimmsnarl ex,Pokémon,4560,2279,13681,9090
+2026-07-25,860,Snorunt,Pokémon,4553,2277,9212,9090
+2026-07-25,1079,Rare Candy,Trainer,6203,3077,18709,9090
+2026-07-25,1080,Unfair Stamp,Trainer,5530,2776,5530,9090
+2026-07-25,1086,Buddy-Buddy Poffin,Trainer,8422,4185,30923,9090
+2026-07-25,1097,Night Stretcher,Trainer,8054,4046,19117,9090
+2026-07-25,1122,Pokégear 3.0,Trainer,3291,1588,4402,9090
+2026-07-25,1137,Tool Scrapper,Trainer,2873,1415,2873,9090
+2026-07-25,1152,Poké Pad,Trainer,8526,4269,33997,9090
+2026-07-25,1182,Boss’s Orders,Trainer,7833,3896,17571,9090
+2026-07-25,1219,Team Rocket's Petrel,Trainer,5172,2585,18991,9090
+2026-07-25,1227,Lillie's Determination,Trainer,7199,3596,27632,9090
+2026-07-25,1231,Dawn,Trainer,6151,3045,11051,9090
+2026-07-25,1259,Spikemuth Gym,Trainer,4560,2279,18239,9090
+2026-07-25,5,Basic {P} Energy,Energy,2107,1042,4414,9090
+2026-07-25,13,Enriching Energy,Energy,1641,803,1641,9090
+2026-07-25,19,Telepath Psychic Energy,Energy,1635,791,6540,9090
+2026-07-25,66,Dudunsparce,Pokémon,1680,817,3686,9090
+2026-07-25,140,Fezandipiti ex,Pokémon,2027,1010,2027,9090
+2026-07-25,305,Dunsparce,Pokémon,1511,745,4585,9090
+2026-07-25,343,Shaymin,Pokémon,1643,806,1643,9090
+2026-07-25,741,Abra,Pokémon,1632,791,6528,9090
+2026-07-25,742,Kadabra,Pokémon,1632,791,6528,9090
+2026-07-25,743,Alakazam,Pokémon,1632,791,6524,9090
+2026-07-25,1081,Enhanced Hammer,Trainer,1676,808,6496,9090
+2026-07-25,1129,Sacred Ash,Trainer,1705,828,1772,9090
+2026-07-25,1184,Lana’s Aid,Trainer,1655,800,1655,9090
+2026-07-25,1197,Xerosic’s Machinations,Trainer,3207,1570,7535,9090
+2026-07-25,1225,Hilda,Trainer,2815,1374,10311,9090
+2026-07-25,1266,Nighttime Mine,Trainer,1432,711,2924,9090
+2026-07-25,6,Basic {F} Energy,Energy,1068,580,4563,9090
+2026-07-25,20,Rock Fighting Energy,Energy,823,430,3292,9090
+2026-07-25,341,Cynthia's Roselia,Pokémon,798,421,3192,9090
+2026-07-25,342,Cynthia's Roserade,Pokémon,798,421,2419,9090
+2026-07-25,379,Cynthia's Gible,Pokémon,798,421,3192,9090
+2026-07-25,380,Cynthia's Gabite,Pokémon,798,421,3192,9090
+2026-07-25,381,Cynthia's Garchomp ex,Pokémon,798,421,2394,9090
+2026-07-25,387,Cynthia's Spiritomb,Pokémon,798,421,1571,9090
+2026-07-25,1142,Fighting Gong,Trainer,805,422,3195,9090
+2026-07-25,1173,Cynthia's Power Weight,Trainer,798,421,2394,9090
+2026-07-25,1203,Surfer,Trainer,772,409,772,9090
+2026-07-25,1261,Forest of Vitality,Trainer,794,418,1630,9090
+2026-07-25,1161,Handheld Fan,Trainer,1543,782,3018,9090
+2026-07-25,1,Basic {G} Energy,Energy,1885,963,13161,9090
+2026-07-25,11,Mist Energy,Energy,339,137,1356,9090
+2026-07-25,14,Spiky Energy,Energy,339,137,1284,9090
+2026-07-25,18,Grow Grass Energy,Energy,305,118,1216,9090
+2026-07-25,344,Dwebble,Pokémon,305,118,1071,9090
+2026-07-25,345,Crustle,Pokémon,305,118,1071,9090
+2026-07-25,756,Mega Kangaskhan ex,Pokémon,562,276,1988,9090
+2026-07-25,1087,Hand Trimmer,Trainer,179,66,285,9090
+2026-07-25,1123,Switch,Trainer,337,126,1216,9090
+2026-07-25,1147,Jumbo Ice Cream,Trainer,307,119,1228,9090
+2026-07-25,1159,Hero’s Cape,Trainer,1392,682,1392,9090
+2026-07-25,1264,Battle Cage,Trainer,478,188,956,9090
+2026-07-25,15,Team Rocket's Energy,Energy,1245,648,4980,9090
+2026-07-25,400,Team Rocket's Tarountula,Pokémon,1245,648,4980,9090
+2026-07-25,401,Team Rocket's Spidops,Pokémon,1245,648,4980,9090
+2026-07-25,414,Team Rocket's Articuno,Pokémon,1274,655,2523,9090
+2026-07-25,431,Team Rocket's Mewtwo ex,Pokémon,1245,648,2490,9090
+2026-07-25,434,Team Rocket's Mimikyu,Pokémon,1146,608,2809,9090
+2026-07-25,1094,Bug Catching Set,Trainer,1338,694,4223,9090
+2026-07-25,1121,Ultra Ball,Trainer,1603,855,3311,9090
+2026-07-25,1134,Team Rocket's Transceiver,Trainer,1245,648,4980,9090
+2026-07-25,1175,Brave Bangle,Trainer,1306,678,1787,9090
+2026-07-25,1216,Team Rocket's Ariana,Trainer,1245,648,4943,9090
+2026-07-25,1218,Team Rocket's Giovanni,Trainer,1245,648,3268,9090
+2026-07-25,1220,Team Rocket's Proton,Trainer,1245,648,3882,9090
+2026-07-25,1257,Team Rocket's Factory,Trainer,1245,648,3598,9090
+2026-07-25,1252,Gravity Mountain,Trainer,138,65,138,9090
+2026-07-25,1120,Crushing Hammer,Trainer,285,119,1008,9090
+2026-07-25,65,Dunsparce,Pokémon,169,72,577,9090
+2026-07-25,1146,Wondrous Patch,Trainer,103,45,103,9090
+2026-07-25,1217,Team Rocket's Archer,Trainer,778,399,778,9090
+2026-07-25,3,Basic {W} Energy,Energy,285,165,666,9090
+2026-07-25,117,Cornerstone Mask Ogerpon ex,Pokémon,44,15,63,9090
+2026-07-25,506,Cubchoo,Pokémon,22,7,88,9090
+2026-07-25,1119,Energy Search,Trainer,115,45,252,9090
+2026-07-25,1166,Gravity Gemstone,Trainer,22,7,66,9090
+2026-07-25,1194,Colress’s Tenacity,Trainer,47,19,69,9090
+2026-07-25,1247,Neutralization Zone,Trainer,175,77,175,9090
+2026-07-25,1256,Team Rocket's Watchtower,Trainer,163,72,301,9090
+2026-07-25,1186,Eri,Trainer,4,1,4,9090
+2026-07-25,1071,Meowth ex,Pokémon,400,222,939,9090
+2026-07-25,96,Teal Mask Ogerpon ex,Pokémon,280,167,861,9090
+2026-07-25,184,Latias ex,Pokémon,259,158,518,9090
+2026-07-25,63,Raging Bolt ex,Pokémon,259,158,518,9090
+2026-07-25,108,Wellspring Mask Ogerpon ex,Pokémon,259,158,259,9090
+2026-07-25,272,Lillie’s Clefairy ex,Pokémon,259,158,259,9090
+2026-07-25,978,Passimian,Pokémon,259,158,259,9090
+2026-07-25,1198,Crispin,Trainer,381,213,1404,9090
+2026-07-25,1205,Cyrano,Trainer,265,159,530,9090
+2026-07-25,1116,Energy Switch,Trainer,421,251,1198,9090
+2026-07-25,1098,Glass Trumpet,Trainer,259,158,518,9090
+2026-07-25,1088,Prime Catcher,Trainer,259,158,259,9090
+2026-07-25,1250,Area Zero Underdepths,Trainer,259,158,1036,9090
+2026-07-25,4,Basic {L} Energy,Energy,259,158,518,9090
+2026-07-25,103,Snorunt,Pokémon,8,2,16,9090
+2026-07-25,235,Budew,Pokémon,227,110,324,9090
+2026-07-25,649,Marnie's Morpeko,Pokémon,2,0,2,9090
+2026-07-25,1174,Air Balloon,Trainer,144,74,254,9090
+2026-07-25,2,Basic {R} Energy,Energy,120,55,469,9090
+2026-07-25,119,Dreepy,Pokémon,120,55,480,9090
+2026-07-25,120,Drakloak,Pokémon,120,55,480,9090
+2026-07-25,121,Dragapult ex,Pokémon,120,55,360,9090
+2026-07-25,1213,Judge,Trainer,142,67,159,9090
+2026-07-25,1246,Jamming Tower,Trainer,32,13,64,9090
+2026-07-25,848,Buneary,Pokémon,42,20,150,9090
+2026-07-25,849,Mega Lopunny ex,Pokémon,42,20,114,9090
+2026-07-25,174,Fan Rotom,Pokémon,36,19,36,9090
+2026-07-25,1229,Wally's Compassion,Trainer,45,20,180,9090
+2026-07-25,689,Yveltal,Pokémon,105,55,105,9090
+2026-07-25,1260,Risky Ruins,Trainer,1,0,1,9090
+2026-07-25,432,Team Rocket's Wobbuffet,Pokémon,93,38,93,9090
+2026-07-25,463,Team Rocket's Murkrow,Pokémon,99,40,204,9090
+2026-07-25,131,Duskull,Pokémon,12,2,24,9090
+2026-07-25,132,Dusclops,Pokémon,12,2,24,9090
+2026-07-25,133,Dusknoir,Pokémon,12,2,12,9090
+2026-07-25,791,Moltres,Pokémon,12,2,12,9090
+2026-07-25,1118,Energy Retrieval,Trainer,2,0,2,9090
+2026-07-25,666,Cinderace,Pokémon,4,1,12,9090
+2026-07-25,861,Mega Froslass ex,Pokémon,2,0,6,9090
+2026-07-25,1030,Staryu,Pokémon,2,0,6,9090
+2026-07-25,1031,Mega Starmie ex,Pokémon,2,0,6,9090
+2026-07-25,1145,Mega Signal,Trainer,19,7,23,9090
+2026-07-25,1189,Salvatore,Trainer,2,0,2,9090
+2026-07-25,1262,Surfing Beach,Trainer,2,0,8,9090
+2026-07-25,293,N’s Zoroark ex,Pokémon,6,1,24,9090
+2026-07-25,292,N’s Zorua,Pokémon,6,1,24,9090
+2026-07-25,303,N’s Reshiram,Pokémon,6,1,12,9090
+2026-07-25,906,N's Zekrom,Pokémon,6,1,6,9090
+2026-07-25,141,Pecharunt ex,Pokémon,6,1,6,9090
+2026-07-25,1113,N’s PP Up,Trainer,6,1,24,9090
+2026-07-25,257,N’s Darumaka,Pokémon,6,1,6,9090
+2026-07-25,1253,N’s Castle,Trainer,6,1,12,9090
+2026-07-25,258,N’s Darmanitan,Pokémon,6,1,6,9090
+2026-07-25,8,Basic {M} Energy,Energy,2,1,22,9090
+2026-07-25,57,Relicanth,Pokémon,2,1,2,9090
+2026-07-25,169,Duraludon,Pokémon,2,1,8,9090
+2026-07-25,190,Archaludon ex,Pokémon,2,1,8,9090
+2026-07-25,1185,Explorer’s Guidance,Trainer,2,1,8,9090
+2026-07-25,1244,Full Metal Lab,Trainer,2,1,8,9090
+2026-07-25,1187,Morty’s Conviction,Trainer,1,1,2,9090
+2026-07-25,675,Lunatone,Pokémon,7,1,14,9090
+2026-07-25,676,Solrock,Pokémon,7,1,21,9090
+2026-07-25,677,Riolu,Pokémon,7,1,28,9090
+2026-07-25,678,Mega Lucario ex,Pokémon,7,1,28,9090
+2026-07-25,1102,Dusk Ball,Trainer,73,38,94,9090
+2026-07-25,1141,Premium Power Pro,Trainer,32,13,53,9090
+2026-07-25,1192,Carmine,Trainer,7,1,21,9090
+2026-07-25,16,Prism Energy,Energy,2,0,8,9090
+2026-07-25,1210,Brock’s Scouting,Trainer,2,0,8,9090
+2026-07-25,1236,Urbain,Trainer,2,0,8,9090
+2026-07-25,73,Rellor,Pokémon,5,0,5,9090
+2026-07-25,74,Rabsca,Pokémon,5,0,5,9090
+2026-07-25,164,Comfey,Pokémon,3,0,12,9090
+2026-07-25,817,Bramblin,Pokémon,3,0,12,9090
+2026-07-25,818,Brambleghast,Pokémon,3,0,9,9090
+2026-07-25,1144,Strange Timepiece,Trainer,3,0,6,9090
+2026-07-25,1127,Tera Orb,Trainer,17,7,17,9090
+2026-07-25,89,Grookey,Pokémon,72,37,288,9090
+2026-07-25,90,Thwackey,Pokémon,72,37,288,9090
+2026-07-25,92,Applin,Pokémon,93,46,198,9090
+2026-07-25,93,Dipplin,Pokémon,93,46,330,9090
+2026-07-25,247,Swirlix,Pokémon,4,0,16,9090
+2026-07-25,1245,Festival Grounds,Trainer,72,37,288,9090
+2026-07-25,1249,Grand Tree,Trainer,25,12,25,9090
+2026-07-25,917,Chikorita,Pokémon,21,9,42,9090
+2026-07-25,709,Bayleef,Pokémon,21,9,42,9090
+2026-07-25,710,Meganium,Pokémon,21,9,42,9090
+2026-07-25,150,Hydrapple ex,Pokémon,21,9,42,9090
+2026-07-25,920,Tapu Bulu,Pokémon,21,9,42,9090
+2026-07-25,306,Dudunsparce ex,Pokémon,11,7,11,9090
+2026-07-25,42,Applin,Pokémon,66,37,132,9090
+2026-07-25,655,Celebi,Pokémon,66,37,198,9090
+2026-07-25,1155,Survival Brace,Trainer,66,37,66,9090
+2026-07-25,1211,Black Belt’s Training,Trainer,68,37,68,9090
+2026-07-25,1092,Secret Box,Trainer,2,0,2,9090
+2026-07-25,1191,Kieran,Trainer,2,0,4,9090
+2026-07-24,648,Marnie's Grimmsnarl ex,Pokémon,4769,2470,14318,8874
+2026-07-24,647,Marnie's Morgrem,Pokémon,4769,2470,14183,8874
+2026-07-24,646,Marnie's Impidimp,Pokémon,4769,2470,19075,8874
+2026-07-24,104,Froslass,Pokémon,4757,2464,9507,8874
+2026-07-24,860,Snorunt,Pokémon,4727,2457,9471,8874
+2026-07-24,112,Munkidori,Pokémon,4845,2505,19152,8874
+2026-07-24,1086,Buddy-Buddy Poffin,Trainer,8494,4268,32232,8874
+2026-07-24,1152,Poké Pad,Trainer,8125,4073,32490,8874
+2026-07-24,1079,Rare Candy,Trainer,6631,3324,19971,8874
+2026-07-24,1097,Night Stretcher,Trainer,7536,3754,17878,8874
+2026-07-24,1080,Unfair Stamp,Trainer,5343,2754,5343,8874
+2026-07-24,1227,Lillie's Determination,Trainer,6970,3567,26982,8874
+2026-07-24,1219,Team Rocket's Petrel,Trainer,5142,2679,19742,8874
+2026-07-24,1182,Boss’s Orders,Trainer,7980,3985,17996,8874
+2026-07-24,1231,Dawn,Trainer,6611,3315,12279,8874
+2026-07-24,1197,Xerosic’s Machinations,Trainer,3169,1467,8758,8874
+2026-07-24,1122,Pokégear 3.0,Trainer,4402,2255,6568,8874
+2026-07-24,1259,Spikemuth Gym,Trainer,4769,2470,19066,8874
+2026-07-24,7,Basic {D} Energy,Energy,4845,2505,47812,8874
+2026-07-24,1161,Handheld Fan,Trainer,1157,613,2214,8874
+2026-07-24,1,Basic {G} Energy,Energy,1787,910,8838,8874
+2026-07-24,15,Team Rocket's Energy,Energy,836,428,3344,8874
+2026-07-24,400,Team Rocket's Tarountula,Pokémon,836,428,3344,8874
+2026-07-24,401,Team Rocket's Spidops,Pokémon,836,428,3344,8874
+2026-07-24,414,Team Rocket's Articuno,Pokémon,892,455,1733,8874
+2026-07-24,431,Team Rocket's Mewtwo ex,Pokémon,836,428,1672,8874
+2026-07-24,434,Team Rocket's Mimikyu,Pokémon,688,364,1908,8874
+2026-07-24,1094,Bug Catching Set,Trainer,1059,561,3434,8874
+2026-07-24,1121,Ultra Ball,Trainer,1039,538,2032,8874
+2026-07-24,1134,Team Rocket's Transceiver,Trainer,836,428,3344,8874
+2026-07-24,1159,Hero’s Cape,Trainer,1586,794,1586,8874
+2026-07-24,1175,Brave Bangle,Trainer,1027,555,1420,8874
+2026-07-24,1216,Team Rocket's Ariana,Trainer,836,428,3334,8874
+2026-07-24,1217,Team Rocket's Archer,Trainer,680,339,680,8874
+2026-07-24,1218,Team Rocket's Giovanni,Trainer,836,428,2352,8874
+2026-07-24,1220,Team Rocket's Proton,Trainer,836,428,2800,8874
+2026-07-24,1257,Team Rocket's Factory,Trainer,944,493,2468,8874
+2026-07-24,1137,Tool Scrapper,Trainer,3661,1891,3661,8874
+2026-07-24,5,Basic {P} Energy,Energy,2150,978,4590,8874
+2026-07-24,13,Enriching Energy,Energy,1867,861,1867,8874
+2026-07-24,19,Telepath Psychic Energy,Energy,1888,864,7552,8874
+2026-07-24,66,Dudunsparce,Pokémon,1888,867,3989,8874
+2026-07-24,140,Fezandipiti ex,Pokémon,1988,910,1988,8874
+2026-07-24,305,Dunsparce,Pokémon,1799,825,5416,8874
+2026-07-24,343,Shaymin,Pokémon,2055,963,2055,8874
+2026-07-24,741,Abra,Pokémon,1862,854,7448,8874
+2026-07-24,742,Kadabra,Pokémon,1862,854,7448,8874
+2026-07-24,743,Alakazam,Pokémon,1862,854,7414,8874
+2026-07-24,1081,Enhanced Hammer,Trainer,1867,857,7255,8874
+2026-07-24,1129,Sacred Ash,Trainer,1955,910,2030,8874
+2026-07-24,1184,Lana’s Aid,Trainer,2016,940,2016,8874
+2026-07-24,1225,Hilda,Trainer,2908,1346,11034,8874
+2026-07-24,1266,Nighttime Mine,Trainer,1735,802,3590,8874
+2026-07-24,11,Mist Energy,Energy,695,340,2780,8874
+2026-07-24,14,Spiky Energy,Energy,695,340,2553,8874
+2026-07-24,18,Grow Grass Energy,Energy,688,334,2737,8874
+2026-07-24,344,Dwebble,Pokémon,688,334,2608,8874
+2026-07-24,345,Crustle,Pokémon,688,334,2503,8874
+2026-07-24,756,Mega Kangaskhan ex,Pokémon,725,349,2594,8874
+2026-07-24,1087,Hand Trimmer,Trainer,435,201,786,8874
+2026-07-24,1123,Switch,Trainer,719,349,2306,8874
+2026-07-24,1147,Jumbo Ice Cream,Trainer,686,334,2738,8874
+2026-07-24,1264,Battle Cage,Trainer,727,332,1460,8874
+2026-07-24,6,Basic {F} Energy,Energy,381,164,1713,8874
+2026-07-24,20,Rock Fighting Energy,Energy,471,222,1674,8874
+2026-07-24,341,Cynthia's Roselia,Pokémon,301,127,1204,8874
+2026-07-24,342,Cynthia's Roserade,Pokémon,301,127,905,8874
+2026-07-24,379,Cynthia's Gible,Pokémon,301,127,1204,8874
+2026-07-24,380,Cynthia's Gabite,Pokémon,301,127,1204,8874
+2026-07-24,381,Cynthia's Garchomp ex,Pokémon,301,127,903,8874
+2026-07-24,387,Cynthia's Spiritomb,Pokémon,299,127,598,8874
+2026-07-24,1142,Fighting Gong,Trainer,310,132,1238,8874
+2026-07-24,1173,Cynthia's Power Weight,Trainer,301,127,903,8874
+2026-07-24,1203,Surfer,Trainer,294,127,294,8874
+2026-07-24,1261,Forest of Vitality,Trainer,301,127,602,8874
+2026-07-24,432,Team Rocket's Wobbuffet,Pokémon,148,64,148,8874
+2026-07-24,463,Team Rocket's Murkrow,Pokémon,148,64,296,8874
+2026-07-24,1119,Energy Search,Trainer,151,66,305,8874
+2026-07-24,2,Basic {R} Energy,Energy,72,34,288,8874
+2026-07-24,119,Dreepy,Pokémon,72,34,288,8874
+2026-07-24,120,Drakloak,Pokémon,72,34,288,8874
+2026-07-24,121,Dragapult ex,Pokémon,72,34,216,8874
+2026-07-24,131,Duskull,Pokémon,59,27,118,8874
+2026-07-24,132,Dusclops,Pokémon,59,27,118,8874
+2026-07-24,133,Dusknoir,Pokémon,59,27,59,8874
+2026-07-24,235,Budew,Pokémon,83,39,93,8874
+2026-07-24,791,Moltres,Pokémon,59,27,59,8874
+2026-07-24,1071,Meowth ex,Pokémon,114,50,198,8874
+2026-07-24,1120,Crushing Hammer,Trainer,238,112,880,8874
+2026-07-24,1198,Crispin,Trainer,119,51,404,8874
+2026-07-24,1256,Team Rocket's Watchtower,Trainer,72,31,139,8874
+2026-07-24,1194,Colress’s Tenacity,Trainer,108,66,216,8874
+2026-07-24,117,Cornerstone Mask Ogerpon ex,Pokémon,193,108,200,8874
+2026-07-24,1177,Sacred Charm,Trainer,105,64,105,8874
+2026-07-24,1187,Morty’s Conviction,Trainer,313,175,367,8874
+2026-07-24,1242,Community Center,Trainer,106,64,106,8874
+2026-07-24,1186,Eri,Trainer,35,11,36,8874
+2026-07-24,1146,Wondrous Patch,Trainer,69,27,69,8874
+2026-07-24,1247,Neutralization Zone,Trainer,36,12,36,8874
+2026-07-24,666,Cinderace,Pokémon,32,17,80,8874
+2026-07-24,16,Prism Energy,Energy,5,1,20,8874
+2026-07-24,1210,Brock’s Scouting,Trainer,5,1,15,8874
+2026-07-24,3,Basic {W} Energy,Energy,74,34,308,8874
+2026-07-24,73,Rellor,Pokémon,180,96,182,8874
+2026-07-24,74,Rabsca,Pokémon,180,96,180,8874
+2026-07-24,89,Grookey,Pokémon,223,133,892,8874
+2026-07-24,90,Thwackey,Pokémon,223,133,892,8874
+2026-07-24,92,Applin,Pokémon,161,91,644,8874
+2026-07-24,93,Dipplin,Pokémon,223,133,892,8874
+2026-07-24,142,Genesect,Pokémon,154,86,154,8874
+2026-07-24,1174,Air Balloon,Trainer,167,94,357,8874
+2026-07-24,1191,Kieran,Trainer,154,86,308,8874
+2026-07-24,1211,Black Belt’s Training,Trainer,216,128,278,8874
+2026-07-24,1223,Harlequin,Trainer,154,86,154,8874
+2026-07-24,1245,Festival Grounds,Trainer,223,133,892,8874
+2026-07-24,689,Yveltal,Pokémon,10,4,10,8874
+2026-07-24,1260,Risky Ruins,Trainer,13,5,16,8874
+2026-07-24,164,Comfey,Pokémon,26,10,104,8874
+2026-07-24,817,Bramblin,Pokémon,26,10,91,8874
+2026-07-24,818,Brambleghast,Pokémon,26,10,76,8874
+2026-07-24,1144,Strange Timepiece,Trainer,24,9,46,8874
+2026-07-24,122,Tatsugiri,Pokémon,23,9,23,8874
+2026-07-24,675,Lunatone,Pokémon,9,5,18,8874
+2026-07-24,676,Solrock,Pokémon,9,5,27,8874
+2026-07-24,677,Riolu,Pokémon,9,5,36,8874
+2026-07-24,678,Mega Lucario ex,Pokémon,9,5,36,8874
+2026-07-24,1102,Dusk Ball,Trainer,9,5,36,8874
+2026-07-24,1141,Premium Power Pro,Trainer,9,5,36,8874
+2026-07-24,1192,Carmine,Trainer,9,5,27,8874
+2026-07-24,1229,Wally's Compassion,Trainer,45,27,180,8874
+2026-07-24,1213,Judge,Trainer,34,15,43,8874
+2026-07-24,848,Buneary,Pokémon,16,8,52,8874
+2026-07-24,849,Mega Lopunny ex,Pokémon,16,8,40,8874
+2026-07-24,174,Fan Rotom,Pokémon,12,7,12,8874
+2026-07-24,8,Basic {M} Energy,Energy,3,1,39,8874
+2026-07-24,169,Duraludon,Pokémon,3,1,12,8874
+2026-07-24,190,Archaludon ex,Pokémon,3,1,12,8874
+2026-07-24,1185,Explorer’s Guidance,Trainer,3,1,12,8874
+2026-07-24,1244,Full Metal Lab,Trainer,3,1,12,8874
+2026-07-24,1118,Energy Retrieval,Trainer,2,2,2,8874
+2026-07-24,861,Mega Froslass ex,Pokémon,24,15,72,8874
+2026-07-24,1030,Staryu,Pokémon,24,15,72,8874
+2026-07-24,1031,Mega Starmie ex,Pokémon,24,15,72,8874
+2026-07-24,1145,Mega Signal,Trainer,26,16,74,8874
+2026-07-24,1189,Salvatore,Trainer,24,15,24,8874
+2026-07-24,1224,Cheren,Trainer,24,15,24,8874
+2026-07-24,1262,Surfing Beach,Trainer,24,15,96,8874
+2026-07-24,1127,Tera Orb,Trainer,2,1,2,8874
+2026-07-24,649,Marnie's Morpeko,Pokémon,3,3,4,8874
+2026-07-24,771,Haunter,Pokémon,1,1,1,8874
+2026-07-24,772,Mega Gengar ex,Pokémon,1,1,2,8874
+2026-07-24,1057,Gastly,Pokémon,1,1,2,8874
+2026-07-24,1116,Energy Switch,Trainer,43,17,170,8874
+2026-07-24,1202,Drayton,Trainer,1,1,3,8874
+2026-07-24,65,Dunsparce,Pokémon,89,42,315,8874
+2026-07-24,1208,Iris’s Fighting Spirit,Trainer,2,0,2,8874
+2026-07-24,293,N’s Zoroark ex,Pokémon,4,1,16,8874
+2026-07-24,292,N’s Zorua,Pokémon,4,1,16,8874
+2026-07-24,303,N’s Reshiram,Pokémon,4,1,8,8874
+2026-07-24,906,N's Zekrom,Pokémon,4,1,4,8874
+2026-07-24,141,Pecharunt ex,Pokémon,4,1,4,8874
+2026-07-24,1113,N’s PP Up,Trainer,4,1,16,8874
+2026-07-24,257,N’s Darumaka,Pokémon,4,1,4,8874
+2026-07-24,1205,Cyrano,Trainer,46,17,92,8874
+2026-07-24,1253,N’s Castle,Trainer,4,1,8,8874
+2026-07-24,258,N’s Darmanitan,Pokémon,4,1,4,8874
+2026-07-24,96,Teal Mask Ogerpon ex,Pokémon,42,16,126,8874
+2026-07-24,184,Latias ex,Pokémon,42,16,84,8874
+2026-07-24,63,Raging Bolt ex,Pokémon,42,16,84,8874
+2026-07-24,108,Wellspring Mask Ogerpon ex,Pokémon,42,16,42,8874
+2026-07-24,272,Lillie’s Clefairy ex,Pokémon,42,16,42,8874
+2026-07-24,978,Passimian,Pokémon,42,16,42,8874
+2026-07-24,1098,Glass Trumpet,Trainer,42,16,84,8874
+2026-07-24,1088,Prime Catcher,Trainer,42,16,42,8874
+2026-07-24,1250,Area Zero Underdepths,Trainer,42,16,168,8874
+2026-07-24,4,Basic {L} Energy,Energy,42,16,84,8874
+2026-07-24,42,Applin,Pokémon,62,42,248,8874
+2026-07-24,100,Goldeen,Pokémon,62,42,124,8874
+2026-07-24,240,Seaking,Pokémon,62,42,124,8874
+2026-07-24,103,Snorunt,Pokémon,54,22,108,8874
+2026-07-24,1176,Punk Helmet,Trainer,1,1,2,8874
+2026-07-24,1139,Energy Recycler,Trainer,2,1,6,8874
+2026-07-24,317,Eevee,Pokémon,2,1,4,8874
+2026-07-24,330,Sylveon,Pokémon,2,1,4,8874
+2026-07-24,1204,Lisia’s Appeal,Trainer,3,1,3,8874
+2026-07-24,1252,Gravity Mountain,Trainer,34,20,34,8874
+2026-07-24,306,Dudunsparce ex,Pokémon,3,1,3,8874
+2026-07-24,247,Swirlix,Pokémon,7,5,28,8874
+2026-07-24,1246,Jamming Tower,Trainer,9,6,18,8874
+2026-07-24,506,Cubchoo,Pokémon,3,2,12,8874
+2026-07-24,1166,Gravity Gemstone,Trainer,3,2,9,8874
+2026-07-23,5,Basic {P} Energy,Energy,3197,1523,7287,9114
+2026-07-23,13,Enriching Energy,Energy,2651,1281,2651,9114
+2026-07-23,19,Telepath Psychic Energy,Energy,2432,1153,9728,9114
+2026-07-23,66,Dudunsparce,Pokémon,2738,1313,5945,9114
+2026-07-23,140,Fezandipiti ex,Pokémon,2695,1279,2695,9114
+2026-07-23,305,Dunsparce,Pokémon,2730,1309,8538,9114
+2026-07-23,343,Shaymin,Pokémon,2540,1213,2540,9114
+2026-07-23,741,Abra,Pokémon,2415,1146,9660,9114
+2026-07-23,742,Kadabra,Pokémon,2415,1146,9660,9114
+2026-07-23,743,Alakazam,Pokémon,2415,1146,9642,9114
+2026-07-23,1079,Rare Candy,Trainer,6013,3005,18131,9114
+2026-07-23,1081,Enhanced Hammer,Trainer,2419,1148,9361,9114
+2026-07-23,1086,Buddy-Buddy Poffin,Trainer,8384,4187,32886,9114
+2026-07-23,1097,Night Stretcher,Trainer,7808,3896,16055,9114
+2026-07-23,1129,Sacred Ash,Trainer,2444,1157,2468,9114
+2026-07-23,1152,Poké Pad,Trainer,8414,4217,33601,9114
+2026-07-23,1182,Boss’s Orders,Trainer,8182,4079,19383,9114
+2026-07-23,1184,Lana’s Aid,Trainer,2475,1183,2475,9114
+2026-07-23,1197,Xerosic’s Machinations,Trainer,4248,2039,11515,9114
+2026-07-23,1225,Hilda,Trainer,4122,1996,15424,9114
+2026-07-23,1231,Dawn,Trainer,6087,3052,13487,9114
+2026-07-23,1266,Nighttime Mine,Trainer,2336,1115,4938,9114
+2026-07-23,6,Basic {F} Energy,Energy,796,394,3811,9114
+2026-07-23,20,Rock Fighting Energy,Energy,895,446,3519,9114
+2026-07-23,341,Cynthia's Roselia,Pokémon,751,372,3004,9114
+2026-07-23,342,Cynthia's Roserade,Pokémon,751,372,2314,9114
+2026-07-23,379,Cynthia's Gible,Pokémon,751,372,3004,9114
+2026-07-23,380,Cynthia's Gabite,Pokémon,751,372,3004,9114
+2026-07-23,381,Cynthia's Garchomp ex,Pokémon,751,372,2253,9114
+2026-07-23,387,Cynthia's Spiritomb,Pokémon,743,368,1433,9114
+2026-07-23,1080,Unfair Stamp,Trainer,4552,2338,4552,9114
+2026-07-23,1142,Fighting Gong,Trainer,760,375,2974,9114
+2026-07-23,1173,Cynthia's Power Weight,Trainer,751,372,2253,9114
+2026-07-23,1203,Surfer,Trainer,645,327,645,9114
+2026-07-23,1227,Lillie's Determination,Trainer,6696,3409,25394,9114
+2026-07-23,1261,Forest of Vitality,Trainer,698,350,1396,9114
+2026-07-23,1,Basic {G} Energy,Energy,1645,830,7825,9114
+2026-07-23,15,Team Rocket's Energy,Energy,881,456,3524,9114
+2026-07-23,400,Team Rocket's Tarountula,Pokémon,881,456,3524,9114
+2026-07-23,401,Team Rocket's Spidops,Pokémon,881,456,3524,9114
+2026-07-23,414,Team Rocket's Articuno,Pokémon,933,481,1833,9114
+2026-07-23,431,Team Rocket's Mewtwo ex,Pokémon,881,456,1762,9114
+2026-07-23,432,Team Rocket's Wobbuffet,Pokémon,504,242,504,9114
+2026-07-23,463,Team Rocket's Murkrow,Pokémon,504,242,1008,9114
+2026-07-23,1094,Bug Catching Set,Trainer,950,495,2919,9114
+2026-07-23,1119,Energy Search,Trainer,508,244,1012,9114
+2026-07-23,1134,Team Rocket's Transceiver,Trainer,881,456,3524,9114
+2026-07-23,1159,Hero’s Cape,Trainer,1707,843,1707,9114
+2026-07-23,1216,Team Rocket's Ariana,Trainer,881,456,3521,9114
+2026-07-23,1217,Team Rocket's Archer,Trainer,881,456,882,9114
+2026-07-23,1218,Team Rocket's Giovanni,Trainer,881,456,2642,9114
+2026-07-23,1220,Team Rocket's Proton,Trainer,881,456,2814,9114
+2026-07-23,1257,Team Rocket's Factory,Trainer,908,472,2166,9114
+2026-07-23,7,Basic {D} Energy,Energy,3930,2016,36971,9114
+2026-07-23,104,Froslass,Pokémon,3567,1851,7134,9114
+2026-07-23,112,Munkidori,Pokémon,3925,2016,14746,9114
+2026-07-23,646,Marnie's Impidimp,Pokémon,3591,1857,14364,9114
+2026-07-23,647,Marnie's Morgrem,Pokémon,3591,1857,10509,9114
+2026-07-23,648,Marnie's Grimmsnarl ex,Pokémon,3591,1857,10797,9114
+2026-07-23,860,Snorunt,Pokémon,3699,1924,7415,9114
+2026-07-23,1122,Pokégear 3.0,Trainer,3947,2025,6671,9114
+2026-07-23,1137,Tool Scrapper,Trainer,2997,1555,2997,9114
+2026-07-23,1219,Team Rocket's Petrel,Trainer,4008,2063,14861,9114
+2026-07-23,1259,Spikemuth Gym,Trainer,3591,1857,14335,9114
+2026-07-23,1161,Handheld Fan,Trainer,757,377,1302,9114
+2026-07-23,2,Basic {R} Energy,Energy,258,126,1027,9114
+2026-07-23,119,Dreepy,Pokémon,258,126,1032,9114
+2026-07-23,120,Drakloak,Pokémon,258,126,1032,9114
+2026-07-23,121,Dragapult ex,Pokémon,258,126,775,9114
+2026-07-23,131,Duskull,Pokémon,216,107,432,9114
+2026-07-23,132,Dusclops,Pokémon,216,107,432,9114
+2026-07-23,133,Dusknoir,Pokémon,216,107,217,9114
+2026-07-23,235,Budew,Pokémon,324,152,355,9114
+2026-07-23,791,Moltres,Pokémon,215,107,215,9114
+2026-07-23,1071,Meowth ex,Pokémon,261,128,267,9114
+2026-07-23,1120,Crushing Hammer,Trainer,471,226,1603,9114
+2026-07-23,1121,Ultra Ball,Trainer,1214,635,3342,9114
+2026-07-23,1198,Crispin,Trainer,275,134,839,9114
+2026-07-23,1256,Team Rocket's Watchtower,Trainer,372,173,671,9114
+2026-07-23,848,Buneary,Pokémon,346,179,902,9114
+2026-07-23,849,Mega Lopunny ex,Pokémon,346,179,821,9114
+2026-07-23,174,Fan Rotom,Pokémon,296,159,296,9114
+2026-07-23,1229,Wally's Compassion,Trainer,324,170,1290,9114
+2026-07-23,1087,Hand Trimmer,Trainer,662,336,1311,9114
+2026-07-23,1174,Air Balloon,Trainer,376,204,1109,9114
+2026-07-23,1264,Battle Cage,Trainer,912,452,2050,9114
+2026-07-23,11,Mist Energy,Energy,976,487,3904,9114
+2026-07-23,861,Mega Froslass ex,Pokémon,134,74,285,9114
+2026-07-23,3,Basic {W} Energy,Energy,156,84,568,9114
+2026-07-23,344,Dwebble,Pokémon,694,334,2572,9114
+2026-07-23,345,Crustle,Pokémon,694,334,2545,9114
+2026-07-23,756,Mega Kangaskhan ex,Pokémon,673,325,2527,9114
+2026-07-23,1147,Jumbo Ice Cream,Trainer,706,339,2776,9114
+2026-07-23,1123,Switch,Trainer,758,372,2362,9114
+2026-07-23,18,Grow Grass Energy,Energy,694,334,2734,9114
+2026-07-23,14,Spiky Energy,Energy,761,364,2709,9114
+2026-07-23,89,Grookey,Pokémon,69,39,276,9114
+2026-07-23,90,Thwackey,Pokémon,69,39,276,9114
+2026-07-23,92,Applin,Pokémon,69,39,270,9114
+2026-07-23,93,Dipplin,Pokémon,69,39,276,9114
+2026-07-23,247,Swirlix,Pokémon,6,1,24,9114
+2026-07-23,1175,Brave Bangle,Trainer,801,424,879,9114
+2026-07-23,1245,Festival Grounds,Trainer,69,39,276,9114
+2026-07-23,1213,Judge,Trainer,189,77,312,9114
+2026-07-23,434,Team Rocket's Mimikyu,Pokémon,377,214,1131,9114
+2026-07-23,1206,Larry’s Skill,Trainer,1,0,1,9114
+2026-07-23,649,Marnie's Morpeko,Pokémon,25,9,30,9114
+2026-07-23,689,Yveltal,Pokémon,39,13,39,9114
+2026-07-23,1260,Risky Ruins,Trainer,30,10,37,9114
+2026-07-23,293,N’s Zoroark ex,Pokémon,76,33,304,9114
+2026-07-23,292,N’s Zorua,Pokémon,76,33,304,9114
+2026-07-23,303,N’s Reshiram,Pokémon,76,33,152,9114
+2026-07-23,906,N's Zekrom,Pokémon,76,33,76,9114
+2026-07-23,141,Pecharunt ex,Pokémon,49,20,49,9114
+2026-07-23,1113,N’s PP Up,Trainer,76,33,304,9114
+2026-07-23,257,N’s Darumaka,Pokémon,49,20,49,9114
+2026-07-23,1205,Cyrano,Trainer,79,35,185,9114
+2026-07-23,1253,N’s Castle,Trainer,76,33,179,9114
+2026-07-23,258,N’s Darmanitan,Pokémon,49,20,49,9114
+2026-07-23,1194,Colress’s Tenacity,Trainer,84,39,112,9114
+2026-07-23,1141,Premium Power Pro,Trainer,62,25,79,9114
+2026-07-23,1249,Grand Tree,Trainer,54,22,54,9114
+2026-07-23,869,Stunfisk,Pokémon,98,59,98,9114
+2026-07-23,4,Basic {L} Energy,Energy,101,61,300,9114
+2026-07-23,1202,Drayton,Trainer,5,1,10,9114
+2026-07-23,122,Tatsugiri,Pokémon,17,8,17,9114
+2026-07-23,117,Cornerstone Mask Ogerpon ex,Pokémon,178,91,193,9114
+2026-07-23,1187,Morty’s Conviction,Trainer,139,72,252,9114
+2026-07-23,1176,Punk Helmet,Trainer,27,13,54,9114
+2026-07-23,1188,Ciphermaniac’s Codebreaking,Trainer,27,13,27,9114
+2026-07-23,1195,Janine’s Secret Art,Trainer,27,13,27,9114
+2026-07-23,1208,Iris’s Fighting Spirit,Trainer,8,4,8,9114
+2026-07-23,1204,Lisia’s Appeal,Trainer,3,2,3,9114
+2026-07-23,1242,Community Center,Trainer,27,16,27,9114
+2026-07-23,73,Rellor,Pokémon,76,44,76,9114
+2026-07-23,74,Rabsca,Pokémon,76,44,76,9114
+2026-07-23,164,Comfey,Pokémon,16,7,64,9114
+2026-07-23,817,Bramblin,Pokémon,16,7,57,9114
+2026-07-23,818,Brambleghast,Pokémon,16,7,48,9114
+2026-07-23,1144,Strange Timepiece,Trainer,16,7,32,9114
+2026-07-23,1247,Neutralization Zone,Trainer,80,33,80,9114
+2026-07-23,410,Torchic,Pokémon,4,2,8,9114
+2026-07-23,411,Combusken,Pokémon,4,2,4,9114
+2026-07-23,326,Blaziken ex,Pokémon,4,2,8,9114
+2026-07-23,31,Chi-Yu,Pokémon,4,2,4,9114
+2026-07-23,1092,Secret Box,Trainer,63,37,63,9114
+2026-07-23,1186,Eri,Trainer,20,7,22,9114
+2026-07-23,1146,Wondrous Patch,Trainer,18,6,18,9114
+2026-07-23,1191,Kieran,Trainer,60,37,120,9114
+2026-07-23,1211,Black Belt’s Training,Trainer,63,38,63,9114
+2026-07-23,666,Cinderace,Pokémon,57,27,194,9114
+2026-07-23,1030,Staryu,Pokémon,18,10,55,9114
+2026-07-23,1031,Mega Starmie ex,Pokémon,18,10,54,9114
+2026-07-23,1145,Mega Signal,Trainer,24,10,71,9114
+2026-07-23,1189,Salvatore,Trainer,23,10,29,9114
+2026-07-23,1224,Cheren,Trainer,17,10,17,9114
+2026-07-23,1262,Surfing Beach,Trainer,17,10,68,9114
+2026-07-23,8,Basic {M} Energy,Energy,26,11,334,9114
+2026-07-23,57,Relicanth,Pokémon,2,0,2,9114
+2026-07-23,169,Duraludon,Pokémon,26,11,104,9114
+2026-07-23,190,Archaludon ex,Pokémon,26,11,104,9114
+2026-07-23,1185,Explorer’s Guidance,Trainer,26,11,104,9114
+2026-07-23,1244,Full Metal Lab,Trainer,26,11,104,9114
+2026-07-23,96,Teal Mask Ogerpon ex,Pokémon,13,7,29,9114
+2026-07-23,184,Latias ex,Pokémon,5,2,8,9114
+2026-07-23,63,Raging Bolt ex,Pokémon,3,2,6,9114
+2026-07-23,108,Wellspring Mask Ogerpon ex,Pokémon,3,2,3,9114
+2026-07-23,272,Lillie’s Clefairy ex,Pokémon,4,2,4,9114
+2026-07-23,1116,Energy Switch,Trainer,3,2,12,9114
+2026-07-23,1098,Glass Trumpet,Trainer,3,2,6,9114
+2026-07-23,1088,Prime Catcher,Trainer,3,2,3,9114
+2026-07-23,1250,Area Zero Underdepths,Trainer,3,2,12,9114
+2026-07-23,506,Cubchoo,Pokémon,4,2,16,9114
+2026-07-23,1166,Gravity Gemstone,Trainer,4,2,12,9114
+2026-07-23,65,Dunsparce,Pokémon,8,4,18,9114
+2026-07-23,745,Ralts,Pokémon,1,0,4,9114
+2026-07-23,746,Kirlia,Pokémon,1,0,3,9114
+2026-07-23,747,Mega Gardevoir ex,Pokémon,1,0,3,9114
+2026-07-23,16,Prism Energy,Energy,15,6,59,9114
+2026-07-23,597,Frillish,Pokémon,1,0,1,9114
+2026-07-23,183,Smoochum,Pokémon,1,0,1,9114
+2026-07-23,1177,Sacred Charm,Trainer,22,13,22,9114
+2026-07-23,12,Legacy Energy,Energy,3,1,3,9114
+2026-07-23,42,Applin,Pokémon,3,1,6,9114
+2026-07-23,655,Celebi,Pokémon,3,1,12,9114
+2026-07-23,1102,Dusk Ball,Trainer,12,4,39,9114
+2026-07-23,1167,Deluxe Bomb,Trainer,1,0,1,9114
+2026-07-23,1192,Carmine,Trainer,8,3,29,9114
+2026-07-23,17,Ignition Energy,Energy,1,0,4,9114
+2026-07-23,1210,Brock’s Scouting,Trainer,14,6,42,9114
+2026-07-23,306,Dudunsparce ex,Pokémon,8,3,8,9114
+2026-07-23,677,Riolu,Pokémon,9,3,36,9114
+2026-07-23,678,Mega Lucario ex,Pokémon,9,3,36,9114
+2026-07-23,676,Solrock,Pokémon,9,3,27,9114
+2026-07-23,675,Lunatone,Pokémon,9,3,18,9114
+2026-07-23,673,Makuhita,Pokémon,7,2,17,9114
+2026-07-23,674,Hariyama,Pokémon,7,2,17,9114
+2026-07-23,1252,Gravity Mountain,Trainer,6,2,11,9114
+2026-07-23,1240,Rosa's Encouragement,Trainer,1,0,1,9114
+2026-07-23,1246,Jamming Tower,Trainer,7,0,14,9114
+2026-07-23,1222,Fennel,Trainer,4,2,4,9114
+2026-07-23,827,Carvanha,Pokémon,6,0,24,9114
+2026-07-23,828,Mega Sharpedo ex,Pokémon,6,0,24,9114
+2026-07-23,833,Toxel,Pokémon,6,0,12,9114
+2026-07-23,834,Toxtricity,Pokémon,6,0,12,9114
+2026-07-23,829,Seviper,Pokémon,6,0,6,9114
+2026-07-23,103,Snorunt,Pokémon,2,1,4,9114
+2026-07-23,1235,Waitress,Trainer,10,5,30,9114
+2026-07-23,1212,Cook,Trainer,10,5,40,9114
+2026-07-22,7,Basic {D} Energy,Energy,4009,2032,36921,9270
+2026-07-22,104,Froslass,Pokémon,3486,1761,6969,9270
+2026-07-22,112,Munkidori,Pokémon,4006,2034,14868,9270
+2026-07-22,646,Marnie's Impidimp,Pokémon,3555,1784,14220,9270
+2026-07-22,647,Marnie's Morgrem,Pokémon,3555,1784,10462,9270
+2026-07-22,648,Marnie's Grimmsnarl ex,Pokémon,3555,1784,10737,9270
+2026-07-22,860,Snorunt,Pokémon,3857,1966,7829,9270
+2026-07-22,1079,Rare Candy,Trainer,5409,2610,16347,9270
+2026-07-22,1080,Unfair Stamp,Trainer,4720,2463,4720,9270
+2026-07-22,1086,Buddy-Buddy Poffin,Trainer,8257,4096,32252,9270
+2026-07-22,1097,Night Stretcher,Trainer,7805,3924,16483,9270
+2026-07-22,1122,Pokégear 3.0,Trainer,3893,1957,7058,9270
+2026-07-22,1137,Tool Scrapper,Trainer,2193,1119,2193,9270
+2026-07-22,1152,Poké Pad,Trainer,8395,4230,33422,9270
+2026-07-22,1182,Boss’s Orders,Trainer,7897,3949,18182,9270
+2026-07-22,1219,Team Rocket's Petrel,Trainer,4179,2118,14759,9270
+2026-07-22,1227,Lillie's Determination,Trainer,7424,3814,27510,9270
+2026-07-22,1231,Dawn,Trainer,5696,2774,11501,9270
+2026-07-22,1259,Spikemuth Gym,Trainer,3555,1784,14092,9270
+2026-07-22,1,Basic {G} Energy,Energy,2087,1042,10105,9270
+2026-07-22,11,Mist Energy,Energy,1133,551,4532,9270
+2026-07-22,14,Spiky Energy,Energy,799,366,3106,9270
+2026-07-22,18,Grow Grass Energy,Energy,779,354,3063,9270
+2026-07-22,344,Dwebble,Pokémon,764,343,2887,9270
+2026-07-22,345,Crustle,Pokémon,764,343,2860,9270
+2026-07-22,756,Mega Kangaskhan ex,Pokémon,746,339,2930,9270
+2026-07-22,1087,Hand Trimmer,Trainer,922,447,2078,9270
+2026-07-22,1123,Switch,Trainer,776,347,2843,9270
+2026-07-22,1147,Jumbo Ice Cream,Trainer,765,343,3053,9270
+2026-07-22,1159,Hero’s Cape,Trainer,2245,1103,2245,9270
+2026-07-22,1197,Xerosic’s Machinations,Trainer,4276,2038,10784,9270
+2026-07-22,1225,Hilda,Trainer,3897,1892,14262,9270
+2026-07-22,1264,Battle Cage,Trainer,1063,517,2459,9270
+2026-07-22,6,Basic {F} Energy,Energy,924,516,4168,9270
+2026-07-22,20,Rock Fighting Energy,Energy,860,467,3434,9270
+2026-07-22,341,Cynthia's Roselia,Pokémon,792,447,3168,9270
+2026-07-22,342,Cynthia's Roserade,Pokémon,792,447,2405,9270
+2026-07-22,379,Cynthia's Gible,Pokémon,792,447,3168,9270
+2026-07-22,380,Cynthia's Gabite,Pokémon,792,447,3168,9270
+2026-07-22,381,Cynthia's Garchomp ex,Pokémon,792,447,2376,9270
+2026-07-22,387,Cynthia's Spiritomb,Pokémon,789,445,1552,9270
+2026-07-22,1142,Fighting Gong,Trainer,807,452,3199,9270
+2026-07-22,1173,Cynthia's Power Weight,Trainer,792,447,2376,9270
+2026-07-22,1203,Surfer,Trainer,712,409,712,9270
+2026-07-22,1261,Forest of Vitality,Trainer,766,440,1532,9270
+2026-07-22,5,Basic {P} Energy,Energy,3210,1566,8034,9270
+2026-07-22,13,Enriching Energy,Energy,2213,1027,2213,9270
+2026-07-22,19,Telepath Psychic Energy,Energy,1853,826,7412,9270
+2026-07-22,66,Dudunsparce,Pokémon,2233,1035,4902,9270
+2026-07-22,140,Fezandipiti ex,Pokémon,2251,1047,2251,9270
+2026-07-22,305,Dunsparce,Pokémon,2223,1028,7044,9270
+2026-07-22,343,Shaymin,Pokémon,1881,848,1881,9270
+2026-07-22,741,Abra,Pokémon,1845,821,7380,9270
+2026-07-22,742,Kadabra,Pokémon,1845,821,7380,9270
+2026-07-22,743,Alakazam,Pokémon,1845,821,7379,9270
+2026-07-22,1081,Enhanced Hammer,Trainer,1847,822,7129,9270
+2026-07-22,1129,Sacred Ash,Trainer,1940,871,1948,9270
+2026-07-22,1184,Lana’s Aid,Trainer,1864,833,1874,9270
+2026-07-22,1266,Nighttime Mine,Trainer,1838,818,3841,9270
+2026-07-22,431,Team Rocket's Mewtwo ex,Pokémon,1213,638,2426,9270
+2026-07-22,400,Team Rocket's Tarountula,Pokémon,1213,638,4852,9270
+2026-07-22,401,Team Rocket's Spidops,Pokémon,1213,638,4852,9270
+2026-07-22,434,Team Rocket's Mimikyu,Pokémon,255,121,762,9270
+2026-07-22,414,Team Rocket's Articuno,Pokémon,1335,702,2559,9270
+2026-07-22,1217,Team Rocket's Archer,Trainer,1213,638,1213,9270
+2026-07-22,1218,Team Rocket's Giovanni,Trainer,1213,638,3639,9270
+2026-07-22,1094,Bug Catching Set,Trainer,1325,699,4087,9270
+2026-07-22,1134,Team Rocket's Transceiver,Trainer,1217,638,4860,9270
+2026-07-22,1216,Team Rocket's Ariana,Trainer,1213,638,4828,9270
+2026-07-22,1257,Team Rocket's Factory,Trainer,1240,648,2708,9270
+2026-07-22,1220,Team Rocket's Proton,Trainer,1213,638,3584,9270
+2026-07-22,1175,Brave Bangle,Trainer,1001,521,1210,9270
+2026-07-22,1121,Ultra Ball,Trainer,1291,675,4157,9270
+2026-07-22,15,Team Rocket's Energy,Energy,1217,638,4860,9270
+2026-07-22,2,Basic {R} Energy,Energy,399,223,1606,9270
+2026-07-22,119,Dreepy,Pokémon,397,222,1588,9270
+2026-07-22,120,Drakloak,Pokémon,397,222,1588,9270
+2026-07-22,121,Dragapult ex,Pokémon,397,222,1192,9270
+2026-07-22,131,Duskull,Pokémon,204,120,408,9270
+2026-07-22,132,Dusclops,Pokémon,204,120,408,9270
+2026-07-22,133,Dusknoir,Pokémon,204,120,206,9270
+2026-07-22,235,Budew,Pokémon,457,253,648,9270
+2026-07-22,791,Moltres,Pokémon,202,118,202,9270
+2026-07-22,1071,Meowth ex,Pokémon,414,230,431,9270
+2026-07-22,1120,Crushing Hammer,Trainer,565,307,1677,9270
+2026-07-22,1198,Crispin,Trainer,404,224,1220,9270
+2026-07-22,1256,Team Rocket's Watchtower,Trainer,470,253,906,9270
+2026-07-22,1161,Handheld Fan,Trainer,985,504,1907,9270
+2026-07-22,848,Buneary,Pokémon,425,234,958,9270
+2026-07-22,849,Mega Lopunny ex,Pokémon,425,234,916,9270
+2026-07-22,174,Fan Rotom,Pokémon,374,209,374,9270
+2026-07-22,1229,Wally's Compassion,Trainer,508,278,2024,9270
+2026-07-22,1174,Air Balloon,Trainer,437,244,1244,9270
+2026-07-22,861,Mega Froslass ex,Pokémon,375,207,868,9270
+2026-07-22,3,Basic {W} Energy,Energy,382,210,1750,9270
+2026-07-22,432,Team Rocket's Wobbuffet,Pokémon,958,517,958,9270
+2026-07-22,463,Team Rocket's Murkrow,Pokémon,958,517,1916,9270
+2026-07-22,1119,Energy Search,Trainer,958,517,1916,9270
+2026-07-22,649,Marnie's Morpeko,Pokémon,105,43,164,9270
+2026-07-22,1202,Drayton,Trainer,76,30,135,9270
+2026-07-22,117,Cornerstone Mask Ogerpon ex,Pokémon,189,87,226,9270
+2026-07-22,1187,Morty’s Conviction,Trainer,46,15,92,9270
+2026-07-22,1209,Ruffian,Trainer,4,0,8,9270
+2026-07-22,1210,Brock’s Scouting,Trainer,5,1,8,9270
+2026-07-22,666,Cinderace,Pokémon,136,71,291,9270
+2026-07-22,1030,Staryu,Pokémon,120,65,362,9270
+2026-07-22,1031,Mega Starmie ex,Pokémon,120,65,360,9270
+2026-07-22,1145,Mega Signal,Trainer,132,69,390,9270
+2026-07-22,1189,Salvatore,Trainer,119,61,127,9270
+2026-07-22,1224,Cheren,Trainer,118,63,125,9270
+2026-07-22,1262,Surfing Beach,Trainer,118,63,472,9270
+2026-07-22,1213,Judge,Trainer,306,149,427,9270
+2026-07-22,1194,Colress’s Tenacity,Trainer,34,11,48,9270
+2026-07-22,1141,Premium Power Pro,Trainer,39,12,78,9270
+2026-07-22,1249,Grand Tree,Trainer,32,11,32,9270
+2026-07-22,122,Tatsugiri,Pokémon,32,5,32,9270
+2026-07-22,689,Yveltal,Pokémon,56,28,56,9270
+2026-07-22,42,Applin,Pokémon,48,25,79,9270
+2026-07-22,89,Grookey,Pokémon,112,61,448,9270
+2026-07-22,90,Thwackey,Pokémon,112,61,448,9270
+2026-07-22,92,Applin,Pokémon,95,50,318,9270
+2026-07-22,93,Dipplin,Pokémon,112,61,448,9270
+2026-07-22,655,Celebi,Pokémon,31,14,124,9270
+2026-07-22,1102,Dusk Ball,Trainer,61,27,117,9270
+2026-07-22,1155,Survival Brace,Trainer,31,14,31,9270
+2026-07-22,1245,Festival Grounds,Trainer,112,61,448,9270
+2026-07-22,1186,Eri,Trainer,17,3,17,9270
+2026-07-22,1208,Iris’s Fighting Spirit,Trainer,3,2,3,9270
+2026-07-22,73,Rellor,Pokémon,17,11,17,9270
+2026-07-22,74,Rabsca,Pokémon,17,11,17,9270
+2026-07-22,100,Goldeen,Pokémon,17,11,34,9270
+2026-07-22,149,Applin,Pokémon,17,11,51,9270
+2026-07-22,240,Seaking,Pokémon,17,11,17,9270
+2026-07-22,1092,Secret Box,Trainer,17,11,17,9270
+2026-07-22,1191,Kieran,Trainer,17,11,17,9270
+2026-07-22,1211,Black Belt’s Training,Trainer,17,11,17,9270
+2026-07-22,8,Basic {M} Energy,Energy,18,8,215,9270
+2026-07-22,57,Relicanth,Pokémon,18,8,35,9270
+2026-07-22,169,Duraludon,Pokémon,18,8,72,9270
+2026-07-22,190,Archaludon ex,Pokémon,18,8,72,9270
+2026-07-22,1185,Explorer’s Guidance,Trainer,3,0,12,9270
+2026-07-22,1244,Full Metal Lab,Trainer,18,8,38,9270
+2026-07-22,1212,Cook,Trainer,15,3,45,9270
+2026-07-22,827,Carvanha,Pokémon,8,2,32,9270
+2026-07-22,828,Mega Sharpedo ex,Pokémon,8,2,32,9270
+2026-07-22,833,Toxel,Pokémon,8,2,16,9270
+2026-07-22,834,Toxtricity,Pokémon,8,2,16,9270
+2026-07-22,829,Seviper,Pokémon,8,2,8,9270
+2026-07-22,1246,Jamming Tower,Trainer,12,3,24,9270
+2026-07-22,164,Comfey,Pokémon,2,1,8,9270
+2026-07-22,817,Bramblin,Pokémon,2,1,4,9270
+2026-07-22,818,Brambleghast,Pokémon,2,1,4,9270
+2026-07-22,1247,Neutralization Zone,Trainer,10,4,10,9270
+2026-07-22,1228,Acerola's Mischief,Trainer,2,1,4,9270
+2026-07-22,972,Hitmontop,Pokémon,2,1,2,9270
+2026-07-22,1192,Carmine,Trainer,30,14,114,9270
+2026-07-22,1239,Naveen,Trainer,17,8,34,9270
+2026-07-22,869,Stunfisk,Pokémon,75,41,75,9270
+2026-07-22,4,Basic {L} Energy,Energy,75,41,225,9270
+2026-07-22,675,Lunatone,Pokémon,13,5,26,9270
+2026-07-22,676,Solrock,Pokémon,13,5,39,9270
+2026-07-22,677,Riolu,Pokémon,13,5,52,9270
+2026-07-22,678,Mega Lucario ex,Pokémon,13,5,51,9270
+2026-07-22,293,N’s Zoroark ex,Pokémon,49,24,196,9270
+2026-07-22,292,N’s Zorua,Pokémon,49,24,196,9270
+2026-07-22,303,N’s Reshiram,Pokémon,49,24,98,9270
+2026-07-22,906,N's Zekrom,Pokémon,49,24,49,9270
+2026-07-22,141,Pecharunt ex,Pokémon,45,21,45,9270
+2026-07-22,1113,N’s PP Up,Trainer,49,24,196,9270
+2026-07-22,257,N’s Darumaka,Pokémon,45,21,45,9270
+2026-07-22,1205,Cyrano,Trainer,49,24,103,9270
+2026-07-22,1253,N’s Castle,Trainer,49,24,102,9270
+2026-07-22,258,N’s Darmanitan,Pokémon,45,21,45,9270
+2026-07-22,317,Eevee,Pokémon,2,1,8,9270
+2026-07-22,330,Sylveon,Pokémon,2,1,8,9270
+2026-07-22,1136,Antique Cover Fossil,Trainer,2,1,8,9270
+2026-07-22,318,Ho-Oh,Pokémon,2,1,8,9270
+2026-07-22,239,Flareon ex,Pokémon,2,1,2,9270
+2026-07-22,16,Prism Energy,Energy,7,5,22,9270
+2026-07-22,1236,Urbain,Trainer,1,1,4,9270
+2026-07-22,247,Swirlix,Pokémon,64,36,256,9270
+2026-07-22,184,Latias ex,Pokémon,7,5,7,9270
+2026-07-22,1260,Risky Ruins,Trainer,12,5,14,9270
+2026-07-22,1167,Deluxe Bomb,Trainer,2,2,2,9270
+2026-07-22,17,Ignition Energy,Energy,2,2,8,9270
+2026-07-22,1176,Punk Helmet,Trainer,4,3,8,9270
+2026-07-22,1188,Ciphermaniac’s Codebreaking,Trainer,4,3,4,9270
+2026-07-22,1195,Janine’s Secret Art,Trainer,4,3,4,9270
+2026-07-22,65,Dunsparce,Pokémon,11,7,22,9270
+2026-07-22,306,Dudunsparce ex,Pokémon,4,1,4,9270
+2026-07-22,464,Team Rocket's Sneasel,Pokémon,3,0,3,9270
+2026-07-22,673,Makuhita,Pokémon,10,4,18,9270
+2026-07-22,674,Hariyama,Pokémon,10,4,18,9270
+2026-07-22,1146,Wondrous Patch,Trainer,1,0,1,9270
+2026-07-22,1204,Lisia’s Appeal,Trainer,29,10,31,9270
+2026-07-22,1242,Community Center,Trainer,27,10,27,9270
+2026-07-22,1240,Rosa's Encouragement,Trainer,2,0,2,9270
+2026-07-22,58,Great Tusk,Pokémon,2,0,8,9270
+2026-07-22,607,Terrakion,Pokémon,2,0,2,9270
+2026-07-22,745,Ralts,Pokémon,6,4,24,9270
+2026-07-22,746,Kirlia,Pokémon,6,4,18,9270
+2026-07-22,747,Mega Gardevoir ex,Pokémon,6,4,18,9270
+2026-07-22,272,Lillie’s Clefairy ex,Pokémon,6,4,6,9270
+2026-07-22,597,Frillish,Pokémon,6,4,6,9270
+2026-07-22,183,Smoochum,Pokémon,6,4,6,9270
+2026-07-22,1252,Gravity Mountain,Trainer,8,3,8,9270
+2026-07-22,103,Snorunt,Pokémon,4,2,8,9270

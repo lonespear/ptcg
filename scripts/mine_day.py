@@ -95,11 +95,17 @@ def append(df: pd.DataFrame, path: Path) -> None:
     df.to_csv(path, mode="a", header=not path.exists(), index=False)
 
 
-def mine(date: str, by_id: pd.DataFrame, keep: bool) -> bool:
+def mine(date: str, by_id: pd.DataFrame, keep: bool,
+         decks_only: bool = False) -> bool:
     print(f"\n=== {date} ===")
-    if already_done(date):
+    if already_done(date) and not decks_only:
         print("  already in history — skipping")
         return True
+    if decks_only and DECKS_CSV.exists():
+        done = set(pd.read_csv(DECKS_CSV)["date"].astype(str))
+        if date in done:
+            print("  decklists already captured — skipping")
+            return True
 
     path = download_day(date)
     if path is None:
@@ -116,9 +122,12 @@ def mine(date: str, by_id: pd.DataFrame, keep: bool) -> bool:
     print(f"  {len(rows)} deck instances in {time.perf_counter() - t0:.0f}s")
 
     cards, arch, agents = aggregate_day(rows, by_id, date)
-    append(cards, CARDS_CSV)
-    append(arch, ARCH_CSV)
-    append(agents, AGENTS_CSV)
+    if not decks_only:
+        append(cards, CARDS_CSV)
+        append(arch, ARCH_CSV)
+        append(agents, AGENTS_CSV)
+    else:
+        print("  decks-only: not re-appending card/archetype/agent rows")
 
     # Keep only decklists with enough games to mean something — storing all
     # ~10k instances per day would bloat the history for no extra signal.
@@ -153,6 +162,9 @@ def main() -> None:
     ap.add_argument("--back", type=int, default=0,
                     help="mine the N most recent days, newest first")
     ap.add_argument("--keep", action="store_true", help="don't delete after mining")
+    ap.add_argument("--decks-only", action="store_true",
+                    help="capture decklists for a day already aggregated "
+                         "(the earliest days were mined before decklists were)")
     args = ap.parse_args()
 
     os.environ.setdefault("KAGGLE_API_TOKEN", os.environ.get("KAGGLE_API_TOKEN", ""))
@@ -170,7 +182,7 @@ def main() -> None:
         print(f"mining {len(dates)} most recent days: {dates}")
 
     for d in dates:
-        if not mine(d, by_id, args.keep):
+        if not mine(d, by_id, args.keep, args.decks_only):
             print(f"  stopping at {d}")
             break
 
