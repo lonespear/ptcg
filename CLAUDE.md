@@ -1,0 +1,92 @@
+# Working on this repo
+
+Kaggle **PTCG AI Battle Challenge**. Two linked competitions: *Simulation*
+(an agent bundle, has the leaderboard) and *Strategy* (a ≤2000-word writeup,
+70% model / 20% deck / 10% report). Deadline **13 Sep 2026**.
+
+Read `README.md` for the strategy and `EDA_FINDINGS.md` for the full numbered
+record. This file is the operating rules.
+
+## Hard rules
+
+- **Never submit without being asked.** Submissions are outward-facing, capped
+  per day, and only the latest one is active on the ladder. "Keep working" is
+  not authorisation to submit.
+- **Never submit the Strategy writeup.** Not without an explicit, specific ask.
+- **Never commit the engine or card data.** `ptcgProgram`, the `cg` package and
+  its binaries, and the card CSVs/PDFs are competition-use-only and this repo is
+  **public**. `engine/`, `build/`, `agent/deck.csv` and the card files are
+  gitignored. `data/` and `agent/deck_priors.json` are aggregate statistics
+  only — that distinction is deliberate, keep it.
+- **Commit messages carry no Co-Authored-By line.**
+
+## The three traps that have already cost us
+
+1. **The grader `exec()`s `main.py`.** `__file__` is undefined — touching it
+   unguarded kills the episode (cost 2 submissions). And `cg` is not importable
+   from inside a function body, so **all engine imports go at module level**
+   (a lazy import silently disabled search on every submission for a whole day).
+2. **`except Exception` around infrastructure hides production failures.** Both
+   bugs above degraded quietly instead of failing loudly. Prefer a loud signal.
+3. **Unsettled ratings lie.** They take hours and swing wildly — 724.9 settled to
+   305.8; 634.9 settled to 695.8. Four wrong calls so far. Never conclude from a
+   fresh score.
+
+## How to decide whether a change is good
+
+- **Use SPRT, not a fixed game count** — `scripts/compare_agents.py --sprt`, or
+  `scripts/field_sprt.py` for a play-weighted field on paired seeds. 100-game
+  samples carry ±5% and have produced several wrong conclusions here.
+- **Compare candidates directly**, never through a stronger third agent — that
+  compresses the gap and nearly lost us the search work.
+- **Re-test anything surprising on a fresh seed.** 5% error each way means about
+  one decision in twenty is wrong.
+- **Verify before submitting**: `scripts/build_submission.py --submit` runs the
+  real `cabt` validation episode first and refuses on failure. Don't bypass it.
+
+## Benchmarks have misled us four distinct ways
+
+Name the bias before trusting a result:
+
+| Benchmark | Bias |
+|---|---|
+| Our own weak agent | opponent far too weak — inverted the deck ranking |
+| The official reference agent | monoculture, one archetype — cost ~240 rating |
+| Field gauntlet | field piloted by us, so absolutes are optimistic |
+| **Any self-play measure** | **symmetric failures cancel — caused a retraction** |
+
+Corollary that keeps paying: **move questions out of the game-outcome channel.**
+The leaderboard CSV settled a rank-vs-rating confusion, ground-truth replays
+graded the opponent model, distributional comparison against real games found a
+world-model bug, and reading code found two more. Games are for confirming; the
+mined data is for learning.
+
+And **check the instrument too** — three probes this project reported on
+something other than what they claimed (a copied formula, a deleted counter, a
+misparsed timestamp).
+
+## Conventions
+
+- **Commit rejections with their numbers.** The decision ledger in `README.md`
+  is three rejections to two accepts. That record is worth more in a
+  methods-scored report than a string of wins, and it stops us re-litigating.
+- **Retract in place, prominently.** When a claim is withdrawn, correct it where
+  a reader meets it — not only in a later section — and tell Austin, who works
+  from `FEEDBACK_FOR_AUSTIN.md`.
+
+## Collaborator
+
+Austin (`defense031/ptcg`) owns `ptcg/creation/` — an island-model GA over
+decks. Cross-repo notes go in `FEEDBACK_FOR_AUSTIN.md`. He rebases onto our
+`main`.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `agent/main.py` | the submission: rules + 1-ply search |
+| `ptcg/opponent.py` | Bayesian decklist posterior |
+| `ptcg/arena.py`, `ptcg/sprt.py` | head-to-head play, sequential testing |
+| `scripts/mine_day.py` | download a day of replays → aggregate → delete (20 GB each) |
+| `scripts/validate_*.py` | grader episode, posterior vs ground truth, rollout vs replays |
+| `scripts/gauntlet.py`, `field_sprt.py` | play-weighted field evaluation |
