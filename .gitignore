@@ -1,0 +1,31 @@
+# Kaggle credentials — never commit
+kaggle.json
+access_token
+.kaggle/
+*.env
+.env
+
+# Competition data / caches
+data/
+cache/
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+*.egg-info/
+
+# Model artifacts
+*.pt
+*.pth
+*.ckpt
+checkpoints/
+runs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
