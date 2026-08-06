@@ -24,6 +24,7 @@ from __future__ import annotations
 import math
 import os
 import random
+import sys
 
 # --- option / area / context constants (see cg/api.py) ----------------------
 OPT_NUMBER, OPT_YES, OPT_NO, OPT_CARD = 0, 1, 2, 3
@@ -57,6 +58,32 @@ except NameError:
     _HERE = ""
 _KAGGLE_DIR = "/kaggle_simulations/agent"
 
+# ---------------------------------------------------------------------------
+# Import the engine API **at module level**, exactly as the official sample
+# does — and make sure the agent's own directory is importable first.
+#
+# This module is exec()'d by the grader with the bundle directory as the working
+# directory, but `cg` is NOT on sys.path by the time a function body runs. Doing
+# these imports lazily inside _search_main therefore raised
+# ModuleNotFoundError("No module named 'cg'") on every single call, and the
+# `except Exception: return None` around it turned that into a silent fallback
+# to the rule policy.
+#
+# Measured under kaggle_environments' own `cabt` environment: 77 agent calls,
+# 40 search attempts, 0 successful imports. The search we built, measured and
+# shipped had never once run on the ladder.
+# ---------------------------------------------------------------------------
+for _p in (_HERE, _KAGGLE_DIR, os.getcwd()):
+    if _p and _p not in sys.path:
+        sys.path.insert(0, _p)
+
+try:
+    from cg.api import (all_attack, all_card_data, search_begin, search_end,
+                        search_step, to_observation_class)
+    CG_AVAILABLE = True
+except Exception:                       # keep playing on rules if it is absent
+    CG_AVAILABLE = False
+
 _CARDS: dict | None = None
 _ATTACKS: dict | None = None
 
@@ -66,7 +93,8 @@ def _tables() -> tuple[dict, dict]:
     global _CARDS, _ATTACKS
     if _CARDS is None:
         try:
-            from cg.api import all_attack, all_card_data
+            if not CG_AVAILABLE:
+                raise RuntimeError("cg unavailable")
             _CARDS = {c.cardId: c for c in all_card_data()}
             _ATTACKS = {a.attackId: a for a in all_attack()}
         except Exception:
@@ -567,7 +595,6 @@ def _evaluate(observation, me: int) -> float:
 
 def _rollout_value(state, me: int, rules_choice) -> float:
     """Play our own turn out with the rule policy, then score the position."""
-    from cg.api import search_step
     steps = 0
     cap = SEARCH_ROLLOUT_STEPS * (3 if TWO_PLY else 1)
     saw_opponent = False
@@ -595,10 +622,7 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
     """1-ply search: simulate each option, finish the turn, keep the best."""
     if not SEARCH_ENABLED or not obs.get("search_begin_input"):
         return None
-    try:
-        from cg.api import (search_begin, search_end, search_step,
-                            to_observation_class)
-    except Exception:
+    if not CG_AVAILABLE:
         return None
 
     try:
