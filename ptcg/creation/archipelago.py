@@ -164,7 +164,8 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
                     games_per_opponent: int = 24, seed: int = 0,
                     plateau_window: int = 15, pilot_factory=None,
                     git_commit: bool = False, workers: int = 1,
-                    generalist_name: str = "jon") -> None:
+                    generalist_name: str = "jon",
+                    seed_deck: list | None = None) -> None:
     rng = random.Random(seed)
     bank = GeneBank(pool())
     p = pool()
@@ -193,6 +194,22 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
 
     pops = {ai.label: [build_template(ai.island, bank, rng)
                        for _ in range(pop_size)] for ai in islands}
+    if seed_deck:
+        # rebuild mode: half the matching mono populations start as mutated
+        # variants of the seed list (purity floors add the backup attackers)
+        from collections import Counter as _Counter
+        from .pool import BASIC_ENERGY as _BE
+        et = _Counter(p.by_id[c]["energyType"] for c in seed_deck
+                      if p.by_id[c]["cardType"] == _BE)
+        dom = et.most_common(1)[0][0] if et else 1
+        for ai in islands:
+            if ai.temperament in ("explore", "refine") and \
+                    dom in ai.island.allowed:
+                popn = pops[ai.label]
+                for i in range(len(popn) // 2):
+                    popn[i] = enforce_purity(
+                        mutate(list(seed_deck), ai.island, bank, rng),
+                        ai, bank, rng)
     cache: dict[tuple, float] = {}
     best_seen: dict[str, tuple[int, float]] = {}   # set_key -> (era, best)
     frozen: set[str] = set()
@@ -205,17 +222,25 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
     slow = {i for i, e in enumerate(panel)
             if e["pilot"].get("specialist") == "codex_alakazam"}
 
+    TERM_LAMBDA = 0.15  # D18
+    EXHAUSTION = ("deck-out", "no active Pokemon")
+
     def fit(deck: list[int]) -> float:
         key = tuple(sorted(deck))
         if key not in cache:
-            score = 0.0
+            score, losses, exh = 0.0, 0, 0
             for i, (entry, opp_pilot) in enumerate(zip(panel, panel_pilots)):
                 n = max(6, games_per_opponent // 4) if i in slow \
                     else games_per_opponent
                 m = play_match(pilot_a, opp_pilot, deck, entry["deck"], n)
                 score += m.win_rate(0) * entry["weight"]
-            cache[key] = score
-        return cache[key]
+                for g in m.games:
+                    if g.winner == 1:
+                        losses += 1
+                        exh += g.reason in EXHAUSTION
+            frag = exh / losses if losses else 0.0
+            cache[key] = (score - TERM_LAMBDA * frag, score, frag)
+        return cache[key][0]
 
     def breed(ai: ArchIsland, era: int) -> dict:
         popn = pops[ai.label]
@@ -276,7 +301,8 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
               "elapsed_h": round((time.time() - t0) / 3600, 3),
               "islands": reports, "frozen": sorted(frozen),
               "elite": {"island": all_best[2], "fitness": all_best[0],
-                        "deck": all_best[1]},
+                        "deck": all_best[1],
+                        "components": cache.get(tuple(sorted(all_best[1])))},
               "gate_vs_prev_elite_500g": gate}
         (run_dir / f"era_{era:03d}.json").write_text(json.dumps(ck))
         (run_dir / "latest.json").write_text(json.dumps(ck))

@@ -31,6 +31,8 @@ if __name__ == "__main__":
     ap.add_argument("--plateau", type=int, default=15)
     ap.add_argument("--pilot", choices=list(PILOTS), default="jon")
     ap.add_argument("--workers", type=int, default=1)
+    ap.add_argument("--seed-deck", default=None,
+                    help="csv/json 60-card list; rebuild mode seeds matching islands")
     ap.add_argument("--git", action="store_true")
     args = ap.parse_args()
 
@@ -40,4 +42,8 @@ if __name__ == "__main__":
                     games_per_opponent=args.games, seed=args.seed,
                     plateau_window=args.plateau, git_commit=args.git,
                     pilot_factory=PILOTS[args.pilot], workers=args.workers,
-                    generalist_name=args.pilot if args.pilot in ('jon','greedy') else 'jon')
+                    generalist_name=args.pilot if args.pilot in ('jon','greedy') else 'jon',
+                    seed_deck=__import__('json').load(open(args.seed_deck))
+                    if args.seed_deck and args.seed_deck.endswith('.json')
+                    else [int(x) for x in open(args.seed_deck).read().split()]
+                    if args.seed_deck else None)

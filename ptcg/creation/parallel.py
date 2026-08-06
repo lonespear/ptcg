@@ -39,15 +39,24 @@ def _init_worker(root: str, panel_json: str, generalist: str,
     _STATE["slow_games"] = slow_games
 
 
-def _eval_deck(deck: list[int]) -> tuple[tuple, float]:
+TERM_LAMBDA = 0.15  # D18: deck-out/bench-out losses are a defect, not noise
+EXHAUSTION = ("deck-out", "no active Pokemon")
+
+
+def _eval_deck(deck: list[int]) -> tuple[tuple, tuple]:
     from ptcg.creation.harness import play_match
     st = _STATE
-    score = 0.0
+    score, losses, exh = 0.0, 0, 0
     for i, (entry, pilot) in enumerate(zip(st["panel"], st["pilots"])):
         n = st["slow_games"] if i in st["slow"] else st["games"]
         m = play_match(st["candidate"], pilot, deck, entry["deck"], n)
         score += m.win_rate(0) * entry["weight"]
-    return tuple(sorted(deck)), score
+        for g in m.games:
+            if g.winner == 1:
+                losses += 1
+                exh += g.reason in EXHAUSTION
+    frag = exh / losses if losses else 0.0
+    return tuple(sorted(deck)), (score - TERM_LAMBDA * frag, score, frag)
 
 
 class ParallelFitness:
