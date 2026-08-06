@@ -61,3 +61,9 @@ agent/agent_data.json
 
 # Leaderboard screenshots
 leaderboard*.png
+
+# derived panel shims from deck_priors
+.panel_*.json
+
+# community agents pending license verification
+external/

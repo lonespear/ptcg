@@ -92,7 +92,9 @@ def build() -> Path:
     # Paths must be relative to the archive root, not nested in a folder.
     with tarfile.open(archive, "w:gz") as tar:
         for p in sorted(staging.rglob("*")):
-            tar.add(p, arcname=str(p.relative_to(staging)))
+            # rglob already yields every descendant; letting tar.add recurse
+            # into directories on top of that writes each cg/ file twice.
+            tar.add(p, arcname=str(p.relative_to(staging)), recursive=False)
 
     size = archive.stat().st_size / 1024**2
     print(f"built {archive.relative_to(ROOT)} ({size:.1f} MB)")
