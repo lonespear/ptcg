@@ -202,12 +202,14 @@ This is the whole thesis in one card. The field has concentrated a third of its
 play into a deck that is *already losing* (46.4% win rate across 57,000 games)
 **and** is weak to Grass — and almost nobody is punishing it.
 
-**Caveat, and it is a serious one.** This list runs **4 Pokémon in 60 cards**.
-Real players hold a 52.8% win rate with it by protecting those four; our agent
-does not, and **70% of our games end with no Pokémon left to promote**. The deck
-is right about the metagame and wrong about its pilot — see
-[the fragility section](#the-deck-is-fragile-in-our-hands-and-no-relative-test-could-see-it)
-below. Fixing that is now ahead of every search improvement in the queue.
+**On the 4 Pokémon in 60 cards.** That looks alarming and we spent real effort
+concluding it was a defect — wrongly. It is load-bearing: the Trainers are the
+engine, and a weak backup Active would also *lower* Myriad Leaf Shower's damage,
+which scales on Energy attached to both Actives. Measured, adding Pokémon takes
+the win rate from **0.911 to 0.17–0.26**. Against real field decks we run out of
+Pokémon 0–4% of the time while the opponent runs out 21–33%. The full story of
+how we got that backwards is
+[below](#corrected-the-deck-is-not-fragile--that-reading-was-a-mirror-artifact).
 
 The story of how we got here is the more useful part, because we got it wrong
 twice first.
@@ -600,10 +602,20 @@ This will not send anything unless the local validation episode passes.
 - [x] Multi-determinization over decklists — **built, measured, rejected**
       (0.485 on 373 paired games). 80% of misidentifications are between sister
       lists that play identically, so there was little to average over.
-- [ ] **Fix the deck's 4-Pokémon fragility — ahead of everything below.**
-      70% of our games end with no Pokémon left. Rebuild the list with backup
-      attackers while keeping the Grass advantage, and add termination mode as a
-      gauntlet output so no future deck can hide the same flaw.
+- [x] ~~Fix the deck's 4-Pokémon fragility~~ — **retracted.** The fragility was
+      a self-play mirror artifact; against the field we are not the side running
+      out, and adding Pokémon costs 0.911 → 0.17–0.26.
+- [ ] **Does search help in production?** The grader import bug meant search was
+      inert on every submission until now. First submission with it live scored
+      634.9 against 666.4 for the rules-only agent — too fresh to call, and the
+      most important open question, because every local measurement of search's
+      value was taken against a broken opponent-hand model.
+- [ ] **Re-validate search on the fixed hand model.** The 0.72 head-to-head
+      headline was measured when every simulated opponent held nothing but
+      Energy, so it rewarded fearlessness. Treat it as unmeasured.
+- [ ] **Deck robustness to a shifting field.** Marnie's Grimmsnarl ex has gone
+      64% → 30% in a week and our whole edge is that it is weak to Grass. A
+      matchup matrix answers whether the counter is durable to September.
 - [ ] Re-test 2-ply on the fixed hand model — the configuration the original
       2-ply diagnosis actually implies, and never yet run.
 - [ ] Re-test sub-selection search: it was rejected for not seeing a fetched
