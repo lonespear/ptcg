@@ -10,8 +10,9 @@ Our entry for the Kaggle **Pokémon TCG AI Battle Challenge**. Final deadline
 |---|---|---|---|
 | v3 — starter deck, rules only | 544.8 | ~4292 | |
 | v4 — Mega Lucario ex | 305.8 | ~6024 | a bad benchmark call |
-| v5 — search + Teal Mask Ogerpon ex | 535.8 | ~4391 | |
-| **v9 — energy term in the eval** | **656.4** | **~2905** | **top 45%** |
+| v5 — search + Teal Mask Ogerpon ex | 552.7 | ~4270 | search inert on the ladder |
+| v9 — energy term in the eval | 645.7 | ~3020 | search still inert |
+| **v1 team — merged, search finally live** | **695.8** | **~2450** | **top 38%** |
 
 **+182 rating from here is the top decile.**
 
@@ -605,11 +606,13 @@ This will not send anything unless the local validation episode passes.
 - [x] ~~Fix the deck's 4-Pokémon fragility~~ — **retracted.** The fragility was
       a self-play mirror artifact; against the field we are not the side running
       out, and adding Pokémon costs 0.911 → 0.17–0.26.
-- [ ] **Does search help in production?** The grader import bug meant search was
-      inert on every submission until now. First submission with it live scored
-      634.9 against 666.4 for the rules-only agent — too fresh to call, and the
-      most important open question, because every local measurement of search's
-      value was taken against a broken opponent-hand model.
+- [x] **Does search help in production? Yes — +50 rating.** The grader import
+      bug meant search was inert on every submission until the merge. Settled:
+      **695.8 with search live against 645.7 for the rules-only agent.**
+      Worth noting how nearly we got this backwards: at three hours old the same
+      pair read 634.9 vs 666.4, i.e. search *hurting*. Over the next few hours
+      it wandered 541 → 705 before settling. Fourth time this project that an
+      unsettled rating pointed the wrong way.
 - [ ] **Re-validate search on the fixed hand model.** The 0.72 head-to-head
       headline was measured when every simulated opponent held nothing but
       Energy, so it rewarded fearlessness. Treat it as unmeasured.
