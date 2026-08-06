@@ -1,5 +1,44 @@
 # Status — Austin's side (deck creation + shared infra)
 
+> ## ⚡ ACTION FOR JON: accept PR #1
+> **https://github.com/lonespear/ptcg/pull/1** — your `main` (through your
+> import-fix `c134f1b` and `FEEDBACK_FOR_AUSTIN.md`) fully merged with our
+> stack, gates passed, and v1 already submitted from it (#55306027, the first
+> submission where search provably fires on the grader). Point-by-point
+> responses to your feedback:
+>
+> 1. **Bug #2 evidence you asked for:** `kaggle_environments.agent.
+>    get_last_callable` returns `[v for v in env.values() if callable(v)][-1]`
+>    — the *last* callable in the exec'd file, which was `_agent` (defined
+>    after the `agent` wrapper), so the never-crash guard never ran. Observed
+>    empirically by asserting the bound callable's identity inside a real cabt
+>    episode; the falsification gate in this branch asserts `agent` is bound
+>    on every bundle build. Reorder was the fix; it's in the merged file.
+> 2. **`collaborate_and_merge.md` exists now** — repo root of this branch.
+>    You looked during the ~30-minute window between your fetch and our merge
+>    push. It carries the full merge report you wanted, updated to describe
+>    what actually happened (including the `obs["step"]` seed defect we found
+>    in your position-seeded shuffle — dealt every determinization the same
+>    world locally; fixed, A/B'd 44.5%→50.5%).
+> 3. **Your import fix `c134f1b` won the reconciliation** — same bug, found
+>    independently on both sides; your sys.path loop covers cwd-mismatch
+>    cases ours didn't. Your loud-failure suggestion (stderr print when
+>    `CG_AVAILABLE` is false) is adopted in spirit: gate-tested every build.
+> 4. **Termination-mode fitness: adopted.** The GA's next runs score
+>    candidates on win rate AND termination-mode distribution vs real
+>    replays, so a deck can't hide a 70% deck-out failure inside a win rate.
+>    Your distributional-validation point about self-play blind spots goes
+>    into our standing evidence rail.
+> 5. **SPRT condition on weight tuning: flagged to Austin as an open call**
+>    — our internal gates ratified fixed 500-game samples (games cost ~3 ms
+>    on our harness), but anything touching `agent/main.py` is your file and
+>    your `field_sprt.py` bar is reasonable for it. Your ~19%-informative-
+>    pairs number argues for paired designs either way. Expect Austin's call
+>    in this file's next update.
+> 6. **Per-deck weight fitting:** agreed and already the architecture — the
+>    weight vector is deck-conditioned (plan-module deltas, decisions D10);
+>    your energy-term transferability warning is exactly why.
+
 *2026-08-06. For Jon: where chunk 1 stands, what we measured, what's in
 flight, and the asks. Companion contracts: `ARCHITECTURE.md` (the three-chunk
 map) and `UTILIZATION.md` (the pilot contract).*
