@@ -193,13 +193,20 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
     prev_elite: list[int] | None = None
     t0 = time.time()
 
+    # Expensive specialists (codex ~0.9 s/game vs 16-107 ms for the rest)
+    # run at a quarter of the game count during GA fitness; gates and
+    # tournaments use full games (decisions.md 2026-08-07 operational call).
+    slow = {i for i, e in enumerate(panel)
+            if e["pilot"].get("specialist") == "codex_alakazam"}
+
     def fit(deck: list[int]) -> float:
         key = tuple(sorted(deck))
         if key not in cache:
             score = 0.0
-            for entry, opp_pilot in zip(panel, panel_pilots):
-                m = play_match(pilot_a, opp_pilot, deck, entry["deck"],
-                               games_per_opponent)
+            for i, (entry, opp_pilot) in enumerate(zip(panel, panel_pilots)):
+                n = max(6, games_per_opponent // 4) if i in slow \
+                    else games_per_opponent
+                m = play_match(pilot_a, opp_pilot, deck, entry["deck"], n)
                 score += m.win_rate(0) * entry["weight"]
             cache[key] = score
         return cache[key]
