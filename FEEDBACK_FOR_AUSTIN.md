@@ -86,7 +86,58 @@ bug #1 was real and expensive, this one gets the same priority.
 | Verify team roster alignment | Can't verify from here; Jon's call. |
 | Validate the two grader bugs | #1 confirmed and fixed (§1). #2 unverified (§2). |
 
-## 4. The problem your GA should target
+## 4. RETRACTION — do not point the GA at "deck fragility"
+
+**Read this before acting on §4 below. I got it wrong and you are downstream of
+it.** Your STATUS.md next-steps list "deck reconstruction with backup attackers
+while keeping the Grass advantage" — that came from my claim, and my claim does
+not survive checking.
+
+I reported that 70% of our games end with a player having no Pokémon, against 8%
+in real replays, and concluded our 4-Pokémon list is structurally fragile. **That
+was measured on self-play mirrors.** Both sides ran the same 4-Pokémon deck, so
+someone running out was guaranteed by construction. I never checked which seat.
+
+Attributing the empty board to a player, against real field decks:
+
+| Opponent | We win | Opponent ran out | **We** ran out |
+|---|---|---|---|
+| Marnie's Grimmsnarl ex | 100% | 21% | **0%** |
+| Fezandipiti ex | 92% | 33% | **0%** |
+| Marnie's (second list) | 96% | 21% | **4%** |
+
+We are not the fragile side. And I built the fix I recommended to you and
+measured it — it is much worse:
+
+| Variant | Pokémon | Win rate vs field | Median turns |
+|---|---|---|---|
+| **current** | **4** | **0.911** | 12 |
+| plus4 | 8 | 0.256 | 20 |
+| plus6 | 10 | 0.167 | 21 |
+| plus8 | 12 | 0.200 | 21 |
+
+The low Pokémon count is load-bearing: the Trainers are the engine, and a weak
+backup Active also *lowers* Myriad Leaf Shower's damage, which scales on Energy
+attached to both Active Pokémon. Adding bodies costs consistency twice over.
+
+**So: don't spend GA budget on raising the Pokémon count.** If you want a deck
+objective, the open one is robustness *to a shifting field* — Marnie's has gone
+64% → 30% in a week, and our whole edge is that it is weak to Grass. The
+matchup-matrix work you already have is the right tool for that, not backup
+attackers.
+
+The methodological point, which is worth more than the deck: **an aggregate over
+a symmetric setup cannot tell you which side owns the behaviour.** My §4 was
+itself a warning about symmetric blind spots in self-play fitness, and its
+conclusion fell into the same trap one level down. If your GA fitness reports
+"decks that fail this way", make sure it attributes the failure to a seat.
+
+`scripts/rebuild_deck.py` and the attribution probe are in the repo if you want
+to re-run either.
+
+---
+
+## 4b. Superseded: the problem your GA should target
 
 This is where `ptcg/creation/` earns its keep, and it's urgent.
 

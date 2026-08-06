@@ -648,6 +648,42 @@ confidence, which is precisely when we are facing an opponent we cannot pin
 down. The adaptive behaviour is already correct — but the honest expectation is
 that the gate earns more at rank 500 than it does at rank 4500.
 
+## 28b. CORRECTION to §28 — the fragility was a mirror artifact
+
+§28 below concluded our 4-Pokémon deck was structurally fragile because 70% of
+our games ended with a player having no Pokémon. **That measurement was
+self-play on a mirror**, where both sides run the same 4-Pokémon list, so the
+termination mode was guaranteed by construction. I generalised it to a claim
+about the field without checking *which seat* ran out.
+
+Attributing the empty board to a player, against real field decks:
+
+| Opponent | We win | Opponent ran out | **We** ran out |
+|---|---|---|---|
+| Marnie's Grimmsnarl ex | 100% | 21% | **0%** |
+| Fezandipiti ex | 92% | 33% | **0%** |
+| Marnie's (second list) | 96% | 21% | **4%** |
+
+We are not the fragile side; the opponent is the one being emptied. And the
+proposed fix makes things far worse:
+
+| Variant | Pokémon | Win rate vs field | Median turns |
+|---|---|---|---|
+| **current** | **4** | **0.911** | 12 |
+| plus4 | 8 | 0.256 | 20 |
+| plus6 | 10 | 0.167 | 21 |
+| plus8 | 12 | 0.200 | 21 |
+
+The low Pokémon count is load-bearing. The Trainers are the engine, and a weak
+backup Active also reduces Myriad Leaf Shower's damage, which scales on Energy
+attached to *both* Active Pokémon.
+
+**What survives:** the distributional check correctly flagged that our self-play
+does not resemble real games, and building it was right. The error was
+attribution — an aggregate over a symmetric setup cannot tell you which side
+owns the behaviour. One probe fixed it. Note the irony: §28 was itself about a
+symmetric blind spot, and its conclusion fell into the same trap one level down.
+
 ## 28. The gauntlet has a symmetric blind spot — and it hid a fragile deck
 
 Validating the rollout world model distributionally against real replays flagged

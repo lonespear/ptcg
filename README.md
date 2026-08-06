@@ -331,7 +331,45 @@ refuses to submit unless it passes.
 
 ---
 
-# The deck is fragile in our hands, and no relative test could see it
+# CORRECTED: the deck is not fragile — that reading was a mirror artifact
+
+*The section below claimed our 4-Pokémon deck was structurally fragile. It was
+measured on self-play **mirrors**, where both sides run the same 4-Pokémon list,
+so "someone runs out of Pokémon" was guaranteed by construction. Attributing it
+to our fragility against the field was wrong.*
+
+Measured against real field decks, we are the ones who almost never run out:
+
+| Opponent | We win | Opponent ran out | **We** ran out |
+|---|---|---|---|
+| Marnie's Grimmsnarl ex | 100% | 21% | **0%** |
+| Fezandipiti ex | 92% | 33% | **0%** |
+| Marnie's (second list) | 96% | 21% | **4%** |
+
+And rebuilding the deck with more Pokémon — trading the least-used Trainer slots
+for Grass Basics — made it dramatically **worse**:
+
+| Variant | Pokémon | Win rate vs field | Median turns |
+|---|---|---|---|
+| **current** | **4** | **0.911** | 12 |
+| plus4 | 8 | 0.256 | 20 |
+| plus6 | 10 | 0.167 | 21 |
+| plus8 | 12 | 0.200 | 21 |
+
+The 4-Pokémon count is **load-bearing, not a defect**. This deck's engine is its
+Trainers; cutting them for bodies guts the consistency that gets Ogerpon online,
+and a weak backup Active also *lowers* Myriad Leaf Shower's damage, since it
+scales on Energy attached to both Active Pokémon.
+
+What survives from the original finding: the distributional check was right that
+our self-play does not look like real games, and running it was correct. The
+error was in **what I attributed the anomaly to** — I generalised a statistic
+from a mirror to a claim about the field without checking which seat it applied
+to. The fix was one probe: attribute the empty board to a player.
+
+---
+
+# Superseded: "the deck is fragile in our hands"
 
 Comparing our self-play games against real replays *distributionally* — not
 against another agent, against the field's actual statistics — flags them at
