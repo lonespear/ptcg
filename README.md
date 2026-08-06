@@ -3,9 +3,37 @@
 Our entry for the Kaggle **Pokémon TCG AI Battle Challenge**. Final deadline
 **13 Sep 2026**.
 
-**Live standing:** `v5` just submitted and settling from the 600 starting
-rating. Previous submissions settled at **544.8** (starter deck) and **305.8**
-(Mega Lucario ex); top of the leaderboard is **~1180**.
+**Live standing (6 Aug):** rank **4567 of 6421**, score **520.5** and still
+climbing after the v5 submission.
+
+The score is a rating, not a rank — worth stating because they get confused. The
+field:
+
+| | Score | Rank |
+|---|---|---|
+| Leader | **1182.2** | 1 |
+| Top 1% | 1026 | ~64 |
+| Top 10% | 838 | ~642 |
+| **Median** | **631** | ~3210 |
+| **Us** | **520.5** | **4567** |
+
+**Nobody is above 1200.** We are ~110 points below median, and the whole board
+spans about 1450 points.
+
+What a rating gain is worth here, because the middle of the board is dense —
+1.4% of all teams sit within ±5 points of us:
+
+| Gain | Score | Rank | Percentile |
+|---|---|---|---|
+| +100 | 620 | ~3352 | top 52% |
+| +200 | 720 | ~1998 | top 31% |
+| +300 | 820 | ~743 | top 12% |
+| +400 | 920 | ~271 | top 4% |
+| +517 | 1037 | ~50 | top 0.8% |
+
+So this is not a hopeless gap needing a learned policy — **+300 rating is the
+top decile**, and we are still below average. The cheap wins have not been taken
+yet.
 
 > Ratings take hours of episodes to settle. An early reading of 724.9 on the
 > Mega Lucario submission fell to 305.8 once it had played enough games, and we
