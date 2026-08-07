@@ -9,9 +9,10 @@ record. This file is the operating rules.
 
 ## Hard rules
 
-- **Never submit without being asked.** Submissions are outward-facing, capped
-  per day, and only the latest one is active on the ladder. "Keep working" is
-  not authorisation to submit.
+- **Never submit without being asked.** "Keep working" is not authorisation.
+  Five per day, resetting **00:00 UTC** (8pm US Eastern), **shared with Austin**,
+  and only the latest submission is active — so a worse one replaces a better
+  one. Failed validations don't consume quota.
 - **Never submit the Strategy writeup.** Not without an explicit, specific ask.
 - **Never commit the engine or card data.** `ptcgProgram`, the `cg` package and
   its binaries, and the card CSVs/PDFs are competition-use-only and this repo is

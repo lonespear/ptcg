@@ -549,19 +549,65 @@ search agent.
 
 | Path | What it is |
 |---|---|
-| `agent/main.py` | The submitted agent |
-| `ptcg/data.py` | Card CSV → tidy `cards` + `effects` tables |
-| `ptcg/episodes.py` | Replay JSON → decklists + outcomes |
+The work splits three ways, and the seams between them are deliberate — see
+`ARCHITECTURE.md`. Jon owns utilisation and identification; Austin
+(`defense031/ptcg`) owns creation.
+
+**Play the deck** — the submission itself.
+
+| Path | What |
+|---|---|
+| `agent/main.py` | The submitted agent: rules + 1-ply search |
 | `ptcg/arena.py` | Plays two agents head-to-head locally |
-| `ptcg/meta.py` | Per-day metagame aggregation |
-| `scripts/mine_day.py` | Download a day of replays → aggregate → delete |
-| `scripts/compare_agents.py` | A vs B, same deck, sides swapped (`--sprt`) |
-| `scripts/gauntlet.py` | Decks vs the real field, weighted by play share |
-| `ptcg/opponent.py` | Infers the opponent's decklist from what they've shown |
-| `ptcg/sprt.py` | Wald's sequential test |
 | `scripts/build_submission.py` | Bundle + validate + submit |
 | `scripts/validate_submission.py` | Runs the real Kaggle validation episode |
-| `EDA_FINDINGS.md` | Full analysis log, numbers and all |
+
+**Guess the opponent** — what makes simulation possible at all.
+
+| Path | What |
+|---|---|
+| `ptcg/opponent.py` | Bayesian posterior over the opponent's decklist |
+| `scripts/export_priors.py` | Bakes the top decklists into the bundle |
+| `scripts/validate_posterior.py` | Grades the posterior against ground truth |
+| `scripts/misid_cost.py` | How *wrong* a wrong guess is, not just how often |
+
+**Build the deck** — Austin's island-model GA.
+
+| Path | What |
+|---|---|
+| `ptcg/creation/` | GA over 60-card decks: `ga`, `archipelago`, `pool`, `validator`, `goldfish`, `specialist_panel`, … |
+| `scripts/run_deck_ga.py`, `run_archipelago.py` | Drive the GA |
+| `scripts/matchup_matrix.py` | Archetype-vs-archetype matrix |
+
+**Read the metagame** — 16 days of replays.
+
+| Path | What |
+|---|---|
+| `ptcg/episodes.py` | Replay JSON → decklists + outcomes |
+| `ptcg/meta.py` | Per-day metagame aggregation |
+| `ptcg/data.py` | Card CSV → tidy `cards` + `effects` tables |
+| `scripts/mine_day.py` | Download a day → aggregate → delete (20 GB each) |
+| `scripts/gauntlet.py` | Decks vs the real field, weighted by play share |
+
+**Decide whether a change is real** — the part that stopped us fooling ourselves.
+
+| Path | What |
+|---|---|
+| `ptcg/sprt.py` | Wald's sequential test |
+| `scripts/compare_agents.py` | A vs B, same deck, sides swapped (`--sprt`) |
+| `scripts/field_sprt.py` | Paired seeds against a play-weighted field |
+| `scripts/validate_rollout.py` | Our simulated games vs real replay statistics |
+| `scripts/termination_modes.py`, `who_runs_out.py` | How games end, and to whom |
+
+**Documents**
+
+| Path | What |
+|---|---|
+| `CLAUDE.md` | Operating rules — read this before changing anything |
+| `EDA_FINDINGS.md` | Full analysis log, numbered, including the retractions |
+| `ARCHITECTURE.md` | The three-chunk split and its interfaces |
+| `FEEDBACK_FOR_AUSTIN.md` | Cross-repo notes both ways |
+| `STATUS.md`, `UTILIZATION.md` | Austin's status and the pilot contract |
 
 ## Setup
 
@@ -590,6 +636,16 @@ python scripts/build_submission.py --submit -m "note"
 ```
 
 This will not send anything unless the local validation episode passes.
+
+**The quota, since it is easy to waste.** Five submissions a day, resetting at
+**00:00 UTC** — which is 8pm US Eastern, so a submission "day" starts the
+previous evening. The count is **shared across the team**, so coordinate before
+spending one. Submissions that fail validation return an error and do **not**
+consume one; a bad bundle costs time, not quota. Only the most recent submission
+is active on the ladder, so a worse one replaces a better one.
+
+And ratings take **hours** to settle — 724.9 became 305.8, 634.9 became 695.8.
+Never judge a submission on a fresh score.
 
 ## Status
 
