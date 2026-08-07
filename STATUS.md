@@ -1,10 +1,12 @@
-**Last updated: 2026-08-07 ~15:00 ET (Aug 7)**
+**Last updated: 2026-08-07 ~16:50 ET (Aug 7)**
 
 # Status — Austin's side (deck creation + shared infra)
 
 ## Update — Aug 7 PM (v3 shipped: the scaling-attack blindness fix)
 
-- **v3 = v2 + the scaled-damage bundle, gated and submitted.** The threat
+- **v3 = v2 + the scaled-damage bundle, gated and SUBMITTED 2026-08-07
+  20:50 UTC** (same Ogerpon list, repaired pilot; 2 team submissions left
+  today — sequence yours under the latest-2 rule). The threat
   machinery read printed damage only, so Alakazam's Powerful Hand (printed
   0, 20 x own hand size) registered as ZERO threat while Dudunsparce
   engines built 20-card hands — the ladder-autopsy loss mode Austin ruled
