@@ -16,6 +16,8 @@ Per mined day, `data/mined/<date>/`:
     decisions.parquet   one row per decision (csv.gz when pyarrow is missing)
     series.parquet      one row per (episode, seat, turn): the board as that
                         seat's turn opened, for turn-to-turn trajectories
+    attacks.parquet     one row per attack chosen: attack id, attacker and
+                        defender card ids, and the realized HP change
     positions.jsonl.gz  2,000 full observations, weighted toward high ratings
     meta.json           episode counts, rating spread, filter survival at cuts
 
@@ -108,6 +110,30 @@ SERIES_COLUMNS = [
     ("opp_hand_count", "int32"), ("opp_prizes_remaining", "int32"),
     ("damage_taken_cumulative", "int32"),
     ("won", "int8"),
+]
+
+# One row per attack chosen at a main menu: the attack's identity, who hit
+# whom, and what the hit was actually worth. `defender_hp_before` is the
+# defender's Active HP at the decision; the outcome is read off the next
+# observed board state (either seat's), tracking the defender by its `serial`
+# instance id: still on the board -> `defender_hp_after` is its HP (bench
+# included, so a mon that retreated after the hit keeps its damage);
+# gone -> `ko` = 1 and the change is the HP it had left. Attacks with no later
+# board state to read (the game's final attack when the replay ends on it)
+# carry `resolved` = 0 and -1 sentinels. `hp_change` is before minus after:
+# negative means the defender healed past the hit.
+ATTACK_COLUMNS = [
+    ("episode_id", "int64"), ("date", "str"), ("seat", "int8"),
+    ("agent_name", "str"), ("opp_name", "str"),
+    ("agent_rating", "float64"), ("opp_rating", "float64"),
+    ("step", "int32"), ("turn", "int32"),
+    ("attack_id", "int32"),
+    ("attacker_card_id", "int32"), ("defender_card_id", "int32"),
+    ("defender_hp_before", "int32"), ("defender_max_hp", "int32"),
+    ("defender_hp_after", "int32"), ("hp_change", "int32"),
+    ("ko", "int8"), ("resolved", "int8"),
+    ("our_archetype", "str"), ("opp_archetype", "str"),
+    ("went_first", "int8"), ("won", "int8"),
 ]
 
 
@@ -209,6 +235,64 @@ def _side_state(p: dict) -> dict:
             "prizes": len(p.get("prize") or [])}
 
 
+def _active_mon(p: dict) -> dict | None:
+    """The player's Active Pokemon dict, or None."""
+    act = p.get("active")
+    if isinstance(act, list):
+        act = act[0] if act else None
+    return act if isinstance(act, dict) else None
+
+
+def _find_serial(p: dict, serial) -> dict | None:
+    """The mon with this `serial` instance id anywhere on this player's board."""
+    for zone in ("active", "bench"):
+        for mon in (p.get(zone) or []):
+            if isinstance(mon, dict) and mon.get("serial") == serial:
+                return mon
+    return None
+
+
+def _resolve_attacks(pending: list, attacks: list, players: list, step: int,
+                     seat: int | None = None, turn: int | None = None) -> None:
+    """Settle pending attack rows against a later observed board state.
+
+    A decision by the attacking seat inside the attack's own turn is one of the
+    attack's sub-selects (pick a target, flip decision), observed *before* the
+    damage lands, so it cannot settle the attack; pass that decision's seat and
+    turn to skip those rows. The terminal call omits them and settles all.
+    """
+    ready = [a for a in pending if step > a["step"]
+             and not (seat == a["seat"] and turn == a["turn"])]
+    for a in ready:
+        pending.remove(a)
+        dp = players[a["def_index"]] if len(players) == 2 else None
+        if dp is None:
+            continue
+        mon = _find_serial(dp, a.pop("def_serial"))
+        a.pop("def_index")
+        if mon is None:
+            a.update(defender_hp_after=0, hp_change=a["defender_hp_before"],
+                     ko=1, resolved=1)
+        else:
+            after = int(mon.get("hp") or 0)
+            a.update(defender_hp_after=after,
+                     hp_change=a["defender_hp_before"] - after,
+                     ko=0, resolved=1)
+        attacks.append(a)
+
+
+def _last_board(steps: list, after_step: int) -> tuple[int, list] | None:
+    """Latest (step, players) with a full 2-player state at step > after_step."""
+    for t in range(len(steps) - 1, after_step, -1):
+        for ag in steps[t]:
+            cur = (ag.get("observation") or {}).get("current")
+            if isinstance(cur, dict):
+                players = cur.get("players") or []
+                if len(players) == 2:
+                    return t, players
+    return None
+
+
 def _winner(rewards: list) -> int | None:
     if len(rewards) != 2:
         return None
@@ -229,6 +313,7 @@ def episode_payload(path) -> dict | None:
     want_dec = cfg.get("decisions", True)
     want_pos = cfg.get("positions", True)
     want_ser = cfg.get("series", True)
+    want_atk = cfg.get("attacks", True)
     pos_per_ep = cfg.get("pos_per_episode", 2)
     try:
         with open(path, "r", encoding="utf-8") as fh:
@@ -269,16 +354,19 @@ def episode_payload(path) -> dict | None:
         "rows": [],
         "positions": [],
         "series": [],
+        "attacks": [],
         "n_decisions": 0,
     }
 
-    if not (want_dec or want_pos or want_ser):
+    if not (want_dec or want_pos or want_ser or want_atk):
         return out
 
     rng = random.Random(out["episode_id"])
     seen = 0
     rows = out["rows"]
     series = out["series"]
+    attacks = out["attacks"]
+    pending_atk: list[dict] = []   # attacks awaiting a later board state
     turn_seen = [set(), set()]   # game-turn numbers already recorded per seat
     for t, seat, obs, sel, chosen in iter_decisions(steps):
         seen += 1
@@ -287,6 +375,9 @@ def episode_payload(path) -> dict | None:
         me = cur.get("yourIndex", seat)
         if not isinstance(me, int) or me not in (0, 1):
             me = seat
+        if pending_atk and len(players) == 2:
+            _resolve_attacks(pending_atk, attacks, players, t,
+                             seat=seat, turn=int(cur.get("turn") or -1))
         pm = pt = -1
         if len(players) == 2:
             pm = len(players[me].get("prize") or [])
@@ -331,6 +422,28 @@ def episode_payload(path) -> dict | None:
         ctype = -1
         if chosen and 0 <= chosen[0] < len(opts):
             ctype = int(opts[chosen[0]].get("type", -1))
+        if want_atk and ctype == 13 and len(players) == 2:
+            att = _active_mon(players[me])
+            dfn = _active_mon(players[1 - me])
+            if att is not None and dfn is not None:
+                pending_atk.append({
+                    "episode_id": out["episode_id"], "date": date,
+                    "seat": seat,
+                    "agent_name": agents[seat], "opp_name": agents[1 - seat],
+                    "agent_rating": None, "opp_rating": None,
+                    "step": t, "turn": int(cur.get("turn") or -1),
+                    "attack_id": int(opts[chosen[0]].get("attackId", -1)),
+                    "attacker_card_id": int(att.get("id") or -1),
+                    "defender_card_id": int(dfn.get("id") or -1),
+                    "defender_hp_before": int(dfn.get("hp") or 0),
+                    "defender_max_hp": int(dfn.get("maxHp") or -1),
+                    "our_archetype": arch[seat],
+                    "opp_archetype": arch[1 - seat],
+                    "went_first": int(fp == seat) if fp >= 0 else -1,
+                    "won": won[seat],
+                    "def_serial": dfn.get("serial"),
+                    "def_index": 1 - me,
+                })
         if want_dec:
             rows.append({
                 "episode_id": out["episode_id"], "date": date, "seat": seat,
@@ -369,6 +482,18 @@ def episode_payload(path) -> dict | None:
                 },
                 "obs": json.dumps(obs, ensure_ascii=False),
             })
+    # The game's last attack has no later decision to read its outcome from;
+    # settle it against the final observed board state (the replay's trailing
+    # steps carry observations past the last select).
+    if pending_atk:
+        last = _last_board(steps, min(a["step"] for a in pending_atk))
+        if last is not None:
+            _resolve_attacks(pending_atk, attacks, last[1], last[0])
+        for a in pending_atk:   # nothing later to read: sentinels
+            a.pop("def_serial", None)
+            a.pop("def_index", None)
+            a.update(defender_hp_after=-1, hp_change=-1, ko=-1, resolved=0)
+            attacks.append(a)
     out["n_decisions"] = seen
     return out
 
@@ -464,6 +589,41 @@ class Decisions(Extractor):
         self.writer.close()
         return {"decisions_rows": self.writer.n,
                 "decisions_file": self.writer.path.name}
+
+
+class Attacks(Extractor):
+    """One row per attack event: identity, target, and realized HP change."""
+    name = "attacks"
+
+    def __init__(self, outdir: Path, ratings: "Ratings"):
+        self.writer = RowWriter(outdir, columns=ATTACK_COLUMNS, name="attacks")
+        self.ratings = ratings
+        self.buf: list[dict] = []
+        self.unresolved = 0
+
+    def collect(self, payload: dict) -> None:
+        rows = payload.get("attacks") or []
+        if not rows:
+            return
+        a, b = payload["agents"]
+        ra, rb = self.ratings.get(a), self.ratings.get(b)
+        for r in rows:
+            first = r["seat"] == 0
+            r["agent_rating"], r["opp_rating"] = (ra, rb) if first else (rb, ra)
+            if not r["resolved"]:
+                self.unresolved += 1
+        self.buf.extend(rows)
+        if len(self.buf) >= 20000:
+            self.writer.write(self.buf)
+            self.buf = []
+
+    def finalize(self, outdir: Path, ctx: dict) -> dict:
+        self.writer.write(self.buf)
+        self.buf = []
+        self.writer.close()
+        return {"attacks_rows": self.writer.n,
+                "attacks_unresolved": self.unresolved,
+                "attacks_file": self.writer.path.name}
 
 
 class Series(Extractor):
@@ -829,7 +989,8 @@ class DayResult:
 def run_day(date: str, outdir: Path | None = None, workers: int = 2,
             limit: int | None = None, positions: int = 2000,
             pos_per_episode: int = 2, want: tuple[str, ...] = (
-                "decisions", "series", "positions", "first_player", "meta"),
+                "decisions", "series", "positions", "attacks",
+                "first_player", "meta"),
             deck_rows: bool = False, files: list | None = None,
             chunksize: int = 4) -> DayResult:
     """Run every extractor over one day's replays in a single pass."""
@@ -858,6 +1019,8 @@ def run_day(date: str, outdir: Path | None = None, workers: int = 2,
     if "positions" in want:
         pos = Positions(outdir, ratings, k=positions)
         exts.append(pos)
+    if "attacks" in want:
+        exts.append(Attacks(outdir, ratings))
     if "first_player" in want:
         fpx = FirstPlayer()
         exts.append(fpx)
@@ -867,6 +1030,7 @@ def run_day(date: str, outdir: Path | None = None, workers: int = 2,
 
     cfg = {"date": date, "decisions": "decisions" in want,
            "positions": "positions" in want, "series": "series" in want,
+           "attacks": "attacks" in want,
            "pos_per_episode": pos_per_episode}
     t0 = time.perf_counter()
     with ProcessPoolExecutor(max_workers=workers, initializer=_worker_init,
@@ -888,6 +1052,7 @@ def run_day(date: str, outdir: Path | None = None, workers: int = 2,
                             "n_steps": payload["n_steps"],
                             "deck": payload["decks"][s]})
             payload["rows"] = payload["positions"] = payload["series"] = None
+            payload["attacks"] = None
             if i % 250 == 0:
                 el = time.perf_counter() - t0
                 print(f"    {i}/{len(paths)} episodes  {el:.0f}s  "
@@ -947,7 +1112,8 @@ def main() -> None:
     ap.add_argument("--positions", type=int, default=2000)
     ap.add_argument("--out", default=None, help="output root (default data/mined)")
     ap.add_argument("--extractors",
-                    default="decisions,series,positions,first_player,meta")
+                    default="decisions,series,positions,attacks,"
+                            "first_player,meta")
     args = ap.parse_args()
     want = tuple(x.strip() for x in args.extractors.split(",") if x.strip())
     for date in args.dates:
