@@ -96,9 +96,11 @@ def append(df: pd.DataFrame, path: Path) -> None:
 
 
 def mine(date: str, by_id: pd.DataFrame, keep: bool,
-         decks_only: bool = False) -> bool:
+         decks_only: bool = False, extract: bool = False,
+         workers: int | None = None, positions: int = 2000) -> bool:
     print(f"\n=== {date} ===")
-    if already_done(date) and not decks_only:
+    in_history = already_done(date)
+    if in_history and not decks_only and not extract:
         print("  already in history — skipping")
         return True
     if decks_only and DECKS_CSV.exists():
@@ -115,11 +117,25 @@ def mine(date: str, by_id: pd.DataFrame, keep: bool,
     print(f"  parsing {len(files)} episodes...")
     t0 = time.perf_counter()
     rows: list[dict] = []
-    with ProcessPoolExecutor() as pool:
-        for res in pool.map(_job, files, chunksize=16):
-            if res:
-                rows.extend(res)
+    if extract:
+        # One pass, every extractor: the decision rows, the sampled positions
+        # and the day's counts come off the same parse as the deck instances.
+        from ptcg.extract import run_day
+        res = run_day(date, workers=workers or 2, files=files,
+                      positions=positions, deck_rows=True)
+        rows = res.deck_rows
+    else:
+        with ProcessPoolExecutor(max_workers=workers) as pool:
+            for res in pool.map(_job, files, chunksize=16):
+                if res:
+                    rows.extend(res)
     print(f"  {len(rows)} deck instances in {time.perf_counter() - t0:.0f}s")
+
+    if in_history and extract:
+        print("  day already in history — extractor output only, no re-append")
+        if not keep:
+            purge_day(date)
+        return True
 
     cards, arch, agents = aggregate_day(rows, by_id, date)
     if not decks_only:
@@ -165,6 +181,14 @@ def main() -> None:
     ap.add_argument("--decks-only", action="store_true",
                     help="capture decklists for a day already aggregated "
                          "(the earliest days were mined before decklists were)")
+    ap.add_argument("--extract", action="store_true",
+                    help="run the extractor bus over the day as well: "
+                         "decisions, sampled positions, meta (data/mined/<date>)")
+    ap.add_argument("--workers", type=int, default=None,
+                    help="parse workers (default: every core; use 2 when this "
+                         "machine is also running a GA)")
+    ap.add_argument("--positions", type=int, default=2000,
+                    help="full observations sampled per day with --extract")
     args = ap.parse_args()
 
     os.environ.setdefault("KAGGLE_API_TOKEN", os.environ.get("KAGGLE_API_TOKEN", ""))
@@ -182,7 +206,8 @@ def main() -> None:
         print(f"mining {len(dates)} most recent days: {dates}")
 
     for d in dates:
-        if not mine(d, by_id, args.keep, args.decks_only):
+        if not mine(d, by_id, args.keep, args.decks_only, args.extract,
+                    args.workers, args.positions):
             print(f"  stopping at {d}")
             break
 
