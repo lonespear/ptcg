@@ -730,7 +730,13 @@ def leaderboard_snapshot(refresh_hours: float = 24.0) -> tuple[dict, str]:
             for f in tmp.iterdir():
                 f.unlink()
             tmp.rmdir()
-        except Exception as e:  # keep going on a stale or missing snapshot
+        except KeyboardInterrupt:
+            raise
+        except BaseException as e:
+            # BaseException, not Exception: the current kaggle client
+            # sys.exit()s when it finds no credentials, and SystemExit would
+            # sail past an Exception handler and kill the caller. A missing
+            # login must degrade to the cached snapshot like any other failure.
             print(f"  leaderboard refresh failed ({type(e).__name__}: "
                   f"{str(e)[:120]}) — falling back to any cached snapshot")
     if not path.exists():
