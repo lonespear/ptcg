@@ -1,0 +1,5929 @@
+{
+ "submission": 55311822,
+ "team": "Lemmes Yad",
+ "n_episodes": 53,
+ "wins": 27,
+ "losses": 26,
+ "errors": [],
+ "primary_distribution": {
+  "e_resource_death": 11,
+  "b_traded_badly": 14,
+  "a_structural_race": 1
+ },
+ "tag_counts": {
+  "b_traded_badly": 20,
+  "e_resource_death": 13,
+  "a_structural_race": 1
+ },
+ "by_opponent_archetype": {
+  "Fezandipiti ex": {
+   "w": 8,
+   "l": 7
+  },
+  "Team Rocket's Mewtwo ex": {
+   "w": 0,
+   "l": 1
+  },
+  "Dudunsparce": {
+   "w": 1,
+   "l": 5
+  },
+  "Marnie's Grimmsnarl ex": {
+   "w": 10,
+   "l": 3
+  },
+  "Mega Lucario ex": {
+   "w": 1,
+   "l": 3
+  },
+  "Archaludon ex": {
+   "w": 3,
+   "l": 4
+  },
+  "Mega Starmie ex": {
+   "w": 2,
+   "l": 0
+  },
+  "Teal Mask Ogerpon ex": {
+   "w": 0,
+   "l": 2
+  },
+  "Cynthia's Garchomp ex": {
+   "w": 1,
+   "l": 0
+  },
+  "Crustle": {
+   "w": 0,
+   "l": 1
+  },
+  "N\u2019s Zoroark ex": {
+   "w": 1,
+   "l": 0
+  }
+ },
+ "trade_economics": {
+  "losses": {
+   "our_kos": 49,
+   "our_prizes": 61,
+   "their_kos": 63,
+   "their_prizes": 126,
+   "our_prizes_per_ko": 1.24,
+   "their_prizes_per_ko": 2.0
+  },
+  "wins": {
+   "our_kos": 123,
+   "our_prizes": 158,
+   "their_kos": 33,
+   "their_prizes": 66,
+   "our_prizes_per_ko": 1.28,
+   "their_prizes_per_ko": 2.0
+  },
+  "losses_with_ko_parity_but_prize_deficit": 9
+ },
+ "termination_modes": {
+  "losses": {
+   "no-active": 10,
+   "prizes": 15,
+   "deck-out": 1
+  },
+  "wins": {
+   "prizes": 25,
+   "no-active": 2
+  }
+ },
+ "control_group": {
+  "wins_with_lethal_seen": 23,
+  "wins_with_lethal_missed": 0,
+  "wins_with_race_inversion": 0,
+  "wins_with_bad_promotion": 0
+ },
+ "episodes": [
+  {
+   "episode_id": 90585940,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "MERO TOKI",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 16,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Abra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 14,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dudunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 16,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 6,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 8,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 14,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 16,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 16,
+     "attack_id": 120,
+     "damage": 270,
+     "target": "Dudunsparce",
+     "target_hp": 140,
+     "prizes_needed": 1,
+     "my_energy": 8,
+     "their_energy": 0
+    },
+    {
+     "turn": 16,
+     "attack_id": 120,
+     "damage": 270,
+     "target": "Dunsparce",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 8,
+     "their_energy": 0
+    },
+    {
+     "turn": 16,
+     "attack_id": 120,
+     "damage": 300,
+     "target": "Dunsparce",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 9,
+     "their_energy": 0
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90586715,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "DiT PTCG AK",
+   "opp_archetype": "Team Rocket's Mewtwo ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 9,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 5,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Team Rocket's Spidops",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": -3,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2,
+    8
+   ],
+   "tags": [
+    "b_traded_badly",
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90587512,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "ibyyue",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 8,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 3,
+    "them": 6
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Shaymin",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 3,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90588297,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "PRASHANT SHUKLA91",
+   "opp_archetype": "Dudunsparce",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 8,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 5,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Abra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 8,
+     "diff": -3,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [
+    "b_traded_badly",
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90589096,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "Lam Mo Kit ",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 11,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 6
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Impidimp",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Morgrem",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 5,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 6,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 120,
+     "target": "Munkidori",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 0
+    },
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 120,
+     "target": "Munkidori",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 0
+    },
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 120,
+     "target": "Munkidori",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 0
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90589884,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "a982295350",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 11,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Abra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 4,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Fezandipiti ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 4,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 5,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 210,
+     "target": "Fezandipiti ex",
+     "target_hp": 210,
+     "prizes_needed": 2,
+     "my_energy": 6,
+     "their_energy": 0
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90590668,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "GuerillaMoon",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 10,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 10,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": 1,
+     "taker": "them"
+    },
+    {
+     "turn": 8,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 360,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 5,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 6,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 6,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 6,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 6,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 6,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 6,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 6,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 480,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 480,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 480,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 480,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 0
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90590778,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "srikalyan",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 13,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 13,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": 1,
+     "taker": "them"
+    },
+    {
+     "turn": 13,
+     "diff": 2,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 150,
+     "target": "Alakazam",
+     "target_hp": 140,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 1
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 150,
+     "target": "Alakazam",
+     "target_hp": 140,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 1
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 180,
+     "target": "Alakazam",
+     "target_hp": 140,
+     "prizes_needed": 1,
+     "my_energy": 4,
+     "their_energy": 1
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 180,
+     "target": "Alakazam",
+     "target_hp": 140,
+     "prizes_needed": 1,
+     "my_energy": 4,
+     "their_energy": 1
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 210,
+     "target": "Alakazam",
+     "target_hp": 140,
+     "prizes_needed": 1,
+     "my_energy": 5,
+     "their_energy": 1
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90591560,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "TomJ286991",
+   "opp_archetype": "Mega Lucario ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 10,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 2,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Makuhita",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 3,
+     "victim": "Mega Lucario ex",
+     "victim_prize_value": 3
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 10,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 10,
+     "diff": -2,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    9
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90592260,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "Fumi",
+   "opp_archetype": "Archaludon ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 8,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 4,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Archaludon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 6,
+     "diff": -2,
+     "taker": "them"
+    },
+    {
+     "turn": 8,
+     "diff": -4,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": {
+    "our_last_turn": 7,
+    "their_attacker": "Archaludon ex",
+    "attack_damage": 220,
+    "our_active": "Teal Mask Ogerpon ex",
+    "our_active_hp": 210,
+    "their_prizes_needed": 2,
+    "dodge_available": false
+   },
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90593062,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "Athar Sayed",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 8,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 5,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 6,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 8,
+     "attack_id": 120,
+     "damage": 480,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 310,
+     "prizes_needed": 2,
+     "my_energy": 3,
+     "their_energy": 4
+    },
+    {
+     "turn": 8,
+     "attack_id": 120,
+     "damage": 540,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 310,
+     "prizes_needed": 2,
+     "my_energy": 4,
+     "their_energy": 4
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90593844,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "Jules",
+   "opp_archetype": "Archaludon ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 10,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 6,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 10,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": -2,
+     "taker": "them"
+    },
+    {
+     "turn": 6,
+     "diff": -4,
+     "taker": "them"
+    },
+    {
+     "turn": 10,
+     "diff": -6,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": {
+    "our_last_turn": 9,
+    "their_attacker": "Archaludon ex",
+    "attack_damage": 230,
+    "our_active": "Teal Mask Ogerpon ex",
+    "our_active_hp": 100,
+    "their_prizes_needed": 2,
+    "dodge_available": false
+   },
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    7
+   ],
+   "tags": [
+    "a_structural_race"
+   ],
+   "primary": "a_structural_race"
+  },
+  {
+   "episode_id": 90594646,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "KatoYui",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 8,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 5,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 4,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 4,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 6,
+     "diff": -3,
+     "taker": "them"
+    },
+    {
+     "turn": 8,
+     "diff": -5,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    5,
+    7
+   ],
+   "tags": [
+    "b_traded_badly",
+    "e_resource_death"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90595440,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "\u304b\u30fc\u30fc\u304d",
+   "opp_archetype": "Archaludon ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 12,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Duraludon",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Duraludon",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Duraludon",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Archaludon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 11,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 12,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Relicanth",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": 5,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 3,
+     "taker": "them"
+    },
+    {
+     "turn": 12,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 12,
+     "attack_id": 120,
+     "damage": 240,
+     "target": "Relicanth",
+     "target_hp": 130,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 0
+    },
+    {
+     "turn": 12,
+     "attack_id": 120,
+     "damage": 300,
+     "target": "Relicanth",
+     "target_hp": 130,
+     "prizes_needed": 1,
+     "my_energy": 4,
+     "their_energy": 0
+    },
+    {
+     "turn": 12,
+     "attack_id": 120,
+     "damage": 300,
+     "target": "Relicanth",
+     "target_hp": 130,
+     "prizes_needed": 1,
+     "my_energy": 4,
+     "their_energy": 0
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90596164,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "PhN01",
+   "opp_archetype": "Dudunsparce",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 12,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 2,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 8,
+     "diff": -3,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": -2,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": -2,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90597039,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "\u0414\u0435\u043d\u0438\u0441",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 11,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 1,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 3,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90597831,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "Ravindra",
+   "opp_archetype": "Dudunsparce",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 12,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 2,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 5,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": -2,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": -1,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": -2,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    3
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90598550,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "Kyoungwon Jeong",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 14,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 12,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 14,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 12,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 14,
+     "diff": 2,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 14,
+     "attack_id": 120,
+     "damage": 150,
+     "target": "Kadabra",
+     "target_hp": 80,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 1
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90599417,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "Shang Bo",
+   "opp_archetype": "Dudunsparce",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 11,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 1,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 11,
+     "diff": 2,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90600210,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "Ying Peter",
+   "opp_archetype": "Mega Starmie ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 13,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 3,
+     "victim": "Mega Starmie ex",
+     "victim_prize_value": 3
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Froslass",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 13,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Mega Starmie ex",
+     "victim_prize_value": 3
+    }
+   ],
+   "race": [
+    {
+     "turn": 7,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 4,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": 2,
+     "taker": "them"
+    },
+    {
+     "turn": 13,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 150,
+     "target": "Mega Starmie ex",
+     "target_hp": 60,
+     "prizes_needed": 2,
+     "my_energy": 3,
+     "their_energy": 1
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    3
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90601014,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "Seiyo",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 11,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Snorunt",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Impidimp",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Impidimp",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Impidimp",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": 4,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 2,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 300,
+     "target": "Marnie's Impidimp",
+     "target_hp": 70,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 1
+    },
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 360,
+     "target": "Marnie's Impidimp",
+     "target_hp": 70,
+     "prizes_needed": 1,
+     "my_energy": 4,
+     "their_energy": 1
+    },
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 360,
+     "target": "Marnie's Impidimp",
+     "target_hp": 70,
+     "prizes_needed": 1,
+     "my_energy": 4,
+     "their_energy": 1
+    },
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 360,
+     "target": "Marnie's Impidimp",
+     "target_hp": 70,
+     "prizes_needed": 1,
+     "my_energy": 4,
+     "their_energy": 1
+    },
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 360,
+     "target": "Marnie's Impidimp",
+     "target_hp": 70,
+     "prizes_needed": 1,
+     "my_energy": 4,
+     "their_energy": 1
+    },
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Impidimp",
+     "target_hp": 70,
+     "prizes_needed": 1,
+     "my_energy": 5,
+     "their_energy": 1
+    },
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Impidimp",
+     "target_hp": 70,
+     "prizes_needed": 1,
+     "my_energy": 5,
+     "their_energy": 1
+    },
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Impidimp",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 5,
+     "their_energy": 1
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90601812,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "\u0431\u0443\u0440\u043c\u0430\u043b\u0434\u0438\u043d\u0438 (cifcifcifarrr-67)",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 14,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 6
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Impidimp",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Morgrem",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Morgrem",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 14,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": 4,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": 5,
+     "taker": "us"
+    },
+    {
+     "turn": 14,
+     "diff": 6,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 14,
+     "attack_id": 120,
+     "damage": 360,
+     "target": "Munkidori",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 10,
+     "their_energy": 1
+    },
+    {
+     "turn": 14,
+     "attack_id": 120,
+     "damage": 360,
+     "target": "Munkidori",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 10,
+     "their_energy": 1
+    },
+    {
+     "turn": 14,
+     "attack_id": 120,
+     "damage": 360,
+     "target": "Munkidori",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 10,
+     "their_energy": 1
+    },
+    {
+     "turn": 14,
+     "attack_id": 120,
+     "damage": 390,
+     "target": "Munkidori",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 11,
+     "their_energy": 1
+    },
+    {
+     "turn": 14,
+     "attack_id": 120,
+     "damage": 390,
+     "target": "Munkidori",
+     "target_hp": 100,
+     "prizes_needed": 1,
+     "my_energy": 11,
+     "their_energy": 1
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90602584,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "kotsuton",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 12,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 2,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 11,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": -2,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    9
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90603363,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "\u305f\u3051\u307e\u308b",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 13,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 13,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": 1,
+     "taker": "them"
+    },
+    {
+     "turn": 13,
+     "diff": 2,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 150,
+     "target": "Alakazam",
+     "target_hp": 140,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 1
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90604161,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "Kers Aoyagi",
+   "opp_archetype": "Teal Mask Ogerpon ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 23,
+   "termination": "deck-out",
+   "final_prizes_left": {
+    "us": 6,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 14,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 20,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 14,
+     "diff": -2,
+     "taker": "them"
+    },
+    {
+     "turn": 20,
+     "diff": -4,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90604939,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "Ross Sponholtz",
+   "opp_archetype": "Mega Lucario ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 10,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 4,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Solrock",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Solrock",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 10,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 8,
+     "diff": -2,
+     "taker": "them"
+    },
+    {
+     "turn": 10,
+     "diff": -4,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90605557,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "SHICHIES",
+   "opp_archetype": "Archaludon ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 13,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Duraludon",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 10,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 3,
+     "victim": "Archaludon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 13,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Archaludon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 5,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 10,
+     "diff": -3,
+     "taker": "them"
+    },
+    {
+     "turn": 11,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 13,
+     "diff": 2,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 300,
+     "target": "Archaludon ex",
+     "target_hp": 300,
+     "prizes_needed": 2,
+     "my_energy": 7,
+     "their_energy": 3
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    7
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90605761,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "arai9953",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 12,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 1,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Abra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 11,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": -1,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    9
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90606541,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "Bocchieri Alberto",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 7,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 4,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": 0,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90607323,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "\u30ab\u30c9\u30e9\u30d0 Kadoraba",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 13,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Abra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Abra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 13,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Fezandipiti ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 4,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": 2,
+     "taker": "them"
+    },
+    {
+     "turn": 11,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 13,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 240,
+     "target": "Fezandipiti ex",
+     "target_hp": 240,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 0
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90608112,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "nynyny67",
+   "opp_archetype": "Mega Starmie ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 14,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 9,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 10,
+     "taker": "us",
+     "prizes": 3,
+     "victim": "Mega Starmie ex",
+     "victim_prize_value": 3
+    },
+    {
+     "turn": 14,
+     "taker": "us",
+     "prizes": 3,
+     "victim": "Mega Starmie ex",
+     "victim_prize_value": 3
+    }
+   ],
+   "race": [
+    {
+     "turn": 9,
+     "diff": -2,
+     "taker": "them"
+    },
+    {
+     "turn": 10,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 14,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 14,
+     "attack_id": 120,
+     "damage": 300,
+     "target": "Mega Starmie ex",
+     "target_hp": 60,
+     "prizes_needed": 3,
+     "my_energy": 7,
+     "their_energy": 2
+    },
+    {
+     "turn": 14,
+     "attack_id": 120,
+     "damage": 300,
+     "target": "Mega Starmie ex",
+     "target_hp": 60,
+     "prizes_needed": 3,
+     "my_energy": 7,
+     "their_energy": 2
+    },
+    {
+     "turn": 14,
+     "attack_id": 120,
+     "damage": 300,
+     "target": "Mega Starmie ex",
+     "target_hp": 60,
+     "prizes_needed": 3,
+     "my_energy": 7,
+     "their_energy": 2
+    },
+    {
+     "turn": 14,
+     "attack_id": 120,
+     "damage": 330,
+     "target": "Mega Starmie ex",
+     "target_hp": 60,
+     "prizes_needed": 3,
+     "my_energy": 8,
+     "their_energy": 2
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90608916,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "\u7d50\u675f\u30d0\u30f3\u30c9",
+   "opp_archetype": "Dudunsparce",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 10,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 2,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Abra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": -2,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90609700,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "EliKal",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 9,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Impidimp",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": 4,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 2,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 9,
+     "attack_id": 120,
+     "damage": 540,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 320,
+     "prizes_needed": 2,
+     "my_energy": 3,
+     "their_energy": 5
+    },
+    {
+     "turn": 9,
+     "attack_id": 120,
+     "damage": 600,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 320,
+     "prizes_needed": 2,
+     "my_energy": 4,
+     "their_energy": 5
+    },
+    {
+     "turn": 9,
+     "attack_id": 120,
+     "damage": 600,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 320,
+     "prizes_needed": 2,
+     "my_energy": 4,
+     "their_energy": 5
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90610506,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "Akamatsu",
+   "opp_archetype": "Mega Lucario ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 12,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 3,
+     "victim": "Mega Lucario ex",
+     "victim_prize_value": 3
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Solrock",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 9,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 10,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Hariyama",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Lunatone",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": -2,
+     "taker": "them"
+    },
+    {
+     "turn": 6,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 10,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": 2,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 12,
+     "attack_id": 120,
+     "damage": 540,
+     "target": "Solrock",
+     "target_hp": 110,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 1
+    },
+    {
+     "turn": 12,
+     "attack_id": 120,
+     "damage": 480,
+     "target": "Lunatone",
+     "target_hp": 110,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 0
+    },
+    {
+     "turn": 12,
+     "attack_id": 120,
+     "damage": 540,
+     "target": "Lunatone",
+     "target_hp": 110,
+     "prizes_needed": 1,
+     "my_energy": 8,
+     "their_energy": 0
+    },
+    {
+     "turn": 12,
+     "attack_id": 120,
+     "damage": 540,
+     "target": "Lunatone",
+     "target_hp": 110,
+     "prizes_needed": 1,
+     "my_energy": 8,
+     "their_energy": 0
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90611299,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "Emile Andrieu",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 9,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 1,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 6,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 1,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": -1,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90612088,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "MarKoz",
+   "opp_archetype": "Archaludon ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 13,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Archaludon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Archaludon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 12,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 13,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Archaludon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 13,
+     "diff": 2,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 180,
+     "target": "Archaludon ex",
+     "target_hp": 60,
+     "prizes_needed": 2,
+     "my_energy": 3,
+     "their_energy": 3
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 180,
+     "target": "Archaludon ex",
+     "target_hp": 60,
+     "prizes_needed": 2,
+     "my_energy": 3,
+     "their_energy": 3
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 210,
+     "target": "Archaludon ex",
+     "target_hp": 60,
+     "prizes_needed": 2,
+     "my_energy": 4,
+     "their_energy": 3
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 240,
+     "target": "Archaludon ex",
+     "target_hp": 60,
+     "prizes_needed": 2,
+     "my_energy": 5,
+     "their_energy": 3
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90612909,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "Ash Kecap",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 12,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Impidimp",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Morgrem",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Morgrem",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Impidimp",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 12,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 12,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": 4,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 2,
+     "taker": "them"
+    },
+    {
+     "turn": 12,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 12,
+     "diff": 2,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90613653,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "Jose Angel Jude Telan",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 13,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Impidimp",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Morgrem",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 13,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 5,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": 1,
+     "taker": "them"
+    },
+    {
+     "turn": 11,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 13,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 600,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 2
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 600,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 2
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 600,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 2
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 660,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 8,
+     "their_energy": 2
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 720,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 9,
+     "their_energy": 2
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 720,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 300,
+     "prizes_needed": 1,
+     "my_energy": 9,
+     "their_energy": 2
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    3
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90614477,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "Kyohei",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 8,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 5,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 5,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 8,
+     "diff": -3,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    7
+   ],
+   "tags": [
+    "b_traded_badly",
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90623099,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "AkiraIshikawa",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 13,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 6
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Impidimp",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Morgrem",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Morgrem",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Froslass",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 13,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 7,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 4,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 5,
+     "taker": "us"
+    },
+    {
+     "turn": 13,
+     "diff": 6,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 270,
+     "target": "Munkidori",
+     "target_hp": 130,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 1
+    },
+    {
+     "turn": 13,
+     "attack_id": 120,
+     "damage": 270,
+     "target": "Munkidori",
+     "target_hp": 130,
+     "prizes_needed": 1,
+     "my_energy": 7,
+     "their_energy": 1
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90629959,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "Articuno0144",
+   "opp_archetype": "Teal Mask Ogerpon ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 8,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 4,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": -2,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": -2,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    5
+   ],
+   "tags": [
+    "b_traded_badly",
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90630214,
+   "won": true,
+   "our_seat": 1,
+   "opp_team": "Yam",
+   "opp_archetype": "Cynthia's Garchomp ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 10,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Cynthia's Gible",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Cynthia's Gabite",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Cynthia's Garchomp ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 10,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Cynthia's Garchomp ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 4,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 2,
+     "taker": "them"
+    },
+    {
+     "turn": 10,
+     "diff": 4,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Cynthia's Garchomp ex",
+     "target_hp": 400,
+     "prizes_needed": 2,
+     "my_energy": 6,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Cynthia's Garchomp ex",
+     "target_hp": 400,
+     "prizes_needed": 2,
+     "my_energy": 6,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Cynthia's Garchomp ex",
+     "target_hp": 400,
+     "prizes_needed": 2,
+     "my_energy": 6,
+     "their_energy": 0
+    },
+    {
+     "turn": 10,
+     "attack_id": 120,
+     "damage": 480,
+     "target": "Cynthia's Garchomp ex",
+     "target_hp": 400,
+     "prizes_needed": 2,
+     "my_energy": 7,
+     "their_energy": 0
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90640463,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "cannotflypig",
+   "opp_archetype": "Crustle",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 20,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 4,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dwebble",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 16,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 17,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dwebble",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 20,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 9,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 16,
+     "diff": -3,
+     "taker": "them"
+    },
+    {
+     "turn": 17,
+     "diff": -2,
+     "taker": "us"
+    },
+    {
+     "turn": 20,
+     "diff": -4,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": {
+    "our_last_turn": 19,
+    "their_attacker": "Crustle",
+    "attack_damage": 120,
+    "our_active": "Teal Mask Ogerpon ex",
+    "our_active_hp": 120,
+    "their_prizes_needed": 2,
+    "dodge_available": false
+   },
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90655246,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "NorthStar",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 3,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 6,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": -2,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90658466,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "seven",
+   "opp_archetype": "Mega Lucario ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 11,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 2,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Solrock",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "us",
+     "prizes": 3,
+     "victim": "Mega Lucario ex",
+     "victim_prize_value": 3
+    },
+    {
+     "turn": 9,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 11,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 4,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 2,
+     "taker": "them"
+    },
+    {
+     "turn": 11,
+     "diff": 0,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2,
+    10
+   ],
+   "tags": [
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90664734,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "ShadowCoder",
+   "opp_archetype": "Archaludon ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 8,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 5,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Duraludon",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 5,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 8,
+     "diff": -3,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [
+    "b_traded_badly",
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90665803,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "\u897f\u677e\u5927\u7950",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 9,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Marnie's Grimmsnarl ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 1,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 3,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": 1,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": 2,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 9,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 310,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 3
+    },
+    {
+     "turn": 9,
+     "attack_id": 120,
+     "damage": 420,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 310,
+     "prizes_needed": 1,
+     "my_energy": 3,
+     "their_energy": 3
+    },
+    {
+     "turn": 9,
+     "attack_id": 120,
+     "damage": 480,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 310,
+     "prizes_needed": 1,
+     "my_energy": 4,
+     "their_energy": 3
+    },
+    {
+     "turn": 9,
+     "attack_id": 120,
+     "damage": 480,
+     "target": "Marnie's Grimmsnarl ex",
+     "target_hp": 310,
+     "prizes_needed": 1,
+     "my_energy": 4,
+     "their_energy": 3
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90668788,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "Shaurya Verma",
+   "opp_archetype": "Dudunsparce",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 12,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 1,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Abra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 12,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 11,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 12,
+     "diff": -1,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    9
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90669047,
+   "won": true,
+   "our_seat": 0,
+   "opp_team": "RMensinck",
+   "opp_archetype": "N\u2019s Zoroark ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 11,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 0,
+    "them": 2
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "N\u2019s Reshiram",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 4,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "N\u2019s Zoroark ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "N's Zekrom",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 11,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "N\u2019s Zoroark ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 4,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 6,
+     "diff": -3,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": -1,
+     "taker": "us"
+    },
+    {
+     "turn": 9,
+     "diff": 0,
+     "taker": "us"
+    },
+    {
+     "turn": 11,
+     "diff": 2,
+     "taker": "us"
+    }
+   ],
+   "lethal_available": [
+    {
+     "turn": 11,
+     "attack_id": 120,
+     "damage": 540,
+     "target": "N\u2019s Zoroark ex",
+     "target_hp": 280,
+     "prizes_needed": 2,
+     "my_energy": 4,
+     "their_energy": 4
+    }
+   ],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    7
+   ],
+   "tags": [],
+   "primary": null
+  },
+  {
+   "episode_id": 90673558,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "Kilupy",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 5,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 6,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 5,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 5,
+     "diff": -2,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2,
+    4
+   ],
+   "tags": [
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90676675,
+   "won": false,
+   "our_seat": 1,
+   "opp_team": "Malyshev Danil",
+   "opp_archetype": "Marnie's Grimmsnarl ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": false,
+   "n_turns": 5,
+   "termination": "no-active",
+   "final_prizes_left": {
+    "us": 5,
+    "them": 4
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 4,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Munkidori",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 4,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": -1,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    2
+   ],
+   "tags": [
+    "b_traded_badly",
+    "e_resource_death"
+   ],
+   "primary": "e_resource_death"
+  },
+  {
+   "episode_id": 90678555,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "NT",
+   "opp_archetype": "Archaludon ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 8,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 5,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Duraludon",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 4,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 4,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 6,
+     "diff": -3,
+     "taker": "them"
+    },
+    {
+     "turn": 8,
+     "diff": -5,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1,
+    5
+   ],
+   "tags": [
+    "b_traded_badly",
+    "e_resource_death"
+   ],
+   "primary": "b_traded_badly"
+  },
+  {
+   "episode_id": 90698334,
+   "won": false,
+   "our_seat": 0,
+   "opp_team": "kanno",
+   "opp_archetype": "Fezandipiti ex",
+   "our_archetype": "Teal Mask Ogerpon ex",
+   "first_player": true,
+   "n_turns": 10,
+   "termination": "prizes",
+   "final_prizes_left": {
+    "us": 1,
+    "them": 0
+   },
+   "statuses": [
+    "DONE",
+    "DONE"
+   ],
+   "ko_ledger": [
+    {
+     "turn": 3,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Dunsparce",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 5,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Kadabra",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 6,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 7,
+     "taker": "us",
+     "prizes": 1,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 8,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    },
+    {
+     "turn": 9,
+     "taker": "us",
+     "prizes": 2,
+     "victim": "Alakazam",
+     "victim_prize_value": 1
+    },
+    {
+     "turn": 10,
+     "taker": "them",
+     "prizes": 2,
+     "victim": "Teal Mask Ogerpon ex",
+     "victim_prize_value": 2
+    }
+   ],
+   "race": [
+    {
+     "turn": 3,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 5,
+     "diff": 2,
+     "taker": "us"
+    },
+    {
+     "turn": 6,
+     "diff": 0,
+     "taker": "them"
+    },
+    {
+     "turn": 7,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 8,
+     "diff": -1,
+     "taker": "them"
+    },
+    {
+     "turn": 9,
+     "diff": 1,
+     "taker": "us"
+    },
+    {
+     "turn": 10,
+     "diff": -1,
+     "taker": "them"
+    }
+   ],
+   "lethal_available": [],
+   "lethal_missed": [],
+   "allowed_visible": null,
+   "promotions_bad": [],
+   "attackless_turns": [
+    1
+   ],
+   "tags": [
+    "b_traded_badly"
+   ],
+   "primary": "b_traded_badly"
+  }
+ ]
+}
