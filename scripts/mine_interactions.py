@@ -68,6 +68,27 @@ rules. The precedent the family answers to: `online_lead`, the threshold form
 of turns-to-online, was fitted and measured null (C1), so the question the
 screen decides is whether the expectation form prices where the threshold
 form did not.
+
+Stage four (Austin, 2026-08-07, two nominations that compose):
+
+    ~/Desktop/PTCG_AI/.venv/bin/python scripts/mine_interactions.py evo
+
+* EVOLUTION-AWARE THREAT LADDER — `_attack_profile` reads only a card's own
+  printed attacks, so `_threat_at`'s ladder never sees a benched basic's
+  future evolved attacks. The variant unions in attacks of evolutions
+  reachable within the horizon (one step per own turn), priced by outs
+  arithmetic over the side's inferred list (posterior top-1; our side by the
+  same posterior over our own board, since the fit-time focal seat's exact
+  list is unknown), with a clock-only variant as the pure-coverage envelope.
+* DISCOUNTED THREAT INTEGRAL — sum over k=0..5 of gamma^k times the
+  threat-at-k differential, on shipped and on evolution-aware profiles: a
+  gradient with earlier-is-better pressure where the shipped term is a
+  threshold at a single horizon. The gamma grid is profiled, not optimized.
+
+The stage writes the per-k ladders to data/analysis/evo_threat_features.csv;
+the screen stage builds every variant from it — swap arms (the variant
+replaces threat_traj), side-by-side arms, the gamma profile, and incidence
+stats so a null can be attributed (rare situations vs mispriced situations).
 """
 
 from __future__ import annotations
@@ -606,6 +627,303 @@ def load_expected(rows):
                          for r in rows]) for t in EXPECTED_TERMS}
 
 
+# ------------------------------------- stage four: evolution-aware ladder
+
+EVO_CSV = ANALYSIS / "evo_threat_features.csv"
+# Per-horizon ladders for both sides, shipped and evolution-aware weighted
+# (k = 0..TRAJ_HORIZON), plus the clock-only variant at the shipped k=3.
+# The per-k columns exist so the DISCOUNTED THREAT INTEGRAL (Austin's second
+# nomination) can be built at screen time for any gamma without re-mining:
+# threat_integral(gamma) = sum over k of gamma^k x (ours(k) - theirs(k)).
+EVO_KMAX = 5
+EVO_COLS = tuple(f"{fam}_{side}_k{k}"
+                 for k in range(EVO_KMAX + 1)
+                 for fam in ("ship", "evow")
+                 for side in ("us", "them")) + ("evof_us_k3", "evof_them_k3")
+
+
+def _evo_map(cards) -> dict:
+    """name -> [(evolution card id, steps)] within two stages.
+
+    Built off the card table's own `evolvesFrom` names, forward: every card
+    naming X as its pre-evolution is one step from X, and everything naming
+    THAT card is two. Two is the cap the game rules set (basic, stage 1,
+    stage 2), so the map is complete, not truncated.
+    """
+    fwd: dict[str, list[int]] = {}
+    names: dict[int, str] = {}
+    for cid, card in cards.items():
+        nm = getattr(card, "name", None)
+        if nm:
+            names[cid] = nm
+        ef = getattr(card, "evolvesFrom", None)
+        if ef:
+            fwd.setdefault(ef, []).append(cid)
+    out: dict[str, list[tuple[int, int]]] = {}
+    for nm in set(fwd) | set(names.values()):
+        steps: list[tuple[int, int]] = []
+        for e1 in fwd.get(nm, ()):
+            steps.append((e1, 1))
+            for e2 in fwd.get(names.get(e1, ""), ()):
+                steps.append((e2, 2))
+        if steps:
+            out[nm] = steps
+    return out
+
+
+def _threat_at_evo(slots, growth, k: int, cards, evo_map, attack_profile,
+                   avail) -> tuple[float, float]:
+    """The shipped ladder with evolution coverage, (weighted, clock-only).
+
+    Everything the shipped `_threat_at` does is kept — full board growth to
+    every slot, hardest payable attack, max over slots — and one thing is
+    added: each slot's profile unions in the attacks of evolutions reachable
+    within the horizon. The evolution clock is one step per own turn (a
+    Pokemon cannot evolve the turn it comes down, and these slots are already
+    down, so s steps need s of the next k turns). Energy attached to the slot
+    survives evolution, so the energy clock is unchanged. `avail` prices the
+    evolution cards: the weighted value multiplies damage by P(every chain
+    card is playable on schedule); the clock-only value counts any chain
+    whose cards exist in the pool at all, the pure coverage repair.
+    """
+    gain = growth(k)
+    best_w = best_f = 0.0
+    for e, cid in slots:
+        budget = e + gain
+        for cost, dmg in attack_profile(int(cid)):
+            if cost <= budget:
+                if dmg > best_w:
+                    best_w = dmg
+                if dmg > best_f:
+                    best_f = dmg
+        nm = getattr(cards.get(int(cid)), "name", None)
+        for evo_id, steps in (evo_map.get(nm or "", ()) or ()):
+            if steps > k:
+                continue
+            p = avail(evo_id, steps, k)
+            if p <= 0.0:
+                continue
+            for cost, dmg in attack_profile(evo_id):
+                if cost <= budget:
+                    if dmg * p > best_w:
+                        best_w = dmg * p
+                    if dmg > best_f:
+                        best_f = dmg
+    return best_w, best_f
+
+
+def stage_evo(args) -> None:
+    import gzip
+
+    from ptcg.creation.outs import p_at_least_one
+
+    agent = _load_agent()
+    if not agent.CG_AVAILABLE:
+        sys.exit("cg.api did not import")
+    if not agent._curves():
+        sys.exit("no trajectory curves loaded")
+    cards, _attacks = agent._tables()
+    evo_map = _evo_map(cards)
+    K = agent.TRAJ_K
+    n_evo_cards = sum(len(v) for v in evo_map.values())
+    print(f"evolution map: {len(evo_map)} evolvable names, "
+          f"{n_evo_cards} (evolution, step) edges; horizon K = {K}")
+
+    def visible_counts(player, include_hand):
+        out: dict[int, int] = {}
+        zones = ["active", "bench", "discard"] + (
+            ["hand"] if include_hand else [])
+        for zone in zones:
+            for card in (player.get(zone) or []):
+                if card is None:
+                    continue
+                for cid in [card.get("id")] + \
+                        [c.get("id") for c in (card.get("preEvolution")
+                                               or []) if c]:
+                    if cid:
+                        out[int(cid)] = out.get(int(cid), 0) + 1
+        return out
+
+    def make_avail(pool_counts, seen, hand_counts, unseen_n, extra_draws,
+                   name_counts):
+        """P(the chain is playable on schedule) for one side.
+
+        A copy in hand is certain. A copy still unseen prices by outs
+        arithmetic: `outs` copies among `unseen_n` unseen cards, with the
+        draws the schedule allows — the step-s card of an s-step chain must
+        come down by own turn k - (steps - s), so it gets k - (steps - s)
+        natural draws (one a turn), plus `extra_draws` for a hidden hand
+        (their side: the hand they already hold is drawn cards we have not
+        seen). Chain steps multiply — the independence approximation is
+        stated, not hidden.
+        """
+        def avail(evo_id, steps, k):
+            p = 1.0
+            chain = ([evo_id] if steps == 1 else
+                     [("name", getattr(cards.get(evo_id), "evolvesFrom",
+                                       "") or ""), evo_id])
+            for s, need in enumerate(chain, start=1):
+                if isinstance(need, tuple):
+                    nm = need[1]
+                    in_hand = sum(c for i, c in hand_counts.items()
+                                  if getattr(cards.get(i), "name", None)
+                                  == nm)
+                    outs = name_counts.get(nm, 0)
+                else:
+                    in_hand = hand_counts.get(need, 0)
+                    outs = pool_counts.get(need, 0) - seen.get(need, 0)
+                if in_hand > 0:
+                    continue
+                draws = k - (steps - s) + extra_draws
+                ps = p_at_least_one(max(outs, 0), max(unseen_n, 1), draws)
+                if ps <= 0.0:
+                    return 0.0
+                p *= ps
+            return p
+        return avail
+
+    rows = []
+    t_feat = 0.0
+    n_feat = 0
+    n_post_us = 0
+    for path in sorted((ROOT / "data" / "mined").glob(
+            "*/positions.jsonl.gz")):
+        day = path.parent.name
+        if day not in TRAIN_DAYS and day != VALID_DAY:
+            continue
+        with gzip.open(path, "rt", encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                obs = rec.get("observation") or {}
+                cur = obs.get("current") or {}
+                players = cur.get("players") or []
+                if len(players) != 2 or rec.get("won", -1) < 0:
+                    continue
+                me = cur.get("yourIndex")
+                if me not in (0, 1):
+                    me = int(rec.get("seat", 0))
+                mine, theirs = players[me], players[1 - me]
+                t0 = time.perf_counter()
+                agent._refresh_traj_arch(obs)
+                try:
+                    (sm, gm, _), (st, gt, _) = agent._traj_projection(
+                        cur, mine, theirs)
+
+                    # their pool: the posterior's top-1 list, the same
+                    # inference _refresh_traj_arch keyed the curve on
+                    try:
+                        post = agent._deck_posterior(
+                            obs, top_k=agent.POSTERIOR_TOP_K)
+                        pool_t = dict(post[0][0]) if post else {}
+                    except Exception:
+                        pool_t = {}
+                    # our pool: the same machinery pointed at our own board
+                    # — at fit time the focal seat's exact list is unknown,
+                    # so the runtime's "exact knowledge" is stood in for by
+                    # the posterior over OUR visible cards (flipped seat)
+                    try:
+                        flipped = {"current": dict(cur,
+                                                   yourIndex=1 - me)}
+                        post_m = agent._deck_posterior(flipped, top_k=1)
+                        pool_m = dict(post_m[0][0]) if post_m else {}
+                        if pool_m:
+                            n_post_us += 1
+                    except Exception:
+                        pool_m = {}
+
+                    seen_m = visible_counts(mine, include_hand=True)
+                    seen_t = visible_counts(theirs, include_hand=False)
+                    hand_m = {}
+                    for card in (mine.get("hand") or []):
+                        if card and card.get("id"):
+                            cid = int(card["id"])
+                            hand_m[cid] = hand_m.get(cid, 0) + 1
+
+                    def name_outs(pool_counts, seen):
+                        out: dict[str, int] = {}
+                        for i, c in pool_counts.items():
+                            nm = getattr(cards.get(int(i)), "name", None)
+                            if nm:
+                                out[nm] = out.get(nm, 0) \
+                                    + max(c - seen.get(int(i), 0), 0)
+                        return out
+
+                    deck_m = int(mine.get("deckCount") or 0)
+                    deck_t = int(theirs.get("deckCount") or 0)
+                    hand_t_n = int(theirs.get("handCount") or 0)
+                    av_m = make_avail(pool_m, seen_m, hand_m, deck_m, 0,
+                                      name_outs(pool_m, seen_m))
+                    av_t = make_avail(pool_t, seen_t, {},
+                                      deck_t + hand_t_n, hand_t_n,
+                                      name_outs(pool_t, seen_t))
+                    vals = {}
+                    for k in range(EVO_KMAX + 1):
+                        vals[f"ship_us_k{k}"] = agent._threat_at(sm, gm, k)
+                        vals[f"ship_them_k{k}"] = agent._threat_at(st, gt,
+                                                                   k)
+                        uw, uf = _threat_at_evo(sm, gm, k, cards, evo_map,
+                                                agent._attack_profile,
+                                                av_m)
+                        tw, tf = _threat_at_evo(st, gt, k, cards, evo_map,
+                                                agent._attack_profile,
+                                                av_t)
+                        vals[f"evow_us_k{k}"] = uw
+                        vals[f"evow_them_k{k}"] = tw
+                        if k == K:
+                            vals["evof_us_k3"] = uf
+                            vals["evof_them_k3"] = tf
+                except Exception:
+                    continue
+                t_feat += time.perf_counter() - t0
+                n_feat += 1
+                rows.append({
+                    "episode_id": int(rec["episode_id"]),
+                    "day": day,
+                    "rec_turn": int(rec.get("turn", -1)),
+                    "rating": float(rec.get("agent_rating") or 0.0),
+                    "went_first": int(rec.get("went_first", -1)),
+                    **{c: round(vals[c], 2) for c in EVO_COLS},
+                })
+
+    keep = {}
+    for r in rows:
+        cur_r = keep.get(r["episode_id"])
+        if cur_r is None or r["rec_turn"] < cur_r["rec_turn"]:
+            keep[r["episode_id"]] = r
+    sel = [r for r in sorted(keep.values(), key=lambda r: r["episode_id"])
+           if r["rating"] >= 1000.0 and r["rec_turn"] > 0
+           and r["went_first"] >= 0]
+    cols = ["episode_id", "day", "rec_turn"] + list(EVO_COLS)
+    with EVO_CSV.open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=cols, extrasaction="ignore")
+        w.writeheader()
+        for r in sel:
+            w.writerow(r)
+    print(f"{len(rows)} positions read; feature cost "
+          f"{1000 * t_feat / max(n_feat, 1):.3f} ms each; our-side "
+          f"posterior resolved on {n_post_us} of {n_feat}")
+    print(f"{len(sel)} episodes after the rating cut and the "
+          f"one-per-episode rule")
+    print(f"wrote {EVO_CSV.relative_to(ROOT)}")
+
+
+def load_evo(rows):
+    """The evolution-ladder columns, aligned to tree_features.csv's rows."""
+    if not EVO_CSV.exists():
+        return None
+    with EVO_CSV.open() as fh:
+        by_ep = {int(r["episode_id"]): r for r in csv.DictReader(fh)}
+    missing = [r for r in rows if int(r["episode_id"]) not in by_ep]
+    if missing:
+        sys.exit(f"{len(missing)} tree_features episodes have no "
+                 f"evo-threat row — rerun the evo stage")
+    return {t: np.array([float(by_ep[int(r["episode_id"])][t])
+                         for r in rows]) for t in EVO_COLS}
+
+
 # ------------------------------------------------------------- stage two
 
 def auc(y, s) -> float:
@@ -853,6 +1171,168 @@ def stage_screen(args) -> None:
               f"[{joint[tag]['delta_logloss']['ci_lo']:+.5f},"
               f"{joint[tag]['delta_logloss']['ci_hi']:+.5f}]")
 
+    # --- the evolution-aware ladder: a swap, not a lift ------------------
+    # This candidate is a coverage repair in an already-priced feature, so
+    # the screen is different in shape: threat_traj is REPLACED by the
+    # variant (and, in a second arm, both enter side by side), and the
+    # incidence stats say whether a null is "the situation is rare" or "the
+    # situation is priced already".
+    evo = load_evo(rows)
+    evo_out = {}
+    if evo is not None:
+        ship = evo["ship_us_k3"] - evo["ship_them_k3"]
+        drift = float(np.abs(ship - col["threat_traj"]).max())
+        variants = {
+            "evo_weighted": evo["evow_us_k3"] - evo["evow_them_k3"],
+            "evo_clock_only": evo["evof_us_k3"] - evo["evof_them_k3"],
+        }
+        pref = {"evo_weighted": "evow_{side}_k3",
+                "evo_clock_only": "evof_{side}_k3"}
+        inc = {"recomputed_shipped_max_drift": round(drift, 4)}
+        for tag, v in variants.items():
+            d = v - ship
+            per_side = {
+                s: evo[pref[tag].format(side=s)] - evo[f"ship_{s}_k3"]
+                for s in ("us", "them")}
+            inc[tag] = {
+                "changed_share": round(float((d != 0).mean()), 4),
+                "changed_share_train": round(float((d[tr] != 0).mean()), 4),
+                "changed_share_valid": round(float((d[va] != 0).mean()), 4),
+                "mean_abs_change": round(float(np.abs(d).mean()), 2),
+                "mean_abs_change_when_changed": round(float(
+                    np.abs(d[d != 0]).mean()), 2) if (d != 0).any() else 0.0,
+                "p90_abs_change": round(float(np.quantile(np.abs(d), 0.9)),
+                                        2),
+                "changed_share_us_side": round(float(
+                    (per_side["us"] != 0).mean()), 4),
+                "changed_share_them_side": round(float(
+                    (per_side["them"] != 0).mean()), 4),
+            }
+
+        def fit_arm(term_cols, term_names):
+            cols_a = [np.ones(len(y))] + \
+                [col[t] for t in BASE_TERMS if t != "threat_traj"] + \
+                list(term_cols)
+            nm = ["const"] + [t for t in BASE_TERMS
+                              if t != "threat_traj"] + list(term_names)
+            na = col["no_active_me"]
+            if na[tr].std() > 0 and na[tr].sum() >= 10:
+                cols_a.append(na)
+                nm.append("no_active_me")
+            cols_a.append(col["went_first"])
+            nm.append("went_first")
+            for tv in turns[1:]:
+                cols_a.append((col["turn"] == tv).astype(float))
+                nm.append(f"turn={tv}")
+            Xa = np.column_stack(cols_a)
+            fa = logit_fit(Xa[tr], y[tr])
+            ta = coef_table(fa, nm, Xa[tr])
+            pa = 1.0 / (1.0 + np.exp(-np.clip(Xa[va] @ fa["beta"], -35,
+                                              35)))
+            rs = np.random.RandomState(7)
+            yv = y[va]
+            d_auc, d_ll = [], []
+            for _ in range(args.boot):
+                ib = rs.randint(0, len(yv), len(yv))
+                if yv[ib].sum() in (0, len(ib)):
+                    continue
+                d_auc.append(auc(yv[ib], pa[ib]) - auc(yv[ib], pb[ib]))
+                d_ll.append(logloss(yv[ib], pa[ib])
+                            - logloss(yv[ib], pb[ib]))
+
+            def aci(vals):
+                a = np.array(vals)
+                return {"delta": round(float(a.mean()), 5),
+                        "ci_lo": round(float(np.percentile(a, 2.5)), 5),
+                        "ci_hi": round(float(np.percentile(a, 97.5)), 5)}
+
+            terms_out = {}
+            for name in term_names:
+                r = next(t for t in ta if t["term"] == name)
+                terms_out[name] = {
+                    "beta_per_sd": r["beta"], "ci_lo": r["ci_lo"],
+                    "ci_hi": r["ci_hi"], "z": r["z"],
+                    "excludes_zero": bool(r["sig"])}
+            return {"terms": terms_out,
+                    "heldout_auc": round(auc(yv, pa), 4),
+                    "heldout_logloss": round(logloss(yv, pa), 4),
+                    "delta_auc_vs_base": aci(d_auc),
+                    "delta_logloss_vs_base": aci(d_ll)}
+
+        arms = {}
+        for tag, v in variants.items():
+            sdv = v[tr].std()
+            arms[f"swap_{tag}"] = fit_arm([v / sdv], [f"threat_traj_{tag}"])
+            sds = ship[tr].std()
+            arms[f"both_{tag}"] = fit_arm(
+                [ship / sds, v / sdv],
+                ["threat_traj_shipped", f"threat_traj_{tag}"])
+
+        # --- the discounted threat integral (Austin's second nomination) -
+        # threat_integral(gamma) = sum over k=0..5 of gamma^k x (ours(k) -
+        # theirs(k)): a gradient with earlier-is-better pressure where the
+        # shipped term is a threshold at one horizon. The shipped k=3 point
+        # term is the base model, so each swap arm IS the "integral
+        # replaces the point term" comparison. The gamma grid is profiled
+        # rather than optimized — five arms are reported with their own
+        # intervals, and reading the best one off the held-out day is
+        # selection; the profile's SHAPE is the finding, any single gamma's
+        # delta is not.
+        gammas = (0.4, 0.5, 0.6, 0.7, 0.8)
+        fams = {
+            "ship": {k: evo[f"ship_us_k{k}"] - evo[f"ship_them_k{k}"]
+                     for k in range(EVO_KMAX + 1)},
+            "evo": {k: evo[f"evow_us_k{k}"] - evo[f"evow_them_k{k}"]
+                    for k in range(EVO_KMAX + 1)},
+        }
+        integral_profile = {}
+        for fam, dd in fams.items():
+            spread = np.max([dd[k] for k in dd], axis=0) \
+                - np.min([dd[k] for k in dd], axis=0)
+            inc[f"integral_{fam}"] = {
+                "profile_nonflat_share": round(float(
+                    (spread != 0).mean()), 4),
+                "profile_spread_mean_when_nonflat": round(float(
+                    spread[spread != 0].mean()), 2)
+                if (spread != 0).any() else 0.0,
+            }
+            for g in gammas:
+                vI = sum((g ** k) * dd[k] for k in dd)
+                sdI = vI[tr].std()
+                name = f"integral_{fam}_g{g:g}"
+                arm = fit_arm([vI / sdI], [name])
+                arm["corr_with_point_k3_train"] = round(float(
+                    np.corrcoef(vI[tr], ship[tr])[0, 1]), 3)
+                integral_profile[name] = arm
+
+        evo_out = {"incidence": inc, "arms": arms,
+                   "integral_profile": integral_profile}
+        print("\nevolution-aware ladder:")
+        print(f"  recomputed shipped ladder vs tree_features drift "
+              f"{drift:.4f}")
+        for tag in variants:
+            i = inc[tag]
+            print(f"  {tag}: changed on {100 * i['changed_share']:.1f}% "
+                  f"of positions (us {100 * i['changed_share_us_side']:.1f}%"
+                  f", them {100 * i['changed_share_them_side']:.1f}%), "
+                  f"mean |change| when changed "
+                  f"{i['mean_abs_change_when_changed']:.1f} damage")
+        for name, a in {**arms, **integral_profile}.items():
+            da, dl = a["delta_auc_vs_base"], a["delta_logloss_vs_base"]
+            print(f"  {name:22s} AUC {a['heldout_auc']:.4f} "
+                  f"dAUC {da['delta']:+.4f} [{da['ci_lo']:+.4f},"
+                  f"{da['ci_hi']:+.4f}] dLL {dl['delta']:+.5f} "
+                  f"[{dl['ci_lo']:+.5f},{dl['ci_hi']:+.5f}]"
+                  + (f"  r(point)={a['corr_with_point_k3_train']}"
+                     if "corr_with_point_k3_train" in a else ""))
+            for t, r in a["terms"].items():
+                print(f"      {t:28s} beta/SD {r['beta_per_sd']:+.4f} "
+                      f"[{r['ci_lo']:+.4f},{r['ci_hi']:+.4f}]"
+                      f"{'' if r['excludes_zero'] else '  NULL'}")
+    else:
+        print("no evo_threat_features.csv — the evolution ladder is not "
+              "screened in this run")
+
     SCREEN_OUT.write_text(json.dumps({
         "spec": {
             "source": "scripts/mine_interactions.py screen",
@@ -875,13 +1355,14 @@ def stage_screen(args) -> None:
         "turn_tercile_edges": [float(e) for e in t_edges],
         "candidates": results,
         "joint_arms": joint,
+        "evolution_ladder": evo_out,
     }, indent=1))
     print(f"wrote {SCREEN_OUT.relative_to(ROOT)}")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=("shap", "screen", "expected"))
+    ap.add_argument("stage", choices=("shap", "screen", "expected", "evo"))
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--verify-trees", type=int, default=12)
     ap.add_argument("--verify-samples", type=int, default=2)
@@ -893,6 +1374,8 @@ def main() -> None:
         stage_shap(args)
     elif args.stage == "expected":
         stage_expected(args)
+    elif args.stage == "evo":
+        stage_evo(args)
     else:
         stage_screen(args)
 
