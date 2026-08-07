@@ -1,4 +1,44 @@
+**Last updated: 2026-08-07 ~09:00 ET (Aug 7)**
+
 # Status — Austin's side (deck creation + shared infra)
+
+## Update — Aug 7 (pilot frozen at its ceiling; GA rotation starts tonight)
+
+- **Ladder:** v2 at ~817 (team record, top ~12%), v1 at 686. No new
+  submission today — v2 stays the incumbent and the scored-pair member.
+  Submission sequencing stays coordinated under the latest-2 rule.
+- **The pilot is FROZEN at v2** after a day of systematic refusals, each
+  with a diagnosis (all committed here: `b36a6cb`, `570aa37`, `18bd1f7`;
+  playbook entries 7–8):
+  1. **D34 GBDT tree leaf** — better held-out description (AUC 0.692 vs
+     0.661) yet 0.2135 pooled at the play gate. TreeSHAP convicts the
+     struck `hand_diff` returning as shape (+0.174 log-odds). Playbook
+     entry 7.
+  2. **Interaction mining off the dead forest** — 18/18 candidates
+     refused. The forest's edge is diffuse (top-5 pairs hold 18% of
+     pairwise mass), and expected-incoming-damage anti-prices (wrong
+     sign). `data/analysis/INTERACTION_MINING.md`.
+  3. **Phase-conditional weights** — the coefficient drift is real
+     (bench 202 early vs 12 late) but the gate refused 0.4763/590: a
+     state-dependent evaluator hands one search two rulers at the phase
+     boundary. Playbook entry 8.
+
+  Net: the 1-ply linear leaf on this feature universe is at its measured
+  ceiling — three independent axes now say so with numbers.
+- **Tonight: GA rotation begins per D30** — deck STABLE (~100 tuned decks,
+  decorrelated matchup weaknesses, per-deck fitted weights). Prep is in
+  flight now; overnight runs on both machines.
+- **One live screen:** an evolution-aware threat ladder. The shipped
+  `_attack_profile` never sees a benched basic's evolved attacks — a
+  verified coverage hole. Offline screen only for now.
+- **Standing asks (unchanged, still open):**
+  1. Post the forum question **in writing** on per-episode deck variation
+     — it gates the stable's runtime use.
+  2. Mirror the team roster on the Strategy-track competition before
+     Sep 6.
+  3. Add an OSI license file to the public repo.
+
+---
 
 > ## ⚡ ACTION FOR JON: accept PR #1
 > **https://github.com/lonespear/ptcg/pull/1** — your `main` (through your
