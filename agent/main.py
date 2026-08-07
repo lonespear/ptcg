@@ -428,8 +428,25 @@ SEARCH_OPP_BRANCH = 0
 # reached either deadline, and a full kaggle_environments episode spends 0.8
 # of its 600 seconds. What holds spending down is the fixed determinization
 # count, not the clock, and the two agents therefore played to 0.505 over
-# those 200 games. This is the meter; the work has to be scaled to it before
-# the bank is worth anything.
+# those 200 games.
+#
+# Scaling the work to the meter was the obvious follow-up and it was measured
+# and rejected. An adaptive count (n_det = budget divided by an online estimate
+# of what one determinization costs, clamped to [3, 64]) raised the mean count
+# from 3 to 43 and the mean search from 16 ms to 127 ms, and then won 147 of
+# 300 rank-0 Marnie mirror games against this agent at an identical 48-second
+# bank: 0.490, 95% CI [0.433, 0.547]. Two other allocations of the same
+# enlarged count measured 0.513 and 0.497, and pooled over all three the score
+# is 450-450 in 900 games. The override rate says why: at 14x the
+# determinizations, how often search overruled the rule policy held flat at
+# 53.9% against this agent's 54.2% over the same 8,000 searches, so at three
+# determinizations the search has already converged on its answer and the
+# sample was never what limited it. Decision invariance over
+# K=5 requeries fell too, 45.6% of main decisions against 51.5% for this
+# agent. What limits the search is the 1-ply evaluation it converges to, so
+# N_DET waits on the opponent policy model SEARCH_OPP_BRANCH is waiting on.
+# The meter stays: it is correct, it costs nothing, and it is what the ladder
+# would need the day the work is worth scaling.
 try:
     BANK_SECONDS = float(os.environ.get("CABT_LOCAL_BANK") or 600.0)
 except Exception:
