@@ -332,9 +332,15 @@ def _choose_attach(options, obs) -> int | None:
 
 
 def _choose_main(options, obs) -> int:
-    best_i, best_rank = 0, -1
+    # Behind, the fitted comeback posture shifts the menu order (see
+    # POSTURE_DELTA); ahead or even it is the flat priority table.
+    behind = _behind(obs)
+    best_i, best_rank = 0, -1.0
     for i, o in enumerate(options):
-        rank = MAIN_PRIORITY.get(_g(o, "type"), 0)
+        kind = _g(o, "type")
+        rank = float(MAIN_PRIORITY.get(kind, 0))
+        if behind:
+            rank += POSTURE_DELTA.get(kind, 0.0)
         if rank > best_rank:
             best_i, best_rank = i, rank
 
@@ -804,42 +810,81 @@ def _own_hidden(obs: dict, rng=None) -> tuple[list[int], list[int]]:
     return hidden[n_prize:], hidden[:n_prize]
 
 
-def _side_hp(player) -> float:
-    total = 0.0
+def _side_totals(player) -> tuple[float, float, float, float]:
+    """(board HP, Energy in play, bench width, damage taken) for one side."""
+    hp = energy = damage = 0.0
     for zone in ("active", "bench"):
-        for mon in getattr(player, zone, None) or []:
-            if mon is not None:
-                total += getattr(mon, "hp", 0) or 0
-    return total
-
-
-def _side_energy(player) -> float:
-    total = 0.0
-    for zone in ("active", "bench"):
-        for mon in getattr(player, zone, None) or []:
-            if mon is not None:
-                total += len(getattr(mon, "energies", None) or [])
-    return total
+        for mon in _g(player, zone, []) or []:
+            if mon is None:
+                continue
+            cur_hp = _g(mon, "hp", 0) or 0
+            hp += cur_hp
+            damage += (_g(mon, "maxHp", 0) or 0) - cur_hp
+            energy += len(_g(mon, "energies", []) or [])
+    bench = len([m for m in (_g(player, "bench", []) or []) if m is not None])
+    return hp, energy, bench, damage
 
 
 # Every number the position evaluator and the search override use, in one
 # place so a tuner can inject a vector instead of editing code.
 #
-#   prize   prizes are the win condition, so they set the scale
-#   hp      board HP, the tie-breaker that points at the next prize
-#   energy  on the scale of HP rather than prizes: board progress the rollout
-#           horizon cannot see, but never enough to outweigh a knockout
-#   hand    cards in hand
-#   no_active  an empty Active Spot loses the game outright. Every other term
-#           is bounded — 6 prizes = 6000, six Pokemon at the pool's 380 max HP
-#           = 2280, Energy and hand under 2000 each — so the 14380 ceiling
-#           keeps ±1e6 for a decided game out of reach of any live position.
+# These are fitted, not chosen. `ptcg/advantage.py` fits a logistic on the
+# eventual win over 2,823 mined positions drawn one per episode from 14,172
+# decided ladder games at rating >= 1000 (turns 3-11, turn fixed effects),
+# and `data/analysis/REPORT.md` §A2 rescales the coefficients into these units
+# by anchoring prize_diff at its hand-set 1000. Two fits are quoted below: the
+# five-term fit over exactly what this evaluator used to score ("pooled"), and
+# the nine-term fit that adds what it did not score ("richer"). Where they
+# disagree the source is named per term.
+#
+#   prize   prizes are the win condition, so they set the scale — and the
+#           anchor, so the rest of the vector is read against it. Fitted
+#           1000 [819, 1181] by construction of the anchor.
+#   hp      2.6 [2.0, 3.2] (pooled fit; was hand-set 1.0). The richer fit puts
+#           it at 1.17 [0.52, 1.82] because damage_diff below takes part of
+#           the same signal; 2.6 is what the evaluator's own five terms
+#           support and is the number ratified for this build.
+#   energy  kept at the hand-set 30. Pooled fit 37.2 [-25.4, 99.9], richer fit
+#           70.0 [8.7, 131.4] — 30 sits inside both intervals, so the data
+#           declines to move it and D30 discipline says leave it alone.
+#   (no hand term)  The fit is unambiguous that holding more cards than they
+#           do predicts winning — hand_diff 97 [40, 155] in the richer fit,
+#           while the old own-hand coefficient turns over to -43.8
+#           [-111.8, +24.1] once the differential is in the model. Shipping it
+#           as a decision weight is what failed: at 97 a card is a tenth of a
+#           prize to play, so the agent hoards its hand and stops converting
+#           it. Measured against the 8bef47a agent on the rank-0 Marnie mirror,
+#           posture off, hand_diff alone on top of hp 2.6: **0.360 over 494
+#           decided games** [0.318, 0.403], and the whole richer vector with it
+#           in scores 0.396 over 495. Every other new term wins the same test
+#           (hp 2.6 alone 0.547, bench 0.537, damage 0.578; the old vector
+#           minus its own-hand term 0.539), so the defect is this term and not
+#           the fitting. The old +5-per-card own-hand term goes with it: it is
+#           the same mistake at a smaller magnitude, and the fit says its sign
+#           is wrong anyway. A fitted advantage component is a description of
+#           positions winners reach; it is only a decision weight if spending
+#           the resource does not produce the advantage it measures.
+#   bench   153 [43, 263] (richer fit). Bench width was unscored; it carries
+#           advantage the HP term does not, because a wide bench is what
+#           survives a knockout.
+#   damage  4.2 [2.5, 6.0] (richer fit), on damage already dealt (theirs minus
+#           ours). Unscored before: HP alone cannot tell a fresh 60-HP Basic
+#           from a 300-HP ex two hits from falling.
+#   no_active  an empty Active Spot loses the game outright, so it keeps its
+#           hand-set 4000 — the fit (354 [-674, +1382], richer 430
+#           [-460, +1319]) is measuring mid-turn promote prompts, not a lost
+#           game, and its interval is wide enough to say so. Every other term
+#           is bounded: 6 prizes = 6000, six Pokemon at the pool's 380 max HP
+#           = 5928 of HP and at most 9576 of damage, Energy, bench and hand
+#           differentials under 2000 each, so the ceiling stays four orders of
+#           magnitude clear of the ±1e6 a decided game scores.
 #   search_margin  how far search must beat the rules pick before it overrides
 WEIGHTS = {
     "prize": 1000.0,
-    "hp": 1.0,
+    "hp": 2.6,
     "energy": 30.0,
-    "hand": 5.0,
+    "bench": 153.0,
+    "damage": 4.2,
     "no_active": 4000.0,
     "search_margin": 0.0,
 }
@@ -863,33 +908,194 @@ def set_weights(weights: dict | None = None) -> None:
     WEIGHTS = fresh
 
 
-def _evaluate(observation, me: int) -> float:
-    """Score a simulated position from our seat.
+def _margin(cur, me: int) -> float:
+    """The evaluator's margin over a state, from seat `me`.
 
-    Prizes dominate because prizes are the win condition; board HP is the
-    tie-breaker that points toward taking the next one.
+    One implementation over both observation forms (D25): the search scores
+    dataclasses through `_evaluate`, the posture below reads the grader's dict,
+    and every named term is the same arithmetic in both.
     """
-    cur = observation.current
-    result = getattr(cur, "result", -1)
-    if result is not None and result != -1:
-        return 1e6 if result == me else -1e6
     w = WEIGHTS
-    mine = cur.players[me]
-    theirs = cur.players[1 - me]
+    players = _g(cur, "players", []) or []
+    mine, theirs = players[me], players[1 - me]
+    hp_m, en_m, bench_m, dmg_m = _side_totals(mine)
+    hp_t, en_t, bench_t, dmg_t = _side_totals(theirs)
     # Our prize pile shrinking means we have been taking prizes.
-    score = (len(theirs.prize or []) - len(mine.prize or [])) * w["prize"]
-    score += w["hp"] * (_side_hp(mine) - _side_hp(theirs))
+    score = w["prize"] * (len(_g(theirs, "prize", []) or [])
+                          - len(_g(mine, "prize", []) or []))
+    score += w["hp"] * (hp_m - hp_t)
     # Energy in play is board progress the rollout horizon usually cannot see.
     # Without this term two different attachment targets evaluate identically
     # unless one happens to enable a knockout this turn — which is why search
     # alone never fixed our worst decision. It matters most for an attacker
     # whose damage is a linear function of Energy, which ours is.
-    score += w["energy"] * (_side_energy(mine) - _side_energy(theirs))
-    score += (getattr(mine, "handCount", 0) or 0) * w["hand"]
-    active = getattr(mine, "active", None) or []
+    score += w["energy"] * (en_m - en_t)
+    score += w["bench"] * (bench_m - bench_t)
+    # Damage already dealt: theirs minus ours, so a board we have chipped is
+    # worth more than the same board at full HP.
+    score += w["damage"] * (dmg_t - dmg_m)
+    active = _g(mine, "active", []) or []
     if not (active and active[0]):
         score -= w["no_active"]
     return score
+
+
+def _evaluate(observation, me: int) -> float:
+    """Score a simulated position from our seat.
+
+    Prizes dominate because prizes are the win condition; every other term is
+    a fitted advantage component that points toward taking the next one.
+    """
+    cur = observation.current
+    result = getattr(cur, "result", -1)
+    if result is not None and result != -1:
+        return 1e6 if result == me else -1e6
+    return _margin(cur, me)
+
+
+# --- calibrated win probability (playbook C3) -------------------------------
+# The margin above is in the evaluator's own units, where "+1400" means
+# nothing. `ptcg/creation/calibration.py` fits the monotone (isotonic) map from
+# that margin to P(win) over self-play games and scores it on held-out games;
+# the fitted table ships with the bundle so the agent can read its own verdict
+# at run time instead of a judge reading it afterwards.
+#
+# The table is data, not code: rebuilt by
+#   python -m ptcg.creation.calibration --games 3000 --out data/calibration_v2.json
+# whenever WEIGHTS move, because a curve fitted to one weight vector says
+# nothing about another.
+CALIBRATION_FILES = ("calibration.json",)
+_CALIB: list[tuple[float, float]] | None = None
+_CALIB_SOURCE = ""
+
+# Counted events, so nothing about this behaviour has to be taken on trust
+# (D25: every fallback firing is a counted telemetry event).
+TELEMETRY = {
+    "main_decisions": 0,      # main-menu picks the posture was consulted on
+    "posture_behind": 0,      # ... of which fired the behind-posture
+    "calibration_missing": 0,  # _pwin asked for with no table loaded
+}
+
+
+def _calibration_paths() -> list[str]:
+    paths = []
+    for name in CALIBRATION_FILES:
+        paths.append(name)
+        if _HERE:
+            paths.append(os.path.join(_HERE, name))
+        paths.append(os.path.join(_KAGGLE_DIR, name))
+    if _HERE:                       # in-repo runs read the fit where it lives
+        paths.append(os.path.join(_HERE, os.pardir, "data",
+                                  "calibration_v2.json"))
+    return paths
+
+
+def _load_calibration() -> list[tuple[float, float]]:
+    """The isotonic breakpoints, as (margin, p) sorted by margin."""
+    global _CALIB, _CALIB_SOURCE
+    if _CALIB is not None:
+        return _CALIB
+    import json
+    _CALIB = []
+    for path in _calibration_paths():
+        try:
+            with open(path, "r") as fh:
+                blob = json.load(fh)
+        except Exception:
+            continue
+        curve = blob.get("curve") or []
+        points = []
+        for row in curve:
+            try:
+                points.append((float(row["margin"]), float(row["p"])))
+            except Exception:
+                continue
+        if points:
+            points.sort()
+            _CALIB, _CALIB_SOURCE = points, path
+            break
+    return _CALIB
+
+
+def _pwin(margin: float) -> float:
+    """P(win) at this margin off the fitted table; 0.5 when it is missing.
+
+    A step lookup, matching the isotonic fit exactly: the probability of the
+    last breakpoint at or below the margin. Returning 0.5 on a missing table
+    is the neutral answer — every posture keyed on it then stays off — and it
+    is counted rather than silent.
+    """
+    curve = _load_calibration()
+    if not curve:
+        TELEMETRY["calibration_missing"] += 1
+        return 0.5
+    if margin < curve[0][0]:
+        return curve[0][1]
+    lo, hi = 0, len(curve) - 1
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        if curve[mid][0] <= margin:
+            lo = mid
+        else:
+            hi = mid - 1
+    return curve[lo][1]
+
+
+# --- comeback posture (playbook C4) -----------------------------------------
+# What losing seats that came back actually did differently, from 14k rated
+# ladder games (`data/analysis/comeback_B.json`, REPORT.md §B). Among seats
+# whose fitted win probability was under 0.45 at turn 5 or 7, entering every
+# behaviour at once on top of the position at t, the fitted deficit and the
+# window length (n = 3,190 at t5 / 3,372 at t7, McFadden R² 0.12):
+#
+#   attack per turn   +1.21 [+0.88, +1.53] t5   +1.41 [+1.10, +1.71] t7
+#   attach per turn   +1.09 [+0.81, +1.38] t5   +0.80 [+0.55, +1.05] t7
+#   play per turn     -0.40 [-0.51, -0.29] t5   -0.59 [-0.69, -0.48] t7
+#   ability per turn  -0.46 [-0.65, -0.26] t5   -0.51 [-0.70, -0.32] t7
+#   retreat per turn  -1.15 [-1.54, -0.75] t5   -0.61 [-0.96, -0.26] t7
+#
+# The stratified rows hold deficit quintile and archetype fixed and the
+# next-turn rates cut the window to the immediate reply; none of that
+# identifies a treatment effect, and the causal caveat in REPORT.md §B stands.
+# So this ships as a modest reordering of the main menu, not as a rewrite of
+# it: close the game out (attack, attach) ahead of churning through it (play,
+# ability), and retreat last of all. The two magnitudes hold the fitted 2:1
+# ratio between the closing terms and the churn terms, small enough that only
+# adjacent priorities trade places.
+#
+# Behind (p < 0.45) the menu order becomes
+#   evolve 6.00 > ability 5.75 > attach 5.50 > attack 4.50 > play 3.75
+#   > end 1.00 > retreat 0.75
+# against the ahead-or-even order
+#   ability 7 > evolve 6 > play 5 > attach 4 > attack 3 > retreat 2 > end 1.
+POSTURE_ENABLED = True
+BEHIND_PWIN = 0.45          # the deficit bin the comeback analysis conditions on
+BEHIND_CLOSE_BONUS = 1.5    # attack and attach, the two positive terms
+BEHIND_CHURN_PENALTY = 1.25  # play, ability, retreat, the three negative ones
+POSTURE_DELTA = {
+    OPT_ATTACK: +BEHIND_CLOSE_BONUS,
+    OPT_ATTACH: +BEHIND_CLOSE_BONUS,
+    OPT_PLAY: -BEHIND_CHURN_PENALTY,
+    OPT_ABILITY: -BEHIND_CHURN_PENALTY,
+    OPT_RETREAT: -BEHIND_CHURN_PENALTY,
+}
+
+
+def _behind(obs) -> bool:
+    """Is the calibrated verdict on this position under the deficit bar?"""
+    if not POSTURE_ENABLED:
+        return False
+    try:
+        cur = _g(obs, "current")
+        me = _g(cur, "yourIndex", 0)
+        p = _pwin(_margin(cur, me))
+    except Exception:
+        return False
+    TELEMETRY["main_decisions"] += 1
+    if p < BEHIND_PWIN:
+        TELEMETRY["posture_behind"] += 1
+        return True
+    return False
 
 
 def _decided(cur) -> bool:

@@ -75,6 +75,20 @@ def build() -> Path:
         print("  WARNING: no deck_priors.json — search will be disabled. "
               "Run scripts/export_priors.py")
 
+    # The fitted margin -> P(win) table (playbook C3). The agent reads its own
+    # verdict off it at run time, and the comeback posture is keyed on that
+    # verdict, so a missing table silently flattens a shipped behaviour to
+    # nothing — hence the same loud absence the priors get.
+    calib = ROOT / "data" / "calibration_v2.json"
+    if calib.exists():
+        shutil.copy2(calib, staging / "calibration.json")
+        print(f"  calibration: {calib.stat().st_size / 1024:.0f} KB")
+    else:
+        print("  WARNING: no data/calibration_v2.json — _pwin returns 0.5 and "
+              "the comeback posture never fires. Run "
+              "python -m ptcg.creation.calibration --games 3000 "
+              "--out data/calibration_v2.json")
+
     # The agent reads card/attack metadata through cg.api, exactly as the
     # official sample does, so the package ships with the bundle. (Importing it
     # was never the problem — the first two failures were the __file__ bug.)
@@ -162,12 +176,13 @@ def main() -> None:
         # under the Windows console codepage — a crash there would look like a
         # validation failure, or worse, be mistaken for noise.
         env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
-        rc = subprocess.run(
-            [sys.executable, str(Path(__file__).parent / "validate_submission.py")],
-            text=True, env=env).returncode
-        if rc != 0:
-            sys.exit("validation failed - not submitting")
-        print("  validation episode passed")
+        for gate in ("falsify_bundle.py", "validate_submission.py"):
+            rc = subprocess.run(
+                [sys.executable, str(Path(__file__).parent / gate)],
+                text=True, env=env).returncode
+            if rc != 0:
+                sys.exit(f"{gate} failed - not submitting")
+            print(f"  {gate} passed")
     if args.submit:
         rc = submit(archive, args.message)
         sys.exit(rc)

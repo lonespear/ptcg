@@ -32,6 +32,8 @@ data/*
 !data/history_cards.csv
 !data/history_archetypes.csv
 !data/history_agents.csv
+# The fitted margin -> P(win) table the agent ships and reads at run time.
+!data/calibration_v2.json
 
 # Python
 __pycache__/

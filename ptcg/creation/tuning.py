@@ -52,7 +52,8 @@ ROOT = Path(__file__).resolve().parents[2]
 # wanders along the ray.
 ANCHOR = "prize"
 ANCHOR_VALUE = 1000.0
-TUNED_DIMS = ("hp", "energy", "hand", "no_active", "search_margin")
+TUNED_DIMS = ("hp", "energy", "bench", "damage", "no_active",
+               "search_margin")
 
 # ES works in log space so a step means "x% bigger", not "+0.3", which is what
 # ratio-valued weights want. search_margin's default is 0 and log 0 is not a
@@ -182,9 +183,9 @@ def _match_job(job: tuple) -> tuple:
 # observation dict instead of a search state. Scales are fixed constants that
 # put every feature in roughly [-1, 1] so one learning rate fits all of them;
 # they are divided back out when the learned vector is mapped to eval weights.
-FEATURES = ("prize", "hp", "energy", "hand", "no_active")
+FEATURES = ("prize", "hp", "energy", "bench", "damage", "no_active")
 FEATURE_SCALE = {"prize": 6.0, "hp": 1000.0, "energy": 10.0,
-                 "hand": 10.0, "no_active": 1.0}
+                 "bench": 5.0, "damage": 500.0, "no_active": 1.0}
 
 
 def _mons(side: dict) -> list:
@@ -205,11 +206,16 @@ def _obs_features(obs: dict, me: int) -> list[float]:
           - sum(m.get("hp") or 0 for m in _mons(theirs)))
     energy = (sum(len(m.get("energies") or []) for m in _mons(mine))
               - sum(len(m.get("energies") or []) for m in _mons(theirs)))
-    hand = mine.get("handCount") or 0
+    bench = len([m for m in (mine.get("bench") or []) if m]) - len(
+        [m for m in (theirs.get("bench") or []) if m])
+    damage = (sum((m.get("maxHp") or 0) - (m.get("hp") or 0)
+                  for m in _mons(theirs))
+              - sum((m.get("maxHp") or 0) - (m.get("hp") or 0)
+                    for m in _mons(mine)))
     active = mine.get("active") or []
     no_active = 0.0 if (active and active[0]) else 1.0
-    raw = {"prize": prize, "hp": hp, "energy": energy,
-           "hand": hand, "no_active": no_active}
+    raw = {"prize": prize, "hp": hp, "energy": energy, "bench": bench,
+           "damage": damage, "no_active": no_active}
     return [raw[f] / FEATURE_SCALE[f] for f in FEATURES]
 
 
@@ -433,7 +439,7 @@ def theta_to_weights(theta: list[float]) -> tuple[dict, dict]:
         return defaults(), notes
     scale = ANCHOR_VALUE / anchor
     weights = {ANCHOR: ANCHOR_VALUE}
-    for f in ("hp", "energy", "hand"):
+    for f in ("hp", "energy", "bench", "damage"):
         weights[f] = raw[f] * scale
     weights["no_active"] = -raw["no_active"] * scale
     if weights["no_active"] < 0:
