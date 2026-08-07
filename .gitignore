@@ -43,6 +43,13 @@ data/analysis/*
 # machine-readable companion; scripts/autopsy_v2.py regenerates the json).
 !data/analysis/LADDER_AUTOPSY_V2.md
 !data/analysis/ladder_autopsy_v2.json
+# Mono-sprint typing report (scripts/mono_sprint_report.py regenerates the
+# tables from runs/mono_sprint/; the narrative sections are hand-written).
+!data/analysis/MONO_SPRINT.md
+# Stratified leaderboard fitness panel + manifest (D38 amendment; card-id
+# lists mined from public replays — same provenance as agent/deck_priors).
+!data/panel_lb.json
+!data/analysis/PANEL_LB.md
 # Matchup deny-posture spec + its design note: integration surface for the
 # agent side (ptcg/matchup_postures.py regenerates the json).
 !data/analysis/postures.json
@@ -76,7 +83,15 @@ venv/
 *.pth
 *.ckpt
 checkpoints/
-runs/
+# Exclude runs/ contents, not the directory itself, so the seeded-overnight
+# run README and founder bank (deck lists mined from public replays/priors —
+# same provenance as data/panel_lb.json) can be versioned.
+runs/*
+!runs/seeded_overnight/
+runs/seeded_overnight/*
+!runs/seeded_overnight/README.md
+!runs/seeded_overnight/founders.json
+!runs/seeded_overnight/founders_manifest.json
 
 # OS
 .DS_Store
