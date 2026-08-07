@@ -234,6 +234,26 @@ def main() -> None:
         if traj["threat_nonzero"] == 0:
             sys.exit(f"FAIL: the C2 term never moved a margin over "
                      f"{traj['threat_scored']} scored positions")
+        # D35: the evolution-aware discounted integral, under the same rule
+        # as every other switched behaviour — counted while it is on, and
+        # asserted to have cost nothing while it is off.
+        if g.get("EVO_INTEGRAL_ENABLED"):
+            if traj.get("evo_scored", 0) == 0:
+                sys.exit("FAIL: CABT_EVO_INTEGRAL is on and the integral "
+                         "replaced the threat term on no position — the "
+                         "margin is still scoring the point ladder")
+            pools = g["_EVO_POOLS"]
+            if not pools.get("us") or not pools.get("them"):
+                sys.exit("FAIL: the evo integral ran without both evolution "
+                         "pools loaded (us: %s, them: %s)"
+                         % (bool(pools.get("us")), bool(pools.get("them"))))
+            print(f"evo integral: replaced the threat term on "
+                  f"{traj['evo_scored']} positions, pools us "
+                  f"{sum(pools['us'].values())} cards / them "
+                  f"{sum(pools['them'].values())} cards")
+        elif traj.get("evo_scored"):
+            sys.exit("FAIL: the evo integral is off and it scored positions "
+                     "anyway, which is time spent on nothing")
         if calls["search_begin"] == 0:
             sys.exit("FAIL: search never fired — the agent played rules-only")
         if g["TREE_LEAF_ENABLED"]:

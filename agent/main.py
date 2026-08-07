@@ -958,6 +958,7 @@ TELEMETRY_TRAJ = {
     "feature_errors": 0,      # a guarded failure; the term scored 0.0
     "threat_scored": 0,       # positions the C2 term was computed on
     "threat_nonzero": 0,      # ... of which it moved the margin
+    "evo_scored": 0,          # positions the evo integral replaced the term on
 }
 
 
@@ -1229,7 +1230,7 @@ def _refresh_traj_arch(obs) -> None:
         me = cur.get("yourIndex", 0) or 0
         _TRAJ_ARCH["us"] = _label_of_ids(
             _visible_ids(players[me], ("active", "bench", "discard", "hand")))
-        label, confidence = "(all)", 0.0
+        label, confidence, post = "(all)", 0.0, None
         try:
             post = _deck_posterior(obs, top_k=POSTERIOR_TOP_K)
             if post:
@@ -1242,6 +1243,11 @@ def _refresh_traj_arch(obs) -> None:
             confidence = 0.0        # a board-derived label is not a posterior
         _TRAJ_ARCH["them"] = label
         _set_posture(label, confidence)
+        if EVO_INTEGRAL_ENABLED:
+            # The evolution pools ride the same once-a-decision read as the
+            # archetype labels: theirs is this posterior's top-1, ours the
+            # episode's own list, and the leaves below never re-infer either.
+            _evo_refresh_pools(post)
     except Exception:
         TELEMETRY_TRAJ["feature_errors"] += 1
 
@@ -1295,6 +1301,288 @@ def _trajectory_terms(cur, mine, theirs) -> tuple[float, float, float]:
     energy_diff = (e_m + gm(TRAJ_K)) - (e_t + gt(TRAJ_K))
     threat_diff = _threat_at(sm, gm, TRAJ_K) - _threat_at(st, gt, TRAJ_K)
     return online_lead, energy_diff, threat_diff
+
+
+# --- the evolution-aware discounted threat integral (D35 nomination) --------
+# `data/analysis/INTERACTION_MINING.md` screened twenty-three candidates and
+# nominated exactly one: the composition of two repairs to the C2 ladder.
+#
+#   coverage   `_attack_profile` reads only a card's own printed attacks, so
+#              the shipped ladder never sees a benched Charmander's future
+#              Charizard. Here each slot's profile unions in the attacks of
+#              evolutions reachable within the horizon — one evolution step
+#              per own turn, Energy surviving evolution — with the evolution
+#              cards priced by outs arithmetic: a copy in hand is certain, an
+#              unseen copy prices hypergeometrically with the draws its step
+#              schedule allows, chain steps multiplying under a stated
+#              independence approximation. The weighted repair moves the k=3
+#              ladder on 31.7% of mined positions; in the side-by-side fit it
+#              takes the whole load (+0.171) and the shipped term goes null.
+#   shape      the shipped term is a threshold at one horizon (k = TRAJ_K).
+#              The integral is the gradient form: sum over k = 0..5 of
+#              gamma^k times the threat-at-k differential, so a stoke that
+#              closes distance without crossing t+3 payability earns
+#              something, and online at t+1 outscores online at t+3.
+#
+# Each repair alone failed the screen's held-out interval; the composition at
+# gamma 0.5-0.8 passes both (training z 2.9-3.6, held-out logloss -0.0012 to
+# -0.0014 with the interval excluding zero). Gamma is 0.6 — the middle of
+# the passing plateau and the best training z (3.16) — fixed, not fitted at
+# run time.
+#
+# Pools. Their side is the posterior's top-1 decklist, the same inference the
+# curve and the postures already key on. Our side is the episode's own list
+# read from deck.csv — the agent knows its 60 cards, where the screen's fit
+# had to stand in a posterior for the unknown focal seat; the nomination
+# names this substitution as the Goodhart risk to close. The shipped
+# competition list carries zero evolution cards, so on our own deck the
+# evo profile equals the shipped profile exactly and the repair's whole
+# effect arrives through the opponent's side; a side with no pool loaded
+# falls back to the shipped profile and is the same degrade.
+#
+# When CABT_EVO_INTEGRAL is on this REPLACES the threat_traj feature value in
+# `_margin` — same slot, same one projection — and the weight swaps with it
+# (see WEIGHTS). Off, nothing here is computed and nothing costs time.
+try:
+    EVO_INTEGRAL_ENABLED = bool(int(os.environ.get("CABT_EVO_INTEGRAL") or 0))
+except Exception:
+    EVO_INTEGRAL_ENABLED = False
+EVO_GAMMA = 0.6
+# The fitted coefficient for the replacement term, in evaluator units per raw
+# unit of the discounted integral. Provenance, screen fit reproduced exactly
+# (`scripts/mine_interactions.py screen`, integral_evo_g0.6 in
+# `data/analysis/interaction_screen.json`; 7,506 training episodes
+# 07-31..08-05, logistic MLE on the base terms with threat_traj replaced,
+# turn fixed effects): beta +0.091037 per training SD [0.034608, 0.147465],
+# z 3.16; the raw integral's training SD is 182.5935 and the same fit's
+# prize_diff coefficient is 0.60211, so the prize-1000 anchor — the exact
+# rule that produced the shipped 1.71 (`scripts/fit_trajectory_features.py`)
+# — gives 1000 x (0.091037 / 182.5935) / 0.60211 = 0.828, 95% CI
+# [0.31, 1.34]. Held out (08-06, 1,286 episodes): logloss -0.00132
+# [-0.00256, -0.00018], AUC +0.0024 [-0.0000, +0.0049].
+THREAT_INTEGRAL_WEIGHT = 0.828
+
+_EVO_MAP: dict | None = None
+_EVO_POOLS: dict = {"us": None, "them": None}
+_EVO_EDGES: dict = {"us": {}, "them": {}}
+
+
+def _evo_map() -> dict:
+    """name -> [(evolution card id, steps)] within two stages.
+
+    `scripts/mine_interactions.py::_evo_map`, verbatim: forward over the card
+    table's own `evolvesFrom` names, capped at two steps because the game
+    rules cap evolution lines at basic / stage 1 / stage 2.
+    """
+    global _EVO_MAP
+    if _EVO_MAP is not None:
+        return _EVO_MAP
+    cards, _ = _tables()
+    fwd: dict = {}
+    names: dict = {}
+    for cid, card in cards.items():
+        nm = getattr(card, "name", None)
+        if nm:
+            names[cid] = nm
+        ef = getattr(card, "evolvesFrom", None)
+        if ef:
+            fwd.setdefault(ef, []).append(cid)
+    out: dict = {}
+    for nm in set(fwd) | set(names.values()):
+        steps = []
+        for e1 in fwd.get(nm, ()):
+            steps.append((e1, 1))
+            for e2 in fwd.get(names.get(e1, ""), ()):
+                steps.append((e2, 2))
+        if steps:
+            out[nm] = steps
+    _EVO_MAP = out
+    return _EVO_MAP
+
+
+def _p_at_least_one(outs: int, unseen: int, draws: int) -> float:
+    """`ptcg.creation.outs.p_at_least_one`, inlined — the bundle cannot
+    import ptcg, and the arithmetic is four lines of math.comb."""
+    if outs <= 0 or unseen <= 0 or draws <= 0:
+        return 0.0
+    outs = min(outs, unseen)
+    draws = min(draws, unseen)
+    blanks = unseen - outs
+    if blanks < draws:
+        return 1.0
+    return 1.0 - math.comb(blanks, draws) / math.comb(unseen, draws)
+
+
+def _evo_refresh_pools(post) -> None:
+    """Re-point both sides' evolution pools; once a decision, never in a leaf.
+
+    Our pool is the episode's own 60-card list and never changes; theirs is
+    the posterior top-1 the caller already computed. A pool change resets
+    that side's edge cache, so a re-identified opponent cannot keep the old
+    list's evolution lines.
+    """
+    global _MY_DECK
+    if _EVO_POOLS["us"] is None:
+        if _MY_DECK is None:
+            try:
+                _MY_DECK = read_deck_csv()
+            except Exception:
+                _MY_DECK = []
+        pool: dict = {}
+        for cid in _MY_DECK:
+            pool[cid] = pool.get(cid, 0) + 1
+        _EVO_POOLS["us"] = pool
+        _EVO_EDGES["us"] = {}
+    theirs = dict(post[0][0]) if post else {}
+    if theirs and theirs != _EVO_POOLS["them"]:
+        _EVO_POOLS["them"] = theirs
+        _EVO_EDGES["them"] = {}
+
+
+def _evo_edges_for(side: str, cid: int):
+    """The (evolution id, steps, mid-stage name) edges a slot can reach,
+    filtered to evolutions the side's pool actually contains — the cached
+    attack-profile-union structure; only the availability price varies by
+    position."""
+    cache = _EVO_EDGES[side]
+    hit = cache.get(cid)
+    if hit is not None:
+        return hit
+    pool = _EVO_POOLS[side] or {}
+    cards, _ = _tables()
+    nm = getattr(cards.get(cid), "name", None)
+    edges = []
+    for evo_id, steps in (_evo_map().get(nm or "", ()) or ()):
+        if pool.get(evo_id, 0) <= 0:
+            continue
+        mid = ""
+        if steps == 2:
+            mid = getattr(cards.get(evo_id), "evolvesFrom", "") or ""
+        edges.append((evo_id, steps, mid))
+    cache[cid] = tuple(edges)
+    return cache[cid]
+
+
+def _evo_position_ctx(player, side: str):
+    """One side's availability inputs, read once per evaluation.
+
+    The exact counting the screen fitted (`stage_evo`): seen is active,
+    bench, discard plus preEvolution cards underneath — and our own hand,
+    which is private information; theirs is hidden, so their unseen set is
+    deck plus hand and their hand size is extra draws already taken.
+    """
+    pool = _EVO_POOLS[side] or {}
+    if not pool:
+        return None
+    cards, _ = _tables()
+    seen: dict = {}
+    zones = (("active", "bench", "discard", "hand") if side == "us"
+             else ("active", "bench", "discard"))
+    for zone in zones:
+        for card in _g(player, zone, []) or []:
+            if card is None:
+                continue
+            cid = int(_g(card, "id", 0) or 0)
+            if cid:
+                seen[cid] = seen.get(cid, 0) + 1
+            for c in _g(card, "preEvolution", []) or []:
+                pid = int(_g(c, "id", 0) or 0)
+                if pid:
+                    seen[pid] = seen.get(pid, 0) + 1
+    hand_ids: dict = {}
+    hand_names: dict = {}
+    if side == "us":
+        for card in _g(player, "hand", []) or []:
+            if card is None:
+                continue
+            cid = int(_g(card, "id", 0) or 0)
+            if not cid:
+                continue
+            hand_ids[cid] = hand_ids.get(cid, 0) + 1
+            nm = getattr(cards.get(cid), "name", None)
+            if nm:
+                hand_names[nm] = hand_names.get(nm, 0) + 1
+        unseen = int(_g(player, "deckCount", 0) or 0)
+        extra = 0
+    else:
+        n_hand = int(_g(player, "handCount", 0) or 0)
+        unseen = int(_g(player, "deckCount", 0) or 0) + n_hand
+        extra = n_hand
+    name_outs: dict = {}
+    for i, c in pool.items():
+        nm = getattr(cards.get(int(i)), "name", None)
+        if nm:
+            name_outs[nm] = name_outs.get(nm, 0) \
+                + max(c - seen.get(int(i), 0), 0)
+    return (pool, seen, hand_ids, hand_names, max(unseen, 1), extra,
+            name_outs)
+
+
+def _evo_avail(ctx, evo_id: int, steps: int, k: int, mid: str) -> float:
+    """P(the chain is playable on schedule): a copy in hand is certain, an
+    unseen copy prices by outs with the draws its step schedule allows (the
+    step-s card of an s-step chain must come down by own turn k - (steps -
+    s)), chain steps multiplying — the screen's `make_avail`, verbatim."""
+    pool, seen, hand_ids, hand_names, unseen, extra, name_outs = ctx
+    p = 1.0
+    for s in range(1, steps + 1):
+        if s < steps:                    # the mid-stage card, priced by name
+            if hand_names.get(mid, 0) > 0:
+                continue
+            outs = name_outs.get(mid, 0)
+        else:
+            if hand_ids.get(evo_id, 0) > 0:
+                continue
+            outs = pool.get(evo_id, 0) - seen.get(evo_id, 0)
+        ps = _p_at_least_one(max(outs, 0), unseen, k - (steps - s) + extra)
+        if ps <= 0.0:
+            return 0.0
+        p *= ps
+    return p
+
+
+def _evo_threat_at(slots, growth, k: int, side: str, ctx) -> float:
+    """`_threat_at` with evolution coverage: everything the shipped ladder
+    does is kept — full board growth to every slot, hardest payable attack,
+    max over slots — and each slot's profile unions in the attacks of
+    evolutions reachable within k own turns, damage weighted by the chain's
+    availability (`scripts/mine_interactions.py::_threat_at_evo`, the
+    weighted variant that won the screen)."""
+    gain = growth(k)
+    best = 0.0
+    for e, cid in slots:
+        budget = e + gain
+        for cost, dmg in _attack_profile(int(cid)):
+            if cost <= budget and dmg > best:
+                best = dmg
+        for evo_id, steps, mid in _evo_edges_for(side, int(cid)):
+            if steps > k:
+                continue
+            p = _evo_avail(ctx, evo_id, steps, k, mid)
+            if p <= 0.0:
+                continue
+            for cost, dmg in _attack_profile(evo_id):
+                if cost <= budget and dmg * p > best:
+                    best = dmg * p
+    return best
+
+
+def _threat_integral(mine, theirs, sm, gm, st, gt) -> float:
+    """Sum over k = 0..TRAJ_HORIZON of gamma^k times the evolution-aware
+    threat differential. A side with no pool loaded scores the shipped
+    profile, which for a pool with no evolution cards is the identical
+    number anyway."""
+    ctx_m = _evo_position_ctx(mine, "us")
+    ctx_t = _evo_position_ctx(theirs, "them")
+    total = 0.0
+    for k in range(TRAJ_HORIZON + 1):
+        um = (_evo_threat_at(sm, gm, k, "us", ctx_m) if ctx_m is not None
+              else _threat_at(sm, gm, k))
+        ut = (_evo_threat_at(st, gt, k, "them", ctx_t) if ctx_t is not None
+              else _threat_at(st, gt, k))
+        total += (EVO_GAMMA ** k) * (um - ut)
+    TELEMETRY_TRAJ["evo_scored"] += 1
+    return total
 
 
 # --- attacker protection (the bench-out loss mode) --------------------------
@@ -1500,7 +1788,12 @@ def _threat_and_exposure(cur, mine, theirs) -> tuple[float, int, int]:
     side's own turns, the exposure at one of theirs.
     """
     (sm, gm, _), (st, gt, _) = _traj_projection(cur, mine, theirs)
-    thr = _threat_at(sm, gm, TRAJ_K) - _threat_at(st, gt, TRAJ_K)
+    if EVO_INTEGRAL_ENABLED:
+        # D35: the discounted evolution-aware integral replaces the point
+        # term — same slot, same projection, and the weight swapped with it.
+        thr = _threat_integral(mine, theirs, sm, gm, st, gt)
+    else:
+        thr = _threat_at(sm, gm, TRAJ_K) - _threat_at(st, gt, TRAJ_K)
     if not PROTECTION_ENABLED:
         return thr, 0, 0     # a refused feature costs no time
     incoming = _threat_at(st, gt, 1)
@@ -1695,7 +1988,14 @@ WEIGHTS = {
     "bench": 153.0,
     "damage": 4.2,
     "no_active": 4000.0,
-    "threat_traj": _THREAT_WEIGHT_BY_K.get(TRAJ_K, 1.42),
+    # With CABT_EVO_INTEGRAL on, the slot holds the D35 replacement — the
+    # evolution-aware discounted threat integral at its own fitted, anchored
+    # coefficient (0.828; provenance at THREAT_INTEGRAL_WEIGHT) — because the
+    # feature value `_threat_and_exposure` returns swaps with it and a
+    # horizon-point coefficient priced at another feature's scale would be
+    # exactly the drift the _THREAT_WEIGHT_BY_K table exists to prevent.
+    "threat_traj": (THREAT_INTEGRAL_WEIGHT if EVO_INTEGRAL_ENABLED
+                    else _THREAT_WEIGHT_BY_K.get(TRAJ_K, 1.42)),
     "attackers_exposed": ATTACKERS_EXPOSED_WEIGHT,
     "search_margin": 0.0,
 }
