@@ -30,13 +30,18 @@ from .ga import (DUAL_PAIRS, GeneBank, Island, build_template, crossover,
                  mutate, repair)
 from .harness import play_match
 from .pilots import GreedyPilot
-from .pool import POKEMON, TYPE_NAMES, pool
+from .pool import BASIC_ENERGY, POKEMON, SPECIAL_ENERGY, TYPE_NAMES, pool
 from .validator import validate
 
 GATE_GAMES = 500
 FRESH_TEMPLATE_EVERY = 10
 MIGRATE_EVERY = 20
 DIVERSITY_LAMBDA = 0.1
+
+# spec-Ogerpon island (D38 correction): every genome must keep at least
+# this many copies of the anchor card — enforced in the repair path, so
+# crossover/mutation/templates cannot drift the card out.
+SPEC_ANCHORS = {"spec-Ogerpon": ("Teal Mask Ogerpon ex", 2)}
 
 
 @dataclass
@@ -119,6 +124,24 @@ def enforce_purity(deck: list[int], ai: ArchIsland, bank: GeneBank,
         rng.shuffle(replaceable)
         for i in replaceable[:deficit]:
             out[i] = bank.pick_print(rng.choice(line), rng)
+    anchor = SPEC_ANCHORS.get(ai.set_key)
+    if anchor:
+        name, min_n = anchor
+        have = sum(1 for c in out if p.by_id[c]["name"] == name)
+        ids = p.ids_by_name.get(name, [])
+        if have < min_n and ids:
+            # replace non-anchor Pokemon first, then trainers — never the
+            # energy base; repair() below re-legalizes whatever this does
+            mons = [i for i, c in enumerate(out)
+                    if p.by_id[c]["cardType"] == POKEMON
+                    and p.by_id[c]["name"] != name]
+            trainers = [i for i, c in enumerate(out)
+                        if p.by_id[c]["cardType"] not in
+                        (POKEMON, BASIC_ENERGY, SPECIAL_ENERGY)]
+            rng.shuffle(mons)
+            rng.shuffle(trainers)
+            for i in (mons + trainers)[:min_n - have]:
+                out[i] = ids[0]
     return repair(out, ai.island, bank, rng)
 
 
@@ -170,11 +193,40 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
                     git_commit: bool = False, workers: int = 1,
                     generalist_name: str = "jon",
                     seed_deck: list | None = None,
-                    resume: bool = False) -> None:
+                    resume: bool = False,
+                    mono_types: list[str] | None = None,
+                    mono_only: bool = False,
+                    wall_hours: float | None = None,
+                    deep_top: int = 3,
+                    preload_archives: list[Path] | None = None,
+                    seed_elites: list[dict] | None = None,
+                    v2: bool = False,
+                    explore_pop: int | None = None,
+                    refine_pop: int | None = None,
+                    migrate_every: int | None = None,
+                    migrate_top: int = 1,
+                    floor_wr: float = 0.35,
+                    founders: dict | None = None,
+                    panel_top_n: int = 8) -> None:
     rng = random.Random(seed)
     bank = GeneBank(pool())
     p = pool()
     islands = build_archipelago(bank)
+    if mono_types:
+        keep = {f"mono-{t}" for t in mono_types}
+        have = {ai.set_key for ai in islands}
+        missing = keep - have
+        if missing:
+            raise ValueError(f"unknown/ineligible mono sets: {sorted(missing)}")
+        islands = [ai for ai in islands
+                   if ai.set_key in keep
+                   or (not mono_only and ai.temperament in ("mix", "gem"))]
+    if founders and "spec-Ogerpon" in founders:
+        # D38 specialty island: refinement of a proven Grass deck (Jon's
+        # list + sisters), not discovery. Grass purity floors apply.
+        spec = Island("spec-Ogerpon", frozenset({1}))
+        islands.append(ArchIsland(spec, "spec-Ogerpon", "explore"))
+        islands.append(ArchIsland(spec, "spec-Ogerpon", "refine"))
     mono = [ai for ai in islands if ai.temperament in ("explore", "refine")]
     downstream = [ai for ai in islands if ai.temperament in ("mix", "gem")]
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -187,7 +239,7 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
     pilot_a, pilot_b = pf(101), pf(202)
     # Each field deck is played by its own specialist when one was harvested
     # for that archetype; the rest keep the injected generalist.
-    panel = build_specialist_panel(priors_path)
+    panel = build_specialist_panel(priors_path, top_n=panel_top_n)
     panel_pilots = make_panel_pilots(panel, pf)
     pfit = None
     if workers > 1:
@@ -197,8 +249,55 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
     (run_dir / "panel.json").write_text(json.dumps(panel))
     print("panel:\n" + panel_report(panel), flush=True)
 
-    pops = {ai.label: [build_template(ai.island, bank, rng)
-                       for _ in range(pop_size)] for ai in islands}
+    def island_pop(ai: ArchIsland) -> int:
+        if ai.temperament == "explore" and explore_pop:
+            return explore_pop
+        if ai.temperament == "refine" and refine_pop:
+            return refine_pop
+        return pop_size
+
+    def fresh_member(ai: ArchIsland) -> list[int]:
+        """Random template; anchored islands get their structural
+        constraint applied from birth, not just at breeding."""
+        d = build_template(ai.island, bank, rng)
+        if ai.set_key in SPEC_ANCHORS:
+            d = enforce_purity(d, ai, bank, rng)
+        return d
+
+    pops = {ai.label: [fresh_member(ai)
+                       for _ in range(island_pop(ai))] for ai in islands}
+
+    def apply_founders(ai: ArchIsland) -> int:
+        """Head of the population becomes the founder decks (exact where
+        purity/legality allow — enforce_purity only swaps off-type
+        Pokemon); the tail stays random templates. Returns founders used."""
+        fl = (founders or {}).get(ai.set_key)
+        if not fl:
+            return 0
+        popn = pops[ai.label]
+        k = min(len(fl), len(popn))
+        for i in range(k):
+            popn[i] = enforce_purity([int(c) for c in fl[i]], ai, bank, rng)
+        return k
+
+    if founders:
+        for ai in islands:
+            n = apply_founders(ai)
+            if n:
+                print(f"founders: {ai.label} seeded {n}/{len(pops[ai.label])}",
+                      flush=True)
+
+    def reseed_set(sk: str) -> None:
+        """Below-floor plateau (D38): back to the founder classes —
+        founders at the head, fresh random templates behind them."""
+        for ai in islands:
+            if ai.set_key != sk or ai.temperament not in ("explore",
+                                                          "refine"):
+                continue
+            popn = pops[ai.label]
+            for i in range(len(popn)):
+                popn[i] = fresh_member(ai)
+            apply_founders(ai)
     if seed_deck:
         # rebuild mode: half the matching mono populations start as mutated
         # variants of the seed list (purity floors add the backup attackers)
@@ -215,8 +314,25 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
                     popn[i] = enforce_purity(
                         mutate(list(seed_deck), ai.island, bank, rng),
                         ai, bank, rng)
+    if seed_elites:
+        # sprint handoff: for each elite record ({"set": "mono-X", "deck":
+        # [...]}), half the matching mono populations start as mutated,
+        # purity-repaired variants of that elite.
+        by_set: dict[str, list[list[int]]] = {}
+        for rec in seed_elites:
+            by_set.setdefault(rec["set"], []).append(
+                [int(c) for c in rec["deck"]])
+        for ai in islands:
+            if ai.temperament in ("explore", "refine") and ai.set_key in by_set:
+                popn = pops[ai.label]
+                stock = by_set[ai.set_key]
+                for i in range(len(popn) // 2):
+                    popn[i] = enforce_purity(
+                        mutate(list(stock[i % len(stock)]), ai.island, bank,
+                               rng), ai, bank, rng)
     cache: dict[tuple, tuple] = {}
     best_seen: dict[str, tuple[int, float]] = {}   # set_key -> (era, best)
+    waves: dict[str, int] = {}                     # set_key -> migrations in
     frozen: set[str] = set()
     prev_elite: list[int] | None = None
     t0 = time.time()
@@ -244,6 +360,7 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
                 pops[label] = [list(d) for d in popn]
         frozen = set(st["frozen"])
         best_seen = {k: tuple(v) for k, v in st["best_seen"].items()}
+        waves = dict(st.get("waves", {}))
         prev_elite = st["prev_elite"]
         start_era = st["era"] + 1
         phase_b_entered = st["phase"] == "B"
@@ -254,12 +371,28 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
         print(f"resumed: era {start_era}, phase {st['phase']}, "
               f"{st['elapsed_h']:.2f}h consumed, {len(cache)} cached evals",
               flush=True)
+    for pre in preload_archives or []:
+        # warm-start from another run's fitness ledger: identical genomes
+        # cost nothing to re-score. Entries are NOT marked archived, so the
+        # first save_state copies them into this run's own archive.
+        n0 = len(cache)
+        with Path(pre).open() as fh:
+            for line in fh:
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                key = tuple(rec["k"])
+                if key not in cache:
+                    cache[key] = (rec["f"], rec["s"], rec["x"], rec.get("p"))
+        print(f"preloaded {len(cache) - n0} evals from {pre}", flush=True)
 
     def save_state(era: int, phase: str) -> None:
         st = {"era": era, "phase": phase,
               "elapsed_h": round((time.time() - t0) / 3600, 4),
               "pops": pops, "frozen": sorted(frozen),
               "best_seen": {k: list(v) for k, v in best_seen.items()},
+              "waves": waves,
               "prev_elite": prev_elite,
               "rng_state": _jsonable_rng(rng.getstate())}
         tmp = state_path.with_suffix(".tmp")
@@ -314,17 +447,25 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
             sel_pool = [(f, d) for _, f, d in ranked]
         else:
             sel_pool = scored
-        n_elite = 1 if explore else 3
-        k = 2 if explore else 4
+        # v2 (D38): explore = tournament size 3 over the full pop;
+        # refine = truncation top-4 parent pool with 2-elite preservation.
+        n_elite = 1 if explore else (2 if v2 else 3)
+        k = (3 if v2 else 2) if explore else 4
+        trunc = v2 and not explore
+
+        def pick_parent():
+            if trunc:
+                return rng.choice(sel_pool[:min(4, len(sel_pool))])[1]
+            return max(rng.sample(sel_pool, k=min(k, len(sel_pool))),
+                       key=lambda s: s[0])[1]
+
         children = [d for _, d in sel_pool[:n_elite]]
         if explore and era % FRESH_TEMPLATE_EVERY == FRESH_TEMPLATE_EVERY - 1:
-            children.append(build_template(ai.island, bank, rng))
-        while len(children) < pop_size:
-            pa = max(rng.sample(sel_pool, k=min(k, len(sel_pool))),
-                     key=lambda s: s[0])[1]
+            children.append(fresh_member(ai))
+        while len(children) < island_pop(ai):
+            pa = pick_parent()
             if rng.random() < 0.7:
-                pb = max(rng.sample(sel_pool, k=min(k, len(sel_pool))),
-                         key=lambda s: s[0])[1]
+                pb = pick_parent()
                 child = crossover(pa, pb, ai.island, bank, rng)
             else:
                 child = list(pa)
@@ -338,15 +479,29 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
                 "best_deck": scored[0][1]}
 
     def migrate_internal(era: int) -> None:
-        if era % MIGRATE_EVERY != MIGRATE_EVERY - 1:
+        every = migrate_every or MIGRATE_EVERY
+        if era % every != every - 1:
             return
+        if pfit:
+            # prefetch: post-breed populations are mostly unscored children;
+            # without this, elite/worst selection below evaluates them one
+            # at a time on a single core (archi_r0p lost 34 min to it once).
+            fresh = [d for ai in mono
+                     if ai.temperament == "explore" and ai.set_key not in frozen
+                     for d in pops[ai.label] + pops[f"{ai.set_key}/refine"]
+                     if tuple(sorted(d)) not in cache]
+            cache.update(pfit.evaluate_many(fresh))
         for ai in mono:
             if ai.temperament != "explore" or ai.set_key in frozen:
                 continue
             refine = f"{ai.set_key}/refine"
-            elite = max(pops[ai.label], key=fit)
-            worst = min(range(pop_size), key=lambda i: fit(pops[refine][i]))
-            pops[refine][worst] = list(elite)
+            top = sorted(pops[ai.label], key=fit,
+                         reverse=True)[:max(1, migrate_top)]
+            order = sorted(range(len(pops[refine])),
+                           key=lambda i: fit(pops[refine][i]))
+            for slot, elite in zip(order, top):
+                pops[refine][slot] = list(elite)
+            waves[ai.set_key] = waves.get(ai.set_key, 0) + 1
 
     def checkpoint(era: int, phase: str, reports: dict) -> None:
         nonlocal prev_elite
@@ -378,17 +533,41 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
                             f"archipelago {run_dir.name} era {era}"],
                            cwd=run_dir.parent.parent, capture_output=True)
 
+    def set_raw_score(sk: str) -> float | None:
+        """Raw weighted win rate (pre-D18-penalty) of the set's elite."""
+        best = None
+        for temp in ("explore", "refine"):
+            for d in pops.get(f"{sk}/{temp}", []):
+                v = cache.get(tuple(sorted(d)))
+                if v and (best is None or v[0] > best[0]):
+                    best = v
+        return best[1] if best else None
+
     def plateau_check(sets: list[str], reports: dict, era: int) -> None:
         for sk in sets:
-            key = (f"{sk}/refine" if f"{sk}/refine" in reports
-                   else next((l for l in reports if l.startswith(sk)), None))
-            if key is None:
+            vals = [r["best"] for l, r in reports.items()
+                    if l.startswith(sk + "/")]
+            if not vals:
                 continue
-            best = reports[key]["best"]
+            best = max(vals)   # set elite = best across explore+refine
             e0, b0 = best_seen.get(sk, (era, -1.0))
             if best > b0 + 0.01:
                 best_seen[sk] = (era, best)
             elif era - e0 >= plateau_window:
+                if v2:
+                    # D38: patience is not armed until the island has
+                    # received a migration wave, and a below-floor elite
+                    # can never freeze its island — it reseeds instead.
+                    if waves.get(sk, 0) < 1:
+                        continue
+                    raw = set_raw_score(sk)
+                    if raw is not None and raw < floor_wr:
+                        reseed_set(sk)
+                        best_seen.pop(sk, None)
+                        print(f"era {era}: {sk} plateaued below floor "
+                              f"(raw {raw:.3f} < {floor_wr:.2f}) — reseeded "
+                              f"from founder classes", flush=True)
+                        continue
                 frozen.add(sk)
 
     era = start_era
@@ -408,7 +587,7 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
         checkpoint(era, "A", reports)
         era += 1
 
-    if not phase_b_entered:
+    if not phase_b_entered and not mono_only:
         # -------- founding burst --------
         if pfit:      # prefetch: downstream pops have never been scored
             fresh = [d for ai in downstream for d in pops[ai.label]
@@ -438,6 +617,107 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
 
         frozen -= {ai.set_key for ai in downstream}
         best_seen.clear()
+
+    # -------- mono sprint: deep final evaluation on reclaimed time --------
+    if mono_only:
+        wall = wall_hours if wall_hours is not None else hours + 0.5
+        term = {}
+        for sk in sorted({ai.set_key for ai in mono}):
+            e0, b0 = best_seen.get(sk, (None, None))
+            term[sk] = {"path": "plateau" if sk in frozen else "time-cap",
+                        "last_improve_era": e0, "best": b0}
+        finals = []
+        for sk in sorted({ai.set_key for ai in mono}):
+            seen, cands = set(), []
+            for temp in ("refine", "explore"):
+                for d in pops.get(f"{sk}/{temp}", []):
+                    key = tuple(sorted(d))
+                    if key in cache and key not in seen:
+                        seen.add(key)
+                        cands.append((cache[key][0], d, f"{sk}/{temp}"))
+            cands.sort(key=lambda s: -s[0])
+            for f, d, label in cands[:deep_top]:
+                comp = cache[tuple(sorted(d))]
+                finals.append({
+                    "set": sk, "island": label, "ga_fitness": round(f, 4),
+                    "ga_score": comp[1], "ga_frag": comp[2],
+                    "ga_profile": comp[3], "deck": d, "deep_games": 0,
+                    "per_opp": [{"name": e["name"], "weight": e["weight"],
+                                 "w": 0, "l": 0, "draw": 0, "capped": 0,
+                                 "win_reasons": {}, "loss_reasons": {}}
+                                for e in panel]})
+
+        def _flush_final() -> None:
+            out = {"termination": term, "plateau_window": plateau_window,
+                   "elites": finals,
+                   "elapsed_h": round((time.time() - t0) / 3600, 3)}
+            tmp = run_dir / "final_eval.tmp"
+            tmp.write_text(json.dumps(out))
+            tmp.replace(run_dir / "final_eval.json")
+
+        _flush_final()
+
+        def _merge(po: dict, add: dict) -> None:
+            for k in ("w", "l", "draw", "capped"):
+                po[k] += add[k]
+            for k in ("win_reasons", "loss_reasons"):
+                for r, n in add[k].items():
+                    po[k][r] = po[k].get(r, 0) + n
+
+        BLOCK, MAXG = 100, 400
+        last_round_h = None
+        for rnd in range(MAXG // BLOCK):
+            remaining = wall - (time.time() - t0) / 3600
+            need = (last_round_h * 1.3 if last_round_h is not None
+                    else 0.08)
+            if remaining < need:
+                print(f"deep-eval stopping before round {rnd + 1}: "
+                      f"{remaining:.2f}h left < {need:.2f}h needed",
+                      flush=True)
+                break
+            rt = time.time()
+            if pfit:
+                # the worker pool from Phase A: one deck per worker, whole
+                # panel per task — serial here once cost 12 min/round
+                batch = pfit.evaluate_reasons(
+                    [rec["deck"] for rec in finals], BLOCK)
+                for rec, per_opp in zip(finals, batch):
+                    for po, add in zip(rec["per_opp"], per_opp):
+                        _merge(po, add)
+                    rec["deep_games"] += BLOCK
+            else:
+                for rec in finals:
+                    if (wall - (time.time() - t0) / 3600) < 0.06:
+                        break
+                    for i, entry in enumerate(panel):
+                        n = max(6, BLOCK // 4) if i in slow else BLOCK
+                        m = play_match(pilot_a, panel_pilots[i],
+                                       rec["deck"], entry["deck"], n)
+                        po = rec["per_opp"][i]
+                        for g in m.games:
+                            if g.winner == 0:
+                                po["w"] += 1
+                                po["win_reasons"][g.reason] = \
+                                    po["win_reasons"].get(g.reason, 0) + 1
+                            elif g.winner == 1:
+                                po["l"] += 1
+                                po["loss_reasons"][g.reason] = \
+                                    po["loss_reasons"].get(g.reason, 0) + 1
+                            elif g.winner == 2:
+                                po["draw"] += 1
+                            else:
+                                po["capped"] += 1
+                    rec["deep_games"] += BLOCK
+            last_round_h = (time.time() - rt) / 3600
+            _flush_final()
+            print(f"deep-eval round {rnd + 1} "
+                  f"[{(time.time() - t0) / 3600:.2f}h, "
+                  f"{last_round_h * 60:.1f} min]", flush=True)
+        if pfit:
+            pfit.close()
+        _flush_final()
+        print("mono sprint complete: final_eval.json written", flush=True)
+        return
 
     # -------- Phase B: duals + tri --------
     while (time.time() - t0) / 3600 < hours:
