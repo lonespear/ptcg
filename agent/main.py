@@ -1562,17 +1562,26 @@ _W_EFF: dict | None = None
 
 
 def _refresh_weights() -> None:
-    """Fold the live posture's deltas into the vector `_margin` reads."""
-    global _W_EFF
+    """Fold the live posture's deltas into the vectors `_margin` reads.
+
+    The phase vectors compose the same way: phase override first (it replaces
+    a cell), posture delta on top (it shifts one), so a posture means the same
+    thing whichever phase the game is in.
+    """
+    global _W_EFF, _PHASE_W_EFF
     delta = _POSTURE_ON["delta"]
-    if not delta:
-        _W_EFF = WEIGHTS
-        return
-    w = dict(WEIGHTS)
-    for key, dv in delta.items():
-        if key in w:
-            w[key] = w[key] + dv
-    _W_EFF = w
+
+    def folded(base: dict) -> dict:
+        if not delta:
+            return base
+        w = dict(base)
+        for key, dv in delta.items():
+            if key in w:
+                w[key] = w[key] + dv
+        return w
+
+    _W_EFF = folded(WEIGHTS)
+    _PHASE_W_EFF = tuple(folded(dict(WEIGHTS, **d)) for d in PHASE_DELTAS)
 
 
 def _set_posture(label: str, confidence: float) -> None:
@@ -1691,7 +1700,51 @@ WEIGHTS = {
     "search_margin": 0.0,
 }
 _DEFAULT_WEIGHTS = dict(WEIGHTS)
+
+# --- phase-conditional vectors (CABT_PHASE_WEIGHTS=1; playbook entry 8) -----
+# The turn-checkpoint fits always said the coefficients drift across the game;
+# the tree leaf (entry 7) was refused for capturing that drift with hundreds
+# of unscreened local weights. This is the sanctioned form: a mixture of
+# linear experts with a NAMED gate, two phases, each phase the same vector
+# shape as WEIGHTS and every cell under the same citation discipline.
+#
+# The gate is the leading side's prize pile — min(ours, theirs) remaining —
+# because that is the candidate that transferred: fitted per-phase on
+# 07-31..08-05 and scored on the held-out day 08-06
+# (`scripts/fit_phase_weights.py`, `data/analysis/phase_weights_fit.json`),
+# min-prizes >= 5 vs <= 4 beats the global fit by +4.9 held-out log-lik over
+# 1,286 episodes, ahead of every prizes-total band, while every turn band
+# transfers at or below the global fit. Three phases lost to two on the same
+# instrument (the 3-band min gate reads -38.9 against global).
+#
+# Per phase, the exact v2 rule the WEIGHTS block above documents: the
+# incumbent value stands unless the phase's fitted 95% interval excludes it.
+# Three cells moved, each cited (n = 6,621 / 2,171 episodes, prize anchored
+# at 1000 per phase):
+#   development (both piles >= 5):  hp 2.6 -> 1.13 [0.49, 1.78];
+#     damage 4.2 -> 7.10 [5.00, 9.20]. Chip damage and the threat of the
+#     first knockout are worth more before anyone has converted; raw HP
+#     totals are worth less.
+#   the race (leader <= 4):  bench 153 -> 11.66 [-100.30, 123.62] — the one
+#     null that still moves, because the incumbent 153 sits OUTSIDE the
+#     interval: once half a pile is gone, bench width has stopped predicting
+#     the winner and the fit rejects paying 153 for it.
+# Everything else — energy 30, threat_traj 1.71, no_active 4000 — stays: the
+# phase intervals all contain the incumbent (threat fitted 3.18 [1.54, 4.81]
+# early, null late; both contain 1.71, so the C2 term stays global).
+try:
+    PHASE_WEIGHTS_ENABLED = bool(int(os.environ.get("CABT_PHASE_WEIGHTS") or 0))
+except ValueError:
+    PHASE_WEIGHTS_ENABLED = False
+PHASE_MIN_PRIZES = 5                    # phase 0 while min(piles) >= this
+PHASE_DELTAS = (
+    {"hp": 1.13, "damage": 7.1},        # development
+    {"bench": 11.66},                   # the race
+)
+TELEMETRY_PHASE = {"development": 0, "race": 0}
+
 _W_EFF = WEIGHTS
+_PHASE_W_EFF = tuple(dict(WEIGHTS, **d) for d in PHASE_DELTAS)
 
 
 def set_weights(weights: dict | None = None) -> None:
@@ -1726,11 +1779,23 @@ def _margin(cur, me: int) -> float:
     w = _W_EFF or WEIGHTS
     players = _g(cur, "players", []) or []
     mine, theirs = players[me], players[1 - me]
+    pz_m = len(_g(mine, "prize", []) or [])
+    pz_t = len(_g(theirs, "prize", []) or [])
+    # Phase-conditional vector: the named gate is the leading side's pile.
+    # Both observation forms answer the same two length reads, so the rollout
+    # and live policies see the same phase — the D25 invariant holds by the
+    # same construction as every other term here.
+    if PHASE_WEIGHTS_ENABLED:
+        if min(pz_m, pz_t) >= PHASE_MIN_PRIZES:
+            w = _PHASE_W_EFF[0]
+            TELEMETRY_PHASE["development"] += 1
+        else:
+            w = _PHASE_W_EFF[1]
+            TELEMETRY_PHASE["race"] += 1
     hp_m, en_m, bench_m, dmg_m = _side_totals(mine)
     hp_t, en_t, bench_t, dmg_t = _side_totals(theirs)
     # Our prize pile shrinking means we have been taking prizes.
-    score = w["prize"] * (len(_g(theirs, "prize", []) or [])
-                          - len(_g(mine, "prize", []) or []))
+    score = w["prize"] * (pz_t - pz_m)
     score += w["hp"] * (hp_m - hp_t)
     # Energy in play is board progress the rollout horizon usually cannot see.
     # Without this term two different attachment targets evaluate identically
