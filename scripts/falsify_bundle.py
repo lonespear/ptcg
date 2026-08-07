@@ -112,7 +112,10 @@ def main() -> None:
         # agent is configured to read them. Both behaviours were measured and
         # refused, so the matching assertion today is the other one: a table
         # nothing opens is not in the archive.
-        posture_on = g["POSTURE_MATCHUP_ENABLED"] or g["PROTECTION_ENABLED"]
+        # The tree leaf reads `gust_reach` out of the same file (two of its
+        # sixteen features are exposure counts), so it counts as a reader.
+        posture_on = (g["POSTURE_MATCHUP_ENABLED"] or g["PROTECTION_ENABLED"]
+                      or g["TREE_LEAF_ENABLED"])
         if posture_on:
             specs = g["_posture_specs"]()
             print(f"postures: {len(specs)} archetypes with a lever, "
@@ -123,17 +126,44 @@ def main() -> None:
                          "postures.json in the bundle — no posture would ever "
                          "activate and gust reach would be a default rather "
                          "than a measurement")
-            if not any(s["gust_rank"] for s in specs.values()):
+            if (g["POSTURE_MATCHUP_ENABLED"]
+                    and not any(s["gust_rank"] for s in specs.values())):
                 sys.exit("FAIL: postures.json carries no gust order, so the "
                          "named target preference cannot reorder anything")
+            if not g["_GUST_REACH"]:
+                sys.exit("FAIL: postures.json loaded with no gust-reach table "
+                         "— every exposure count would use the default")
             sources.append(("postures", g["_POSTURES_SOURCE"]))
         elif (tmp / "postures.json").exists():
-            sys.exit("FAIL: postures.json is in the bundle and both the deny-"
-                     "postures and the protection rule are off, so nothing "
-                     "will ever open it")
+            sys.exit("FAIL: postures.json is in the bundle and the deny-"
+                     "postures, the protection rule and the tree leaf are all "
+                     "off, so nothing will ever open it")
         else:
-            print("postures: correctly absent (CABT_POSTURES and CABT_PROTECT "
-                  "both 0)")
+            print("postures: correctly absent (CABT_POSTURES, CABT_PROTECT "
+                  "and CABT_TREE_LEAF all 0)")
+        # The D34 tree leaf, under the same rule: asserted while the agent is
+        # configured to read it, and asserted absent while it is not. The
+        # forest was refused at the gate, so today the second assertion is the
+        # live one — but `CABT_TREE_LEAF=1 python scripts/build_submission.py`
+        # is the retest and this is what proves the retest would work.
+        if g["TREE_LEAF_ENABLED"]:
+            forest = g["_tree"]()
+            print(f"tree leaf: {len(forest.get('trees') or [])} trees, "
+                  f"scale {g['TREE_SCALE']}, from {g['_TREE_SOURCE']}")
+            if not forest.get("trees"):
+                sys.exit("FAIL: CABT_TREE_LEAF is on and no forest loaded — "
+                         "every search evaluation raises into its guard and "
+                         "the linear margin scores instead, silently")
+            if list(forest.get("features") or ()) != list(g["TREE_FEATURES"]):
+                sys.exit("FAIL: the bundled forest's feature list is not the "
+                         "one _tree_features computes — the split indices "
+                         "would point at the wrong numbers")
+            sources.append(("tree leaf", g["_TREE_SOURCE"]))
+        elif (tmp / "tree_leaf.json").exists():
+            sys.exit("FAIL: tree_leaf.json is in the bundle and "
+                     "CABT_TREE_LEAF is 0, so nothing will ever open it")
+        else:
+            print("tree leaf: correctly absent (CABT_TREE_LEAF = 0)")
         branch = g["SEARCH_OPP_BRANCH"]
         pol = g["_opp_policy"]()
         if branch >= 1:
@@ -185,6 +215,7 @@ def main() -> None:
                     steps += 1
             finally:
                 battle_finish()
+            last_obs = obs
             print(f"game {game + 1}: {steps} decisions, "
                   f"turn {obs.get('current', {}).get('turn')}")
 
@@ -205,6 +236,27 @@ def main() -> None:
                      f"{traj['threat_scored']} scored positions")
         if calls["search_begin"] == 0:
             sys.exit("FAIL: search never fired — the agent played rules-only")
+        if g["TREE_LEAF_ENABLED"]:
+            tree = g["TELEMETRY_TREE"]
+            print(f"tree leaf: {tree}")
+            if tree["scored"] == 0:
+                sys.exit("FAIL: the tree leaf scored no position — the search "
+                         "is running on the linear margin it was meant to "
+                         "replace")
+            if tree["errors"] or tree["missing"]:
+                sys.exit(f"FAIL: the tree leaf fell through its guard "
+                         f"{tree['errors']} times and found no forest "
+                         f"{tree['missing']} times")
+            try:
+                probe = g["_tree_raw"](last_obs["current"], 0)
+            except Exception as exc:
+                sys.exit(f"FAIL: the tree leaf raised on a real position: "
+                         f"{exc!r}")
+            if probe != probe or abs(probe) == float("inf"):
+                sys.exit(f"FAIL: the tree leaf returned {probe} on a real "
+                         f"position")
+            print(f"tree leaf on a live position: {probe:+.4f} log-odds, "
+                  f"{g['TREE_SCALE'] * probe:+.1f} in evaluator units")
         if g["SEARCH_OPP_BRANCH"] >= 1:
             if opp["branch_replies"] == 0:
                 sys.exit("FAIL: 2-ply is on and the table was never asked for "

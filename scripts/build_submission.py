@@ -78,7 +78,8 @@ def agent_flags() -> dict:
     import re
     src = (AGENT / "main.py").read_text(encoding="utf-8")
     out = {}
-    for key, name in (("postures", "CABT_POSTURES"), ("protect", "CABT_PROTECT")):
+    for key, name in (("postures", "CABT_POSTURES"), ("protect", "CABT_PROTECT"),
+                      ("tree_leaf", "CABT_TREE_LEAF")):
         m = re.search(rf'{name}"\) or (\d+)\)', src)
         if m is None:
             raise ValueError(f"cannot read {name} out of agent/main.py")
@@ -151,7 +152,13 @@ def build() -> Path:
     # 0 and this normally copies nothing and says so.
     flags = agent_flags()
     postures = ROOT / "data" / "analysis" / "postures.json"
-    if flags["postures"] or flags["protect"]:
+    # The tree leaf reads this file too, and for the same reason the
+    # protection rule does: `attackers_exposed` counts a benched Pokemon only
+    # where their archetype can gust it into the Active Spot, which is
+    # `gust_reach`. Two of the sixteen features would silently fall back to
+    # the play-weighted default without it — a different feature from the one
+    # the forest was fitted on.
+    if flags["postures"] or flags["protect"] or flags["tree_leaf"]:
         if not postures.exists():
             raise FileNotFoundError(
                 f"a posture behaviour is on and {postures} is missing — no "
@@ -160,10 +167,33 @@ def build() -> Path:
         shutil.copy2(postures, staging / "postures.json")
         print(f"  postures: {postures.stat().st_size / 1024:.0f} KB "
               f"(CABT_POSTURES={flags['postures']}, "
-              f"CABT_PROTECT={flags['protect']})")
+              f"CABT_PROTECT={flags['protect']}, "
+              f"CABT_TREE_LEAF={flags['tree_leaf']})")
     else:
-        print("  postures: not bundled — the deny-postures and the protection "
-              "rule are both off, so nothing in the agent would read it")
+        print("  postures: not bundled — the deny-postures, the protection "
+              "rule and the tree leaf are all off, so nothing in the agent "
+              "would read it")
+
+    # The D34 tree leaf. Under the same rule the two above get: it ships only
+    # while the agent is configured to read it, and CABT_TREE_LEAF defaults to
+    # 0 because the gate refused it (pooled mirrors 0.2135 over 787). Turning
+    # the leaf on without the forest beside it would put `_evaluate` into a
+    # guarded except on every scored position and score nothing at all, so a
+    # missing file with the flag up is fatal rather than quiet.
+    leaf = ROOT / "data" / "analysis" / "tree_leaf.json"
+    if flags["tree_leaf"]:
+        if not leaf.exists():
+            raise FileNotFoundError(
+                f"CABT_TREE_LEAF is on and {leaf} is missing — every search "
+                f"evaluation would raise into its guard and fall back to the "
+                f"linear margin without saying so. Rebuild it: "
+                f"/usr/bin/python3 scripts/fit_tree_leaf.py fit")
+        shutil.copy2(leaf, staging / "tree_leaf.json")
+        print(f"  tree_leaf: {leaf.stat().st_size / 1024:.0f} KB "
+              f"(CABT_TREE_LEAF={flags['tree_leaf']})")
+    else:
+        print("  tree_leaf: not bundled — CABT_TREE_LEAF is 0, so nothing in "
+              "the agent would open it")
 
     # Playbook entry 4: the counted opponent reply table. It ships only while
     # the agent is configured to read it, because a file in the archive that

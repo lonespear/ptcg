@@ -1782,7 +1782,209 @@ def _evaluate(observation, me: int) -> float:
     result = getattr(cur, "result", -1)
     if result is not None and result != -1:
         return 1e6 if result == me else -1e6
+    if TREE_LEAF_ENABLED:
+        try:
+            raw = _tree_raw(cur, me)      # loads the forest, and TREE_SCALE
+            return TREE_SCALE * raw
+        except Exception:
+            TELEMETRY_TREE["errors"] += 1
     return _margin(cur, me)
+
+
+# --- the tree leaf (playbook: the D34 entry) --------------------------------
+# D33 closed the 2-ply axis and named the defendant: three refusals of a deeper
+# search, each one removing the excuse the last had used, with the leaf the
+# only thing they had in common. The leaf was a linear margin over six terms.
+# This is the sanctioned escalation — the SAME named features, scored by a
+# gradient-boosted forest fitted on real ladder outcomes instead of by a dot
+# product, so the leaf can hold "a bench body is worth more when you are two
+# prizes down" without a hand-written interaction.
+#
+# Three constraints shaped what ships here.
+#
+#   * No new dependency on the grader. The forest is data — a JSON of nested
+#     thresholds and leaf values — and the evaluator below is a tree walk in
+#     the standard library, the same discipline the calibration table ships
+#     under (C3).
+#   * The linear evaluator stays the spine. `_margin` is untouched, and every
+#     policy path that reads it — `_behind` through `_pwin`, the comeback
+#     posture, the C3 verdict — still reads the linear number whether this
+#     leaf is on or off. Only `_evaluate`, the thing the search calls on a
+#     simulated position, swaps. That keeps the D25 invariant a mechanical
+#     fact rather than a claim: turning the leaf on cannot move a rules
+#     decision.
+#   * The forest scores the same features the linear model was refused on.
+#     `hand_diff`, `attackers_exposed`, `online_lead` and `energy_traj` were
+#     all measured and all refused as WEIGHTS — but every one of those
+#     refusals was a LINEAR pathology (a sign that inverts, a coefficient that
+#     describes positions winners reach rather than resources worth spending).
+#     A tree can hold a feature whose sign depends on the rest of the board,
+#     which is exactly what those measurements said was happening. They enter
+#     here on that argument and the gate decides.
+#
+# Output units. The forest predicts P(win); `_tree_raw` returns its log-odds,
+# and TREE_SCALE puts that on the linear margin's scale. With
+# WEIGHTS["search_margin"] at 0 the override test is invariant to any monotone
+# rescaling, so the scale changes nothing about which candidate wins a
+# comparison between two live positions. What it does govern is the trade
+# against the +/-1e6 a decided determinization scores: a forest whose spread
+# were 4 log-odds wide would let a single terminal determinization outvote
+# every other one far more easily than the linear leaf does. TREE_SCALE is
+# therefore set so the leaf's standard deviation over the fitted corpus
+# matches the linear margin's, and that trade is left where the shipped
+# evaluator had it. It is not a fitted quantity and does not pretend to be.
+TREE_LEAF_NAME = os.environ.get("CABT_TREE_LEAF_FILE") or "tree_leaf.json"
+TREE_LEAF_FILES = (TREE_LEAF_NAME,)
+try:
+    TREE_LEAF_ENABLED = bool(int(os.environ.get("CABT_TREE_LEAF") or 0))
+except Exception:
+    TREE_LEAF_ENABLED = False
+
+TELEMETRY_TREE = {
+    "scored": 0,          # positions the forest scored
+    "errors": 0,          # guarded failures; the linear margin scored instead
+    "missing": 0,         # the forest asked for and not found in the bundle
+}
+
+# The feature vector, in the order the forest's `feature` indices refer to.
+# Every one is a named quantity this agent already computes or already has:
+# the six shipped margin terms as differentials, the two prize piles apart so
+# the forest can see "two down" and not only "two behind", the C2 projection,
+# and the four named features the linear fits refused.
+TREE_FEATURES = (
+    "prize_diff",              # their prizes remaining - ours
+    "prizes_left_me",
+    "prizes_left_them",
+    "hp_diff",
+    "energy_diff",
+    "bench_diff",
+    "damage_diff",             # damage on their board - damage on ours
+    "no_active_me",
+    "threat_traj",             # C2, at TRAJ_K of each side's own turns
+    "attackers_exposed",       # ours inside their next-turn knockout range
+    "attackers_exposed_them",  # theirs inside ours, the mirror
+    "hand_diff",
+    "hand_me",
+    "online_lead",             # their earliest attack turn minus ours
+    "energy_traj",             # projected Energy differential at TRAJ_K
+    "turn",
+)
+
+
+def _tree_features(cur, me: int) -> list[float]:
+    """The forest's input vector over a position, from seat `me`.
+
+    One implementation for both observation forms, exactly as `_margin` is:
+    the search hands it dataclasses and the offline fit hands it the mined
+    dicts, and `_g` makes those the same code. The offline fitter imports THIS
+    function rather than reimplementing it, so a training-time feature and a
+    run-time feature cannot drift apart.
+    """
+    players = _g(cur, "players", []) or []
+    mine, theirs = players[me], players[1 - me]
+    hp_m, en_m, bench_m, dmg_m = _side_totals(mine)
+    hp_t, en_t, bench_t, dmg_t = _side_totals(theirs)
+    prize_m = len(_g(mine, "prize", []) or [])
+    prize_t = len(_g(theirs, "prize", []) or [])
+    active = _g(mine, "active", []) or []
+
+    thr = lead = e_traj = 0.0
+    exposed = exposed_t = 0
+    try:
+        (sm, gm, e_m2), (st, gt, e_t2) = _traj_projection(cur, mine, theirs)
+        thr = _threat_at(sm, gm, TRAJ_K) - _threat_at(st, gt, TRAJ_K)
+        lead = float(_online_turn(st, gt) - _online_turn(sm, gm))
+        e_traj = (e_m2 + gm(TRAJ_K)) - (e_t2 + gt(TRAJ_K))
+        _posture_specs()
+        reach_us = _GUST_REACH.get(_TRAJ_ARCH["them"], _GUST_REACH_DEFAULT)
+        reach_them = _GUST_REACH.get(_TRAJ_ARCH["us"], _GUST_REACH_DEFAULT)
+        exposed, _ = _exposure(mine, _threat_at(st, gt, 1), reach_us)
+        exposed_t, _ = _exposure(theirs, _threat_at(sm, gm, 1), reach_them)
+    except Exception:
+        TELEMETRY_TRAJ["feature_errors"] += 1
+
+    return [
+        float(prize_t - prize_m),
+        float(prize_m),
+        float(prize_t),
+        float(hp_m - hp_t),
+        float(en_m - en_t),
+        float(bench_m - bench_t),
+        float(dmg_t - dmg_m),
+        0.0 if (active and active[0]) else 1.0,
+        float(thr),
+        float(exposed),
+        float(exposed_t),
+        float((_g(mine, "handCount", 0) or 0) - (_g(theirs, "handCount", 0) or 0)),
+        float(_g(mine, "handCount", 0) or 0),
+        float(lead),
+        float(e_traj),
+        float(_g(cur, "turn", 1) or 0),
+    ]
+
+
+_TREE: dict | None = None
+_TREE_SOURCE = ""
+TREE_SCALE = 1.0
+
+
+def _tree() -> dict:
+    """The bundled forest: {"bias", "learning_rate", "scale", "trees": [...]}.
+
+    Each tree is four parallel arrays over its nodes — `feature`, `threshold`,
+    `left`, `right` — with a leaf marked by feature -1 and its value in
+    `threshold`. Parallel arrays rather than nested dicts because the walk
+    below is the hot path and an index is cheaper than an attribute.
+    """
+    global _TREE, _TREE_SOURCE, TREE_SCALE
+    if _TREE is not None:
+        return _TREE
+    blob, src = _read_json(_bundle_paths(
+        TREE_LEAF_FILES, ("data", "analysis", TREE_LEAF_NAME)))
+    if not blob or not (blob.get("trees") or []):
+        TELEMETRY_TREE["missing"] += 1
+        _TREE = {}
+        return _TREE
+    # The forest's split indices point into `_tree_features`' vector by
+    # position, so a forest fitted against a different feature order is not a
+    # degraded leaf, it is a wrong one. Refuse it rather than score it.
+    if list(blob.get("features") or ()) != list(TREE_FEATURES):
+        TELEMETRY_TREE["missing"] += 1
+        _TREE = {}
+        return _TREE
+    _TREE = blob
+    _TREE_SOURCE = src
+    try:
+        TREE_SCALE = float(blob.get("scale") or 1.0)
+    except Exception:
+        TREE_SCALE = 1.0
+    return _TREE
+
+
+def _tree_raw(cur, me: int) -> float:
+    """The forest's log-odds of winning this position, from seat `me`.
+
+    Bias plus the learning rate times every tree's leaf, which is sklearn's
+    own decision function for a log-loss gradient boosting ensemble. A missing
+    forest returns 0.0, which `_evaluate` cannot tell from a dead-even
+    position — so the falsification gate asserts the file loaded rather than
+    trusting the value.
+    """
+    forest = _tree()
+    trees = forest.get("trees") or ()
+    if not trees:
+        raise RuntimeError("no tree leaf bundled")
+    x = _tree_features(cur, me)
+    total = 0.0
+    for feat, thr, left, right in trees:
+        node = 0
+        f = feat[node]
+        while f >= 0:
+            node = left[node] if x[f] <= thr[node] else right[node]
+            f = feat[node]
+        total += thr[node]
+    TELEMETRY_TREE["scored"] += 1
+    return forest["bias"] + forest["learning_rate"] * total
 
 
 # --- calibrated win probability (playbook C3) -------------------------------

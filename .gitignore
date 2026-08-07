@@ -44,6 +44,10 @@ data/analysis/*
 !data/analysis/postures.json
 !data/analysis/POSTURES.md
 !data/energy_mechanics.json
+# Playbook entry 7: the D34 tree leaf. Same rule again — the agent bundles it
+# and walks it on every scored position whenever CABT_TREE_LEAF is on, which
+# is the one environment variable the refused entry's retest needs.
+!data/analysis/tree_leaf.json
 # Playbook entry 4: the counted opponent reply table. Same rule again — the
 # agent ships it in the bundle and reads it on every rollout of their turn.
 !data/opponent_policy.json
