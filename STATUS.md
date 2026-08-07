@@ -1,4 +1,21 @@
-**Last updated: 2026-08-07 ~16:50 ET (Aug 7)**
+**Last updated: 2026-08-07 ~17:45 ET (Aug 7)**
+
+## Update — Aug 7 evening (v4: the GA's first shipped deck)
+
+- **v4 SUBMITTED** (~21:40 UTC; **1 team slot left today**). v3's rating hit
+  850 then fell to ~720; replay autopsy of its 18 ladder losses: 5 to one
+  Duraludon/Archaludon/Cinderace list — an archetype with zero cells in our
+  fitness panel. No episode errors; v3's record (20W-18L) tracks v2's, so
+  the crash reads as a panel hole plus Elo convergence, not a pilot bug.
+- v4 deck = the seeded GA's Ogerpon-chain elite (raw 0.660 vs founder 0.574
+  on the 27-cell panel): 4x Teal Mask / **26 energy** / 30 trainers — the
+  scaled-damage pilot prices Myriad Leaf Shower's energy scaling, and the
+  GA traded six one-of trainers for six energy. Ship gate (5 loss-archetype
+  cells, 30 games each, specialist-piloted): better-or-equal everywhere,
+  +10pp on the Archaludon cell (0.30 — improved, still negative),
+  bench-out losses 28% vs the old deck's 61%.
+- Ask: the Archaludon archetype goes into the fitness panel before the next
+  GA selection round; flag if your side has a better list for it.
 
 # Status — Austin's side (deck creation + shared infra)
 
