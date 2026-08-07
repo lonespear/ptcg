@@ -14,6 +14,8 @@ extractors, which stream to disk. Nothing accumulates in memory except the
 
 Per mined day, `data/mined/<date>/`:
     decisions.parquet   one row per decision (csv.gz when pyarrow is missing)
+    series.parquet      one row per (episode, seat, turn): the board as that
+                        seat's turn opened, for turn-to-turn trajectories
     positions.jsonl.gz  2,000 full observations, weighted toward high ratings
     meta.json           episode counts, rating spread, filter survival at cuts
 
@@ -80,6 +82,32 @@ DECISION_COLUMNS = [
     ("our_archetype", "str"), ("opp_archetype", "str"),
     ("prizes_mine", "int32"), ("prizes_theirs", "int32"),
     ("went_first", "int8"), ("won", "int8"),
+]
+
+# One row per (episode, seat, turn): the board as it stood when that seat's own
+# turn opened -- `seat_turn` is the seat's turn ordinal, `turn` the game's.
+# Everything here is read off the observation's true state
+# (`current.players`), never reconstructed from the action stream, so Energy is
+# what is sitting on Pokemon rather than a count of attachments made. The two
+# damage columns are damage standing on the board at that moment: a knockout
+# clears the Pokemon and its damage, so they run low by whatever the knockouts
+# were worth, and the prize columns are the complete knockout record.
+SERIES_COLUMNS = [
+    ("episode_id", "int64"), ("date", "str"), ("seat", "int8"),
+    ("agent_name", "str"), ("opp_name", "str"),
+    ("agent_rating", "float64"), ("opp_rating", "float64"),
+    ("turn", "int32"), ("seat_turn", "int32"), ("step", "int32"),
+    ("went_first", "int8"),
+    ("our_archetype", "str"), ("opp_archetype", "str"),
+    ("energy_in_play", "int32"), ("board_hp", "int32"),
+    ("bench_count", "int32"), ("mons_in_play", "int32"),
+    ("hand_count", "int32"), ("prizes_remaining", "int32"),
+    ("damage_dealt_cumulative", "int32"),
+    ("opp_energy_in_play", "int32"), ("opp_board_hp", "int32"),
+    ("opp_bench_count", "int32"), ("opp_mons_in_play", "int32"),
+    ("opp_hand_count", "int32"), ("opp_prizes_remaining", "int32"),
+    ("damage_taken_cumulative", "int32"),
+    ("won", "int8"),
 ]
 
 
@@ -154,6 +182,33 @@ def _first_player(steps: list) -> int:
     return -1
 
 
+def _side_state(p: dict) -> dict:
+    """Board totals for one player, read off the observation's true state.
+
+    `damage` is the damage standing on that player's Pokemon right now. A
+    knocked-out Pokemon leaves the board, so damage summed this way understates
+    the damage a side has absorbed over the game by whatever the knockouts were
+    worth; the prize counters are the complete record of knockouts.
+    """
+    energy = hp = dmg = mons = 0
+    for zone in ("active", "bench"):
+        for mon in (p.get(zone) or []):
+            if not isinstance(mon, dict):
+                continue
+            mons += 1
+            energy += len(mon.get("energies") or [])
+            h = mon.get("hp")
+            mh = mon.get("maxHp")
+            if isinstance(h, (int, float)):
+                hp += int(h)
+                if isinstance(mh, (int, float)):
+                    dmg += int(mh) - int(h)
+    return {"energy": energy, "hp": hp, "mons": mons,
+            "bench": len(p.get("bench") or []), "damage": dmg,
+            "hand": int(p.get("handCount") or 0),
+            "prizes": len(p.get("prize") or [])}
+
+
 def _winner(rewards: list) -> int | None:
     if len(rewards) != 2:
         return None
@@ -173,6 +228,7 @@ def episode_payload(path) -> dict | None:
     date = cfg.get("date", "")
     want_dec = cfg.get("decisions", True)
     want_pos = cfg.get("positions", True)
+    want_ser = cfg.get("series", True)
     pos_per_ep = cfg.get("pos_per_episode", 2)
     try:
         with open(path, "r", encoding="utf-8") as fh:
@@ -212,15 +268,18 @@ def episode_payload(path) -> dict | None:
         "decks": [dict(decks[0]), dict(decks[1])],
         "rows": [],
         "positions": [],
+        "series": [],
         "n_decisions": 0,
     }
 
-    if not (want_dec or want_pos):
+    if not (want_dec or want_pos or want_ser):
         return out
 
     rng = random.Random(out["episode_id"])
     seen = 0
     rows = out["rows"]
+    series = out["series"]
+    turn_seen = [set(), set()]   # game-turn numbers already recorded per seat
     for t, seat, obs, sel, chosen in iter_decisions(steps):
         seen += 1
         cur = obs.get("current") or {}
@@ -232,6 +291,42 @@ def episode_payload(path) -> dict | None:
         if len(players) == 2:
             pm = len(players[me].get("prize") or [])
             pt = len(players[1 - me].get("prize") or [])
+        # The state at the top of this seat's own turn: the first decision the
+        # seat is asked for inside a turn that belongs to it. Turns alternate
+        # from the first player, so turn 1, 3, 5 ... are the first player's;
+        # a seat is also asked to decide *during* the opponent's turn (choosing
+        # a new Active after a knockout, for one), and those decisions are not
+        # a turn of its own. Setup decisions carry turn -1 and are not a turn.
+        turn_no = int(cur.get("turn") or -1)
+        owns_turn = fp >= 0 and ((turn_no % 2 == 1) == (fp == seat))
+        if (want_ser and turn_no > 0 and owns_turn and len(players) == 2
+                and turn_no not in turn_seen[seat]):
+            turn_seen[seat].add(turn_no)
+            # Turn ordinal for this seat, straight off the alternation, so a
+            # turn with no decision leaves a hole rather than shifting the index.
+            seat_turn = (turn_no + 1) // 2 if fp == seat else turn_no // 2
+            mine = _side_state(players[me])
+            theirs = _side_state(players[1 - me])
+            series.append({
+                "episode_id": out["episode_id"], "date": date, "seat": seat,
+                "agent_name": agents[seat], "opp_name": agents[1 - seat],
+                "agent_rating": None, "opp_rating": None,
+                "turn": turn_no, "seat_turn": seat_turn, "step": t,
+                "went_first": int(fp == seat) if fp >= 0 else -1,
+                "our_archetype": arch[seat], "opp_archetype": arch[1 - seat],
+                "energy_in_play": mine["energy"], "board_hp": mine["hp"],
+                "bench_count": mine["bench"], "mons_in_play": mine["mons"],
+                "hand_count": mine["hand"], "prizes_remaining": mine["prizes"],
+                "damage_dealt_cumulative": theirs["damage"],
+                "opp_energy_in_play": theirs["energy"],
+                "opp_board_hp": theirs["hp"],
+                "opp_bench_count": theirs["bench"],
+                "opp_mons_in_play": theirs["mons"],
+                "opp_hand_count": theirs["hand"],
+                "opp_prizes_remaining": theirs["prizes"],
+                "damage_taken_cumulative": mine["damage"],
+                "won": won[seat],
+            })
         opts = sel["option"]
         ctype = -1
         if chosen and 0 <= chosen[0] < len(opts):
@@ -283,9 +378,10 @@ def episode_payload(path) -> dict | None:
 # --------------------------------------------------------------------------
 
 class RowWriter:
-    """Streams decision rows to parquet, or to csv.gz when pyarrow is absent."""
+    """Streams rows to parquet, or to csv.gz when pyarrow is absent."""
 
-    def __init__(self, outdir: Path, columns=DECISION_COLUMNS):
+    def __init__(self, outdir: Path, columns=DECISION_COLUMNS,
+                 name: str = "decisions"):
         self.columns = [c for c, _ in columns]
         self.n = 0
         self._pq = None
@@ -297,12 +393,12 @@ class RowWriter:
                      "float64": pa.float64(), "str": pa.string()}
             self._pa = pa
             self.schema = pa.schema([(c, types[t]) for c, t in columns])
-            self.path = outdir / "decisions.parquet"
+            self.path = outdir / f"{name}.parquet"
             self._pq = pq.ParquetWriter(self.path, self.schema,
                                         compression="zstd")
         except ImportError:
             import csv
-            self.path = outdir / "decisions.csv.gz"
+            self.path = outdir / f"{name}.csv.gz"
             self._fh = gzip.open(self.path, "wt", newline="", encoding="utf-8")
             self._csv = csv.DictWriter(self._fh, fieldnames=self.columns)
             self._csv.writeheader()
@@ -368,6 +464,55 @@ class Decisions(Extractor):
         self.writer.close()
         return {"decisions_rows": self.writer.n,
                 "decisions_file": self.writer.path.name}
+
+
+class Series(Extractor):
+    """Per-turn board state, one row per (episode, seat, turn).
+
+    This is the empirical trajectory table: how Energy, board HP, bench width,
+    hand and prizes actually move turn to turn, which is what any projection of
+    the next few turns has to be fitted and validated against.
+    """
+    name = "series"
+
+    def __init__(self, outdir: Path, ratings: "Ratings"):
+        self.writer = RowWriter(outdir, columns=SERIES_COLUMNS, name="series")
+        self.ratings = ratings
+        self.buf: list[dict] = []
+        self.episodes = 0
+        self.turns_per_seat: Counter = Counter()
+
+    def collect(self, payload: dict) -> None:
+        rows = payload.get("series") or []
+        if not rows:
+            return
+        self.episodes += 1
+        a, b = payload["agents"]
+        ra, rb = self.ratings.get(a), self.ratings.get(b)
+        for r in rows:
+            first = r["seat"] == 0
+            r["agent_rating"], r["opp_rating"] = (ra, rb) if first else (rb, ra)
+        for s in (0, 1):
+            n = sum(1 for r in rows if r["seat"] == s)
+            if n:
+                self.turns_per_seat[n] += 1
+        self.buf.extend(rows)
+        if len(self.buf) >= 20000:
+            self.writer.write(self.buf)
+            self.buf = []
+
+    def finalize(self, outdir: Path, ctx: dict) -> dict:
+        self.writer.write(self.buf)
+        self.buf = []
+        self.writer.close()
+        counts = sorted(self.turns_per_seat.elements())
+        med = counts[len(counts) // 2] if counts else None
+        return {"series_rows": self.writer.n,
+                "series_file": self.writer.path.name,
+                "series_episodes": self.episodes,
+                "series_seat_turns_median": med,
+                "series_seat_turns_mean": (
+                    round(sum(counts) / len(counts), 2) if counts else None)}
 
 
 class Positions(Extractor):
@@ -678,7 +823,7 @@ class DayResult:
 def run_day(date: str, outdir: Path | None = None, workers: int = 2,
             limit: int | None = None, positions: int = 2000,
             pos_per_episode: int = 2, want: tuple[str, ...] = (
-                "decisions", "positions", "first_player", "meta"),
+                "decisions", "series", "positions", "first_player", "meta"),
             deck_rows: bool = False, files: list | None = None,
             chunksize: int = 4) -> DayResult:
     """Run every extractor over one day's replays in a single pass."""
@@ -697,10 +842,13 @@ def run_day(date: str, outdir: Path | None = None, workers: int = 2,
     print(f"  ratings: {len(ratings.lb)} teams from {ratings.source}")
 
     exts: list[Extractor] = []
-    dec = pos = fpx = met = None
+    dec = ser = pos = fpx = met = None
     if "decisions" in want:
         dec = Decisions(outdir, ratings)
         exts.append(dec)
+    if "series" in want:
+        ser = Series(outdir, ratings)
+        exts.append(ser)
     if "positions" in want:
         pos = Positions(outdir, ratings, k=positions)
         exts.append(pos)
@@ -712,7 +860,8 @@ def run_day(date: str, outdir: Path | None = None, workers: int = 2,
         exts.append(met)
 
     cfg = {"date": date, "decisions": "decisions" in want,
-           "positions": "positions" in want, "pos_per_episode": pos_per_episode}
+           "positions": "positions" in want, "series": "series" in want,
+           "pos_per_episode": pos_per_episode}
     t0 = time.perf_counter()
     with ProcessPoolExecutor(max_workers=workers, initializer=_worker_init,
                              initargs=(cfg,)) as pool:
@@ -732,7 +881,7 @@ def run_day(date: str, outdir: Path | None = None, workers: int = 2,
                             "won": int(payload["winner"] == s),
                             "n_steps": payload["n_steps"],
                             "deck": payload["decks"][s]})
-            payload["rows"] = payload["positions"] = None
+            payload["rows"] = payload["positions"] = payload["series"] = None
             if i % 250 == 0:
                 el = time.perf_counter() - t0
                 print(f"    {i}/{len(paths)} episodes  {el:.0f}s  "
@@ -756,6 +905,10 @@ def run_day(date: str, outdir: Path | None = None, workers: int = 2,
 
     print(f"  parsed {res.parsed}/{res.files} episodes in "
           f"{meta['seconds']:.0f}s -> {outdir}")
+    if ser is not None:
+        print(f"  series: {meta['series_rows']} rows over "
+              f"{meta['series_episodes']} episodes, median "
+              f"{meta['series_seat_turns_median']} turns per seat")
     if met is not None:
         print_survival(meta)
     if fpx is not None:
@@ -787,7 +940,8 @@ def main() -> None:
                     help="only the first N episodes (smoke test)")
     ap.add_argument("--positions", type=int, default=2000)
     ap.add_argument("--out", default=None, help="output root (default data/mined)")
-    ap.add_argument("--extractors", default="decisions,positions,first_player,meta")
+    ap.add_argument("--extractors",
+                    default="decisions,series,positions,first_player,meta")
     args = ap.parse_args()
     want = tuple(x.strip() for x in args.extractors.split(",") if x.strip())
     for date in args.dates:
