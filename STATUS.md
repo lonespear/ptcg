@@ -1,6 +1,23 @@
-**Last updated: 2026-08-07 ~09:00 ET (Aug 7)**
+**Last updated: 2026-08-07 ~14:00 ET (Aug 7)**
 
 # Status — Austin's side (deck creation + shared infra)
+
+## Update — Aug 7 PM (seeded archipelago v3 launched, both machines)
+
+- **The GA deck search is LIVE** on both machines: the seeded
+  archipelago v3 (`ptcg/creation/seeded.py`, spec + pilot-split table in
+  `runs/seeded_overnight/README.md`). Five chains x (explore + refine):
+  spec-Ogerpon (anchored refinement of the shipped list), mono-Darkness
+  (mirror-weighted Grimmsnarl harvest), mono-Fighting (uniform
+  wildcard), rainbow-Kanga (the field's 5-energy toolbox), kanga-counter
+  (energy-unconstrained counter chain). Fitness = the 27-cell stratified
+  leaderboard panel (`data/panel_lb.json`, manifest
+  `data/analysis/PANEL_LB.md`), specialist-piloted; selection decided by
+  real/specialist pilots, greedy only screens (D40).
+- ~12 h budget each, deep final evals (`final_eval.json`) under real
+  pilots at the end. Results + candidate lists tomorrow morning.
+- Yesterday's mono-typing sprint findings that shaped this design:
+  `data/analysis/MONO_SPRINT.md`.
 
 ## Update — Aug 7 (pilot frozen at its ceiling; GA rotation starts tonight)
 
