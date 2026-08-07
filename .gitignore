@@ -34,6 +34,12 @@ data/*
 !data/history_agents.csv
 # The fitted margin -> P(win) table the agent ships and reads at run time.
 !data/calibration_v2.json
+# Same rule for the two C1/C2 tables: the agent ships them in the bundle and
+# reads them on every position it scores, so they are versioned with it.
+!data/analysis/
+data/analysis/*
+!data/analysis/trajectory_curves.json
+!data/energy_mechanics.json
 
 # Python
 __pycache__/

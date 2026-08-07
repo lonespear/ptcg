@@ -89,6 +89,27 @@ def build() -> Path:
               "python -m ptcg.creation.calibration --games 3000 "
               "--out data/calibration_v2.json")
 
+    # The C1/C2 trajectory tables: the fitted turn-to-turn Energy curves the
+    # projection reads, and the Energy-mechanics KB it credits a visible
+    # accelerator from. Same loud absence as the two above — without them the
+    # projection falls back to a flat field rate and the fitted C2 weight is
+    # being spent on a number it was not fitted for.
+    for src, dest, rebuild in (
+            (ROOT / "data" / "analysis" / "trajectory_curves.json",
+             "trajectory_curves.json",
+             "python -m ptcg.trajectory"),
+            (ROOT / "data" / "energy_mechanics.json",
+             "energy_mechanics.json",
+             "python -c \"from ptcg.energy_mechanics import write_json; "
+             "write_json()\"")):
+        if src.exists():
+            shutil.copy2(src, staging / dest)
+            print(f"  {dest}: {src.stat().st_size / 1024:.0f} KB")
+        else:
+            print(f"  WARNING: no {src.relative_to(ROOT)} — the C1/C2 "
+                  f"projection degrades to the field-average rate. "
+                  f"Rebuild it with: {rebuild}")
+
     # The agent reads card/attack metadata through cg.api, exactly as the
     # official sample does, so the package ships with the bundle. (Importing it
     # was never the problem — the first two failures were the __file__ bug.)

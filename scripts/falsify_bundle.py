@@ -39,6 +39,8 @@ ARCHIVE = ROOT / "build" / "submission.tar.gz"
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--games", type=int, default=1)
+    ap.add_argument("--opponent", default="external/grimmsnarl/deck.csv",
+                    help="field decklist for the other seat; \"\" for a mirror")
     args = ap.parse_args()
 
     if not ARCHIVE.exists():
@@ -87,9 +89,41 @@ def main() -> None:
         if not lo < hi:
             sys.exit("FAIL: _pwin is not monotone over the table")
 
+        # C1/C2: the projection tables have to come out of the bundle too, and
+        # the feature has to return a number on a real position rather than
+        # fall through its own guard to a silent zero.
+        curves, accel = g["_curves"](), g["_accel_rates"]()
+        print(f"trajectory curves: {len(curves)} cells from "
+              f"{g['_CURVES_SOURCE']}")
+        print(f"energy KB: {len(accel)} accelerators from {g['_ACCEL_SOURCE']}")
+        if not curves:
+            sys.exit("FAIL: no trajectory curves in the bundle — the C2 "
+                     "weight would be spent on a flat field rate")
+        if not accel:
+            sys.exit("FAIL: no energy-mechanics KB in the bundle")
+        for name, src in (("curves", g["_CURVES_SOURCE"]),
+                          ("energy KB", g["_ACCEL_SOURCE"])):
+            if not str(Path(src).resolve()).startswith(str(tmp.resolve())):
+                sys.exit(f"FAIL: {name} loaded {src}, outside the bundle")
+
         deck = g["read_deck_csv"]()
+        # The opponent is a field list, not our own: a same-deck mirror leaves
+        # both sides' best affordable attack identical, so the C2 differential
+        # is 0 on 98% of positions and asserting it fired would assert nothing.
+        # This is a decklist, not code — the bundle's own `cg` and `main.py`
+        # are still the only things being exercised.
+        opp = deck
+        if args.opponent:
+            try:
+                text = (ROOT / args.opponent).read_text()
+                ids = [int(x) for x in text.replace(",", "\n").split()
+                       if x.strip()]
+                if len(ids) == 60:
+                    opp = ids
+            except Exception:
+                print(f"  (no {args.opponent}; falling back to a mirror)")
         for game in range(args.games):
-            obs, start = battle_start(list(deck), list(deck))
+            obs, start = battle_start(list(deck), list(opp))
             if obs is None:
                 sys.exit(f"FAIL: battle_start (type {start.errorType})")
             steps = 0
@@ -106,8 +140,18 @@ def main() -> None:
                   f"turn {obs.get('current', {}).get('turn')}")
 
         tel = g["TELEMETRY"]
+        traj = g["TELEMETRY_TRAJ"]
         print(f"search_begin fired {calls['search_begin']} times")
         print(f"telemetry: {tel}")
+        print(f"trajectory: {traj}")
+        if traj["feature_errors"]:
+            sys.exit(f"FAIL: the C2 feature raised {traj['feature_errors']} "
+                     f"times and scored 0.0 behind its guard")
+        if traj["curves_missing"]:
+            sys.exit("FAIL: the projection fell back to the flat field rate")
+        if traj["threat_nonzero"] == 0:
+            sys.exit(f"FAIL: the C2 term never moved a margin over "
+                     f"{traj['threat_scored']} scored positions")
         if calls["search_begin"] == 0:
             sys.exit("FAIL: search never fired — the agent played rules-only")
         if tel["calibration_missing"]:

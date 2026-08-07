@@ -825,6 +825,394 @@ def _side_totals(player) -> tuple[float, float, float, float]:
     return hp, energy, bench, damage
 
 
+# --- trajectory features (playbook C1/C2) -----------------------------------
+# The evaluator above scores the board as it stands. C1/C2 of D29 score where
+# the board is going: who gets an attacker online first, and how much Energy
+# and damage each side is expected to hold two of its own turns from now.
+#
+# Two shipped tables carry it, and the agent reads both at run time:
+#
+#   trajectory_curves.json   `ptcg/trajectory.py`'s conditional curves, fitted
+#                            on 193,479 (episode, seat, turn) series rows over
+#                            14,182 rated ladder games: given an archetype, a
+#                            turn bucket and the Energy on its board now, the
+#                            mean Energy it holds k of its own turns later.
+#                            Held-out bias at k=2 is -0.058 Energy against
+#                            +0.926 for the playbook's one-attach-a-turn line
+#                            (data/analysis/TRAJECTORY_REPORT.md), which is why
+#                            the projection is this table and not arithmetic.
+#   energy_mechanics.json    `ptcg/energy_mechanics.py`'s KB: every Energy
+#                            accelerator in the pool, classified from its
+#                            effect text, with the rate one use is worth
+#                            (unbounded text capped at 2, as `energy_plan`
+#                            caps it). Our own hand and board are private
+#                            information the field curve cannot see, so a
+#                            visible accelerator is credited on top of it.
+#
+# `ptcg/energy_plan.py` is the reference implementation of the same projection
+# with exact type matching and a full feed-order search. It cannot ship (it
+# imports the card pool and the outs machinery), so what runs here is its lean
+# form: cost size instead of exact type matching, board-level growth fed to the
+# focal attacker, which is the feed order the planner's greedy would pick.
+# `scripts/fit_trajectory_features.py` computes these exact functions over the
+# mined positions, so the weights below are fitted on what the agent computes.
+TRAJECTORY_FILES = ("trajectory_curves.json",)
+MECHANICS_FILES = ("energy_mechanics.json",)
+
+TRAJ_HORIZON = 5          # ptcg.energy_plan.HORIZON — D32's five-turn cap
+TRAJ_K = 2                # the horizon the t+2 features read
+TRAJ_RATE_CAP = 2         # ptcg.energy_plan.UNBOUNDED_CAP
+TRAJ_MAX_BIN = 9          # the curves' top Energy bin is "9+"
+# Field-wide realized Energy per own turn, the fallback when no cell matches
+# (TRAJECTORY_REPORT.md, "realized rate/turn" for (all)).
+TRAJ_FIELD_RATE = 0.541
+
+_CURVES: dict | None = None
+_CURVES_SOURCE = ""
+_ACCEL: dict | None = None
+_ACCEL_SOURCE = ""
+_ATTACK_PROFILE: dict = {}
+# The archetype label is a per-episode constant, so it is read once a decision
+# and held: inside a rollout the opponent's decklist is already fixed by the
+# determinization, and rescanning the discard on every leaf buys nothing.
+_TRAJ_ARCH = {"us": "(all)", "them": "(all)"}
+
+TELEMETRY_TRAJ = {
+    "curves_missing": 0,      # a feature computed with no table loaded
+    "feature_errors": 0,      # a guarded failure; the term scored 0.0
+    "threat_scored": 0,       # positions the C2 term was computed on
+    "threat_nonzero": 0,      # ... of which it moved the margin
+}
+
+
+def _bundle_paths(names, repo_rel=None) -> list[str]:
+    """Where a shipped data file can be, bundle first, repo last."""
+    paths = []
+    for name in names:
+        paths.append(name)
+        if _HERE:
+            paths.append(os.path.join(_HERE, name))
+        paths.append(os.path.join(_KAGGLE_DIR, name))
+    if _HERE and repo_rel:
+        paths.append(os.path.join(_HERE, os.pardir, *repo_rel))
+    return paths
+
+
+def _read_json(paths):
+    import json
+    for path in paths:
+        try:
+            with open(path, "r") as fh:
+                return json.load(fh), path
+        except Exception:
+            continue
+    return None, ""
+
+
+def _curves() -> dict:
+    """(archetype, k, turn bucket, Energy bin) -> mean Energy at t+k."""
+    global _CURVES, _CURVES_SOURCE
+    if _CURVES is not None:
+        return _CURVES
+    _CURVES = {}
+    blob, src = _read_json(_bundle_paths(
+        TRAJECTORY_FILES, ("data", "analysis", "trajectory_curves.json")))
+    for arch, metrics in ((blob or {}).get("curves") or {}).items():
+        for kname, cells in ((metrics or {}).get("energy_in_play") or {}).items():
+            try:
+                k = int(str(kname).lstrip("k"))
+            except ValueError:
+                continue
+            for cell in cells or []:
+                try:
+                    _CURVES[(arch, k, cell["t_bucket"], int(cell["bin"]))] = \
+                        float(cell["mean"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+    if _CURVES:
+        _CURVES_SOURCE = src
+    return _CURVES
+
+
+def _accel_rates() -> dict:
+    """card id -> Energy one use of it accelerates onto the board.
+
+    Attack riders are excluded: they cost the attack, so they are not free
+    ramp on a turn the plan wants damage (`energy_plan.deck_accel_package`
+    reports them separately for the same reason).
+    """
+    global _ACCEL, _ACCEL_SOURCE
+    if _ACCEL is not None:
+        return _ACCEL
+    _ACCEL = {}
+    blob, src = _read_json(_bundle_paths(
+        MECHANICS_FILES, ("data", "energy_mechanics.json")))
+    for rec in ((blob or {}).get("records") or []):
+        if rec.get("mechanic") != "acceleration":
+            continue
+        if rec.get("frequency") == "attack_rider":
+            continue
+        try:
+            cid = int(rec.get("card_id") or 0)
+        except (TypeError, ValueError):
+            continue
+        rate = rec.get("rate")
+        rate = TRAJ_RATE_CAP if rate is None else int(rate)
+        if cid and rate > _ACCEL.get(cid, 0):
+            _ACCEL[cid] = rate
+    if _ACCEL:
+        _ACCEL_SOURCE = src
+    return _ACCEL
+
+
+def _attack_profile(card_id: int) -> list[tuple[int, float]]:
+    """(cost size, damage) for every attack a card prints, cheapest first."""
+    prof = _ATTACK_PROFILE.get(card_id)
+    if prof is not None:
+        return prof
+    cards, attacks = _tables()
+    prof = []
+    card = cards.get(card_id)
+    for aid in (getattr(card, "attacks", None) or []):
+        atk = attacks.get(aid)
+        if atk is None:
+            continue
+        cost = len(getattr(atk, "energies", None) or [])
+        prof.append((cost, float(getattr(atk, "damage", 0) or 0)))
+    prof.sort()
+    _ATTACK_PROFILE[card_id] = prof
+    return prof
+
+
+def _traj_bucket(turn) -> str:
+    """The curves' turn bucket, in the seat's own turns.
+
+    The series was indexed by the seat's own turn; an observation carries the
+    global turn, and the two seats alternate, so own turn is half of it. The
+    buckets are three turns wide, so the half-turn the seats are out of step by
+    cannot move a position more than one bucket, and only at a boundary.
+    """
+    try:
+        t = max(1, (int(turn) + 1) // 2)
+    except (TypeError, ValueError):
+        t = 1
+    return "t1-3" if t <= 3 else ("t4-6" if t <= 6 else "t7+")
+
+
+def _traj_growth(arch: str, bucket: str, e_now: float, k: int) -> float:
+    """Expected Energy this side gains over its next k turns.
+
+    k of 1-3 is a table read; beyond that the last fitted step is repeated,
+    which is the flattest honest extrapolation (the curves' own steps shrink
+    with k, so repeating the k3-k2 step does not run away).
+    """
+    if k <= 0:
+        return 0.0
+    curves = _curves()
+    if not curves:
+        TELEMETRY_TRAJ["curves_missing"] += 1
+        return TRAJ_FIELD_RATE * k
+    b = min(int(e_now), TRAJ_MAX_BIN)
+
+    def at(kk: int) -> float:
+        v = curves.get((arch, kk, bucket, b))
+        if v is None:
+            v = curves.get(("(all)", kk, bucket, b))
+        if v is None:
+            return e_now + TRAJ_FIELD_RATE * kk
+        return v
+
+    if k <= 3:
+        return at(k) - e_now
+    g3, g2 = at(3) - e_now, at(2) - e_now
+    return g3 + max(g3 - g2, 0.0) * (k - 3)
+
+
+def _traj_slots(player) -> list[tuple[float, int]]:
+    """(Energy on it, card id) for every Pokemon this side has in play."""
+    out = []
+    for zone in ("active", "bench"):
+        for mon in _g(player, zone, []) or []:
+            if mon is None:
+                continue
+            cid = _g(mon, "id", 0) or 0
+            if cid:
+                out.append((float(len(_g(mon, "energies", []) or [])), int(cid)))
+    return out
+
+
+def _visible_accel(player) -> float:
+    """The best accelerator this side can see — private information for us.
+
+    Our hand is ours to read; theirs is hidden, so this term is zero on their
+    side by construction and the asymmetry is the point. In play it counts
+    abilities already on the board; in hand it counts the copy we are holding.
+    """
+    rates = _accel_rates()
+    if not rates:
+        return 0.0
+    best = 0.0
+    for zone in ("active", "bench", "hand"):
+        for card in _g(player, zone, []) or []:
+            if card is None:
+                continue
+            cid = _g(card, "id", 0) or 0
+            r = rates.get(int(cid), 0)
+            if r > best:
+                best = float(r)
+            for sub in ("tools",):
+                for c in _g(card, sub, []) or []:
+                    r = rates.get(int(_g(c, "id", 0) or 0), 0)
+                    if r > best:
+                        best = float(r)
+    return best
+
+
+def _online_turn(slots, growth) -> int:
+    """The earliest of our next 5 turns an attacker's cheapest attack is paid.
+
+    Board-level growth is fed to whichever attacker reaches its cost soonest,
+    which is the feed order `energy_plan.plan` searches for and finds. Nothing
+    online inside the horizon returns HORIZON + 1, so the feature is bounded.
+    """
+    best = TRAJ_HORIZON + 1
+    for e, cid in slots:
+        prof = _attack_profile(cid)
+        if not prof:
+            continue
+        cost = prof[0][0]
+        for k in range(0, TRAJ_HORIZON + 1):
+            if k >= best:
+                break
+            if e + growth(k) >= cost:
+                best = k
+                break
+    return best
+
+
+def _threat_at(slots, growth, k: int) -> float:
+    """The hardest attack this side can pay for k of its turns from now."""
+    gain = growth(k)
+    best = 0.0
+    for e, cid in slots:
+        budget = e + gain
+        for cost, dmg in _attack_profile(cid):
+            if cost <= budget and dmg > best:
+                best = dmg
+    return best
+
+
+def _label_of_ids(card_ids) -> str:
+    """The label the series was cut by: the highest-HP Pokemon in a pile.
+
+    `ptcg.extract.label_archetype_fast` names a decklist that way, and
+    `ptcg/trajectory.py` cut its curves by that name, so a curve key is only
+    reachable through the same rule.
+    """
+    cards, _ = _tables()
+    best, best_hp = "(all)", -1.0
+    for cid in card_ids:
+        info = cards.get(int(cid or 0))
+        hp = getattr(info, "hp", None) if info is not None else None
+        if hp and float(hp) > best_hp:
+            best, best_hp = getattr(info, "name", "(all)"), float(hp)
+    return best
+
+
+def _visible_ids(player, zones=("active", "bench", "discard")):
+    for zone in zones:
+        for card in _g(player, zone, []) or []:
+            if card is None:
+                continue
+            yield _g(card, "id", 0) or 0
+            for sub in ("preEvolution",):
+                for c in _g(card, sub, []) or []:
+                    yield _g(c, "id", 0) or 0
+
+
+def _refresh_traj_arch(obs) -> None:
+    """Re-read both archetype labels. Once a decision, never inside a leaf.
+
+    Their label comes off `_deck_posterior` — the search's own decklist
+    inference, graded 0.63 right at turn 1 rising to 0.94 by turn 10 — because
+    what is on their board names the deck only 15% of the time at turn 1 and
+    the trajectory features are worth most exactly that early. Ours is read
+    off our own board, discard and hand, which is private information and
+    needs no inference.
+    """
+    try:
+        cur = (obs or {}).get("current") or {}
+        players = cur.get("players") or []
+        if len(players) < 2:
+            return
+        me = cur.get("yourIndex", 0) or 0
+        _TRAJ_ARCH["us"] = _label_of_ids(
+            _visible_ids(players[me], ("active", "bench", "discard", "hand")))
+        label = "(all)"
+        try:
+            post = _deck_posterior(obs, top_k=1)
+            if post:
+                label = _label_of_ids(post[0][0].keys())
+        except Exception:
+            label = "(all)"
+        if label == "(all)":
+            label = _label_of_ids(_visible_ids(players[1 - me]))
+        _TRAJ_ARCH["them"] = label
+    except Exception:
+        TELEMETRY_TRAJ["feature_errors"] += 1
+
+
+def _traj_projection(cur, mine, theirs):
+    """Both sides' projected Energy, as (slots, growth) pairs.
+
+    The growth functions are the whole projection: k of our turns from now,
+    how much more Energy each side is holding. Ours adds the accelerator we
+    can see in our own hand or on our own board — private information the
+    field curve averages over and therefore understates for us.
+    """
+    bucket = _traj_bucket(_g(cur, "turn", 1))
+    us, them = _TRAJ_ARCH["us"], _TRAJ_ARCH["them"]
+    slots_m, slots_t = _traj_slots(mine), _traj_slots(theirs)
+    e_m = sum(e for e, _ in slots_m)
+    e_t = sum(e for e, _ in slots_t)
+    accel_m = _visible_accel(mine)
+
+    def g_m(k: int) -> float:
+        return _traj_growth(us, bucket, e_m, k) + (accel_m if k else 0.0)
+
+    def g_t(k: int) -> float:
+        return _traj_growth(them, bucket, e_t, k)
+
+    return (slots_m, g_m, e_m), (slots_t, g_t, e_t)
+
+
+def _threat_traj_t2(cur, mine, theirs) -> float:
+    """C2's shipped term: the damage-potential differential at t+2.
+
+    The hardest attack each side can pay for two of its own turns from now,
+    ours minus theirs. This is the only trajectory term the fit priced (see
+    WEIGHTS); the other two are measured-null and are not computed here.
+    """
+    (sm, gm, _), (st, gt, _) = _traj_projection(cur, mine, theirs)
+    return _threat_at(sm, gm, TRAJ_K) - _threat_at(st, gt, TRAJ_K)
+
+
+def _trajectory_terms(cur, mine, theirs) -> tuple[float, float, float]:
+    """(online_lead, energy_traj_diff_t2, threat_traj_diff_t2), all three.
+
+    What `scripts/fit_trajectory_features.py` prices. online_lead is their
+    earliest online turn minus ours, so positive means we reach an attack
+    first; the other two are our projection at t+2 minus theirs. Only the
+    third one has a weight — this function stays so the other two can be
+    re-measured on new data without being reconstructed from the write-up.
+    """
+    (sm, gm, e_m), (st, gt, e_t) = _traj_projection(cur, mine, theirs)
+    online_lead = float(_online_turn(st, gt) - _online_turn(sm, gm))
+    energy_diff = (e_m + gm(TRAJ_K)) - (e_t + gt(TRAJ_K))
+    threat_diff = _threat_at(sm, gm, TRAJ_K) - _threat_at(st, gt, TRAJ_K)
+    return online_lead, energy_diff, threat_diff
+
+
 # Every number the position evaluator and the search override use, in one
 # place so a tuner can inject a vector instead of editing code.
 #
@@ -879,6 +1267,24 @@ def _side_totals(player) -> tuple[float, float, float, float]:
 #           differentials under 2000 each, so the ceiling stays four orders of
 #           magnitude clear of the ±1e6 a decided game scores.
 #   search_margin  how far search must beat the rules pick before it overrides
+#   threat_traj_t2  1.42 [0.47, 2.36], on the damage-potential differential
+#           two of each side's turns from now (playbook C2). Fitted by
+#           `scripts/fit_trajectory_features.py` on the same sample and by the
+#           same machinery as the vector above — 8,792 positions, one an
+#           episode, rating >= 1000, turn fixed effects — entered on top of
+#           exactly the terms this evaluator scores
+#           (`data/analysis/trajectory_fit.json`).
+#           The projection is what carries it, not the board: the same
+#           differential taken on the present board fits 1.25 [0.15, 2.34]
+#           alone and goes null (0.48 [-0.82, 1.79]) once the t+2 version is
+#           in the model beside it, while the t+2 term survives at 1.18
+#           [0.04, 2.32]. That contrast is the C2 result.
+#   two trajectory features are measured-null and carry no weight, by D30:
+#           online_lead (their earliest attack turn minus ours) 31 [-16, +78]
+#           in the joint fit and 40 [-7, +86] alone; energy_traj_t2 (projected
+#           Energy differential at t+2) -27 [-58, +3], correlated 0.68 with
+#           the Energy term already in the vector. Both stay computable in
+#           `_trajectory_terms` so they can be re-priced on new data.
 WEIGHTS = {
     "prize": 1000.0,
     "hp": 2.6,
@@ -886,6 +1292,7 @@ WEIGHTS = {
     "bench": 153.0,
     "damage": 4.2,
     "no_active": 4000.0,
+    "threat_traj_t2": 1.42,
     "search_margin": 0.0,
 }
 _DEFAULT_WEIGHTS = dict(WEIGHTS)
@@ -937,6 +1344,17 @@ def _margin(cur, me: int) -> float:
     active = _g(mine, "active", []) or []
     if not (active and active[0]):
         score -= w["no_active"]
+    # C2: where the board is going. Zero the weight and the projection is not
+    # computed at all, so a struck feature costs no time.
+    if w["threat_traj_t2"]:
+        try:
+            thr = _threat_traj_t2(cur, mine, theirs)
+            TELEMETRY_TRAJ["threat_scored"] += 1
+            if thr:
+                TELEMETRY_TRAJ["threat_nonzero"] += 1
+            score += w["threat_traj_t2"] * thr
+        except Exception:
+            TELEMETRY_TRAJ["feature_errors"] += 1
     return score
 
 
@@ -1376,6 +1794,10 @@ def _agent(obs_dict: dict) -> list[int]:
     select = obs.get("select")
     if select is None:
         return read_deck_csv()
+
+    # Both archetype labels, re-read once here and held for every leaf the
+    # search scores below (they are per-episode constants).
+    _refresh_traj_arch(obs)
 
     # The main menu: simulate the candidates when we can, fall back to rules.
     options = select.get("option") or []
