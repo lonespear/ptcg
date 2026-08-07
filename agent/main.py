@@ -122,36 +122,54 @@ def read_deck_csv() -> list[int]:
 
 
 # --- reading the board ------------------------------------------------------
-def _zone(obs: dict, area: int, player_index: int) -> list:
+def _g(obj, key, default=None):
+    """Read `key` off either observation form.
+
+    The grader hands the live policy a dict; `search_step` hands the rollout
+    policy the same observation as dataclasses (cg/api.py), with identical
+    field names. One accessor over both is what lets the two policies be the
+    same code rather than two copies that drift — the D25 invariant, held
+    structurally.
+    """
+    if obj is None:
+        return default
+    if isinstance(obj, dict):
+        v = obj.get(key, default)
+    else:
+        v = getattr(obj, key, default)
+    return default if v is None else v
+
+
+def _zone(obs, area: int, player_index: int) -> list:
     """The list an option's (area, index) points into."""
-    cur = obs.get("current") or {}
-    players = cur.get("players") or []
+    cur = _g(obs, "current")
+    players = _g(cur, "players", []) or []
     if area == AREA_DECK:
-        return (obs.get("select") or {}).get("deck") or []
+        return _g(_g(obs, "select"), "deck", []) or []
     if area == AREA_STADIUM:
-        return cur.get("stadium") or []
+        return _g(cur, "stadium", []) or []
     if area == AREA_LOOKING:
-        return cur.get("looking") or []
+        return _g(cur, "looking", []) or []
     if player_index is None or player_index >= len(players):
         return []
     ps = players[player_index]
     return {
-        AREA_HAND: ps.get("hand"),
-        AREA_DISCARD: ps.get("discard"),
-        AREA_ACTIVE: ps.get("active"),
-        AREA_BENCH: ps.get("bench"),
-        AREA_PRIZE: ps.get("prize"),
+        AREA_HAND: _g(ps, "hand"),
+        AREA_DISCARD: _g(ps, "discard"),
+        AREA_ACTIVE: _g(ps, "active"),
+        AREA_BENCH: _g(ps, "bench"),
+        AREA_PRIZE: _g(ps, "prize"),
     }.get(area) or []
 
 
-def _option_card(obs: dict, opt: dict) -> dict | None:
-    """Resolve a CARD option to the actual card dict, or None if hidden.
+def _option_card(obs, opt):
+    """Resolve a CARD option to the actual card, or None if hidden.
 
     CARD options carry (area, index, playerIndex) — never a cardId — so
     scoring one means looking it up on the board first.
     """
-    zone = _zone(obs, opt.get("area"), opt.get("playerIndex"))
-    idx = opt.get("index")
+    zone = _zone(obs, _g(opt, "area"), _g(opt, "playerIndex"))
+    idx = _g(opt, "index")
     if idx is None or idx >= len(zone):
         return None
     return zone[idx]
@@ -190,45 +208,44 @@ EVOLUTION_BONUS = 70.0       # evolves something we already have in play
 BENCH_EMERGENCY = 10000.0    # one Pokemon left: a Basic outranks everything
 
 
-def _board_context(obs: dict) -> dict:
+def _board_context(obs) -> dict:
     """Our own side, read once per ranking: hand copies, Pokemon in play, and
     the names an evolution card could be looking for."""
-    cur = obs.get("current") or {}
-    me = cur.get("yourIndex", 0)
-    players = cur.get("players") or []
+    cur = _g(obs, "current")
+    me = _g(cur, "yourIndex", 0)
+    players = _g(cur, "players", []) or []
     if me >= len(players):
         return {"hand": {}, "in_play": 0, "names": set()}
     mine = players[me]
     hand: dict = {}
-    for c in mine.get("hand") or []:
-        if isinstance(c, dict) and c.get("id"):
-            hand[c["id"]] = hand.get(c["id"], 0) + 1
+    for c in _g(mine, "hand", []) or []:
+        cid = _g(c, "id")
+        if cid:
+            hand[cid] = hand.get(cid, 0) + 1
     cards, _ = _tables()
     names, in_play = set(), 0
     for zone in ("active", "bench"):
-        for mon in mine.get(zone) or []:
-            if not isinstance(mon, dict):
+        for mon in _g(mine, zone, []) or []:
+            if mon is None:
                 continue
             in_play += 1
-            data = cards.get(mon.get("id"))
+            data = cards.get(_g(mon, "id"))
             if data is not None:
                 names.add(getattr(data, "name", None))
     return {"hand": hand, "in_play": in_play, "names": names}
 
 
-def _card_score(card: dict, board: dict | None = None,
+def _card_score(card, board: dict | None = None,
                 in_hand: bool = False) -> float:
     """How much we want this card in play.
 
     Offence and bulk are good; handing the opponent extra prizes is not, and
     that penalty is what keeps a Mega ex from being promoted on reflex.
     """
-    if not isinstance(card, dict):
-        return -1.0
-    cid = card.get("id")
+    cid = _g(card, "id")
     if cid is None:
         return -1.0
-    hp = card.get("hp")
+    hp = _g(card, "hp")
     if hp is None:
         cards, _ = _tables()
         data = cards.get(cid)
@@ -253,26 +270,26 @@ def _card_score(card: dict, board: dict | None = None,
 
 
 # --- choosing an attack -----------------------------------------------------
-def _opponent_active(obs: dict) -> dict | None:
-    cur = obs.get("current") or {}
-    me = cur.get("yourIndex", 0)
-    players = cur.get("players") or []
+def _opponent_active(obs):
+    cur = _g(obs, "current")
+    me = _g(cur, "yourIndex", 0)
+    players = _g(cur, "players", []) or []
     if len(players) < 2:
         return None
-    act = players[1 - me].get("active") or []
-    return act[0] if act and isinstance(act[0], dict) else None
+    act = _g(players[1 - me], "active", []) or []
+    return act[0] if act and act[0] is not None else None
 
 
-def _damage_against(attack_id: int, target: dict | None) -> int:
+def _damage_against(attack_id: int, target) -> int:
     """Printed damage, doubled if the defender is weak to this attack's type."""
     cards, attacks = _tables()
     a = attacks.get(attack_id)
     if a is None:
         return 0
     dmg = getattr(a, "damage", 0) or 0
-    if not dmg or not target:
+    if not dmg or target is None:
         return dmg
-    data = cards.get(target.get("id"))
+    data = cards.get(_g(target, "id"))
     weakness = getattr(data, "weakness", None) if data else None
     if weakness is None:
         return dmg
@@ -282,17 +299,17 @@ def _damage_against(attack_id: int, target: dict | None) -> int:
     return dmg
 
 
-def _choose_attack(options: list[dict], obs: dict) -> int | None:
+def _choose_attack(options, obs) -> int | None:
     """Cheapest knockout if one exists, otherwise the biggest hit."""
     target = _opponent_active(obs)
-    target_hp = target.get("hp") if target else None
+    target_hp = _g(target, "hp")
 
     ko_i, ko_d = None, None
     big_i, big_d = None, -1
     for i, o in enumerate(options):
-        if o.get("type") != OPT_ATTACK:
+        if _g(o, "type") != OPT_ATTACK:
             continue
-        d = _damage_against(o.get("attackId"), target)
+        d = _damage_against(_g(o, "attackId"), target)
         if d > big_d:
             big_i, big_d = i, d
         if target_hp is not None and d >= target_hp:
@@ -301,27 +318,27 @@ def _choose_attack(options: list[dict], obs: dict) -> int | None:
     return ko_i if ko_i is not None else big_i
 
 
-def _choose_attach(options: list[dict], obs: dict) -> int | None:
+def _choose_attach(options, obs) -> int | None:
     """Energy goes on whatever is going to attack — the Active Pokémon."""
     fallback = None
     for i, o in enumerate(options):
-        if o.get("type") != OPT_ATTACH:
+        if _g(o, "type") != OPT_ATTACH:
             continue
         if fallback is None:
             fallback = i
-        if o.get("inPlayArea") == AREA_ACTIVE:
+        if _g(o, "inPlayArea") == AREA_ACTIVE:
             return i
     return fallback
 
 
-def _choose_main(options: list[dict], obs: dict) -> int:
+def _choose_main(options, obs) -> int:
     best_i, best_rank = 0, -1
     for i, o in enumerate(options):
-        rank = MAIN_PRIORITY.get(o.get("type"), 0)
+        rank = MAIN_PRIORITY.get(_g(o, "type"), 0)
         if rank > best_rank:
             best_i, best_rank = i, rank
 
-    kind = options[best_i].get("type")
+    kind = _g(options[best_i], "type")
     if kind == OPT_ATTACK:
         alt = _choose_attack(options, obs)
         if alt is not None:
@@ -333,7 +350,7 @@ def _choose_main(options: list[dict], obs: dict) -> int:
     return best_i
 
 
-def _rank_card_options(options: list[dict], obs: dict) -> list[int]:
+def _rank_card_options(options, obs) -> list[int]:
     """Option indices, best card first. Unresolvable cards sort last."""
     try:
         board = _board_context(obs)
@@ -342,13 +359,74 @@ def _rank_card_options(options: list[dict], obs: dict) -> list[int]:
     scored = []
     for i, o in enumerate(options):
         card = _option_card(obs, o)
-        if card:
-            v = _card_score(card, board, o.get("area") == AREA_HAND)
+        if card is not None:
+            v = _card_score(card, board, _g(o, "area") == AREA_HAND)
         else:
             v = -1.0
         scored.append((v, -i, i))
     scored.sort(reverse=True)
     return [i for _, _, i in scored]
+
+
+def _policy(obs) -> list[int]:
+    """The rule policy, over a dict or a dataclass observation alike.
+
+    This is the whole of what the agent plays when the search does not
+    override it, and it is also what every rollout inside the search plays.
+    Before this was one function it was two, and the rollout half handled only
+    the MAIN menu: every other prompt inside a rollout — which card to fetch,
+    which to discard, which Pokémon to bench, how many to draw — scored rank 0
+    for every option and took index 0. Rollouts therefore valued our candidate
+    moves as continued by a policy nobody plays, and the bias fell hardest on
+    setup lines, whose payoff arrives through exactly those prompts.
+    """
+    sel = _g(obs, "select")
+    options = _g(sel, "option", []) or []
+    if not options:
+        return [0]
+
+    ctx = _g(sel, "context")
+    min_count = _g(sel, "minCount", 1) or 0
+    max_count = _g(sel, "maxCount", 1) or 1
+    n = len(options)
+    types = {_g(o, "type") for o in options}
+
+    # Yes/no questions.
+    if types <= {OPT_YES, OPT_NO}:
+        want_yes = ctx != CTX_MULLIGAN   # never redraw a legal opening hand
+        for i, o in enumerate(options):
+            if (_g(o, "type") == OPT_YES) == want_yes:
+                return [i]
+        return [0]
+
+    # "How many?" — always take the most.
+    if types == {OPT_NUMBER}:
+        best_i, best_n = 0, -1
+        for i, o in enumerate(options):
+            v = _g(o, "number", 0) or 0
+            if v > best_n:
+                best_i, best_n = i, v
+        return [best_i]
+
+    # The main menu.
+    if any(_g(o, "type") in MAIN_PRIORITY for o in options):
+        return [_choose_main(options, obs)]
+
+    # Card choices: put the most valuable card where we want it, and the least
+    # valuable card where we don't.
+    if OPT_CARD in types:
+        order = _rank_card_options(options, obs)
+        if ctx == CTX_DISCARD:
+            order = order[::-1]
+        k = max(min_count, 1) if max_count >= 1 else min_count
+        k = min(k, max_count, n)
+        if ctx in (CTX_SETUP_BENCH, CTX_TO_BENCH):
+            k = min(max_count, n)      # a full bench is always better
+        return sorted(order[:max(k, 1)])
+
+    # Anything else (energy picks, tools): smallest legal set.
+    k = min(max(min_count, 1), max_count, n)
+    return list(range(max(k, 1)))
 
 
 # =========================================================================
@@ -455,11 +533,15 @@ BANK_SAFETY = 0.80        # fraction of the bank we ever plan against
 BANK_MIN_BUDGET = 0.20    # seconds; a search shorter than this buys nothing
 BANK_MAX_BUDGET = 5.00    # seconds; ceiling on any one decision
 BANK_RESERVE = 5.00       # below this the bank is closed and the rules decide
-# Episodes measured at 85 agent calls on average and 151 at the longest. The
-# estimate only has to stay conservative — over-counting what is left just
-# means underspending — so it decays linearly from a high start and floors.
-BANK_DECISIONS_MAX = 260
-BANK_DECISIONS_MIN = 40
+# How many decisions are still to come. Measured, not assumed: episodes run 85
+# agent calls on average and 151 at the longest, so the estimate starts at 150
+# and decays with the calls already made. The old 260 was a guess with no
+# episode behind it, and it made every early decision plan against a divisor
+# 1.7x too large. Over-estimating is the safe direction — it underspends — but
+# only up to the point where the whole bank goes unused, which is where 260
+# had put us.
+BANK_DECISIONS_MAX = 150
+BANK_DECISIONS_MIN = 30
 BANK_DIVISOR_FLOOR = 20   # never divide by less than this
 
 _bank_remaining = BANK_SECONDS
@@ -473,13 +555,33 @@ def _reset_bank() -> None:
     _bank_decisions = 0
 
 
-def _decision_budget() -> float:
+def _bank_left(obs=None) -> float:
+    """Seconds of thinking time the episode still holds.
+
+    The grader publishes its own accounting on every observation as
+    `remainingOverageTime`, and kaggle_environments decrements it by each
+    call's full duration because this environment sets no per-move deadline.
+    That number is the one the episode is killed on, so it is the one to read;
+    our own subtraction is the fallback for harnesses that do not send it.
+    Taking the smaller of the two can only underspend.
+    """
+    try:
+        rot = obs.get("remainingOverageTime") if isinstance(obs, dict) else None
+        if rot is not None:
+            return min(float(rot), _bank_remaining)
+    except Exception:
+        pass
+    return _bank_remaining
+
+
+def _decision_budget(obs=None) -> float:
     """Seconds this decision may search for; 0.0 means the rules policy only."""
     try:
-        if _bank_remaining < BANK_RESERVE:
+        left = _bank_left(obs)
+        if left < BANK_RESERVE:
             return 0.0
         est = max(BANK_DECISIONS_MIN, BANK_DECISIONS_MAX - _bank_decisions)
-        budget = _bank_remaining * BANK_SAFETY / max(est, BANK_DIVISOR_FLOOR)
+        budget = left * BANK_SAFETY / max(est, BANK_DIVISOR_FLOOR)
         return min(max(budget, BANK_MIN_BUDGET), BANK_MAX_BUDGET)
     except Exception:
         return BANK_MIN_BUDGET
@@ -842,10 +944,10 @@ def _advance_forced(state, owner: int, rules_choice, deadline=None, limit=8):
 
 def _rules_order_for(observation) -> list[int]:
     """Option indices under the rule policy's priority, best first."""
-    opts = (observation.select.option or []) if observation.select else []
+    opts = _g(_g(observation, "select"), "option", []) or []
 
     def rank(i):
-        return (-MAIN_PRIORITY.get(getattr(opts[i], "type", None), 0), i)
+        return (-MAIN_PRIORITY.get(_g(opts[i], "type"), 0), i)
 
     return sorted(range(len(opts)), key=rank)
 
@@ -890,6 +992,60 @@ def _rollout_value(state, me: int, rules_choice, deadline=None) -> float:
     return _evaluate(o, me) if worst is None else worst
 
 
+# Options that differ only in which copy of a card they spend are the same
+# move. Attaching any of three identical Energy to the Active is one candidate,
+# not three: searching them separately spends three shares of a fixed
+# determinization budget on one line, and the fair-sample rule then compares a
+# line sampled three ways against one sampled once.
+#
+# The key is deliberately narrow. It collapses only moves that name both the
+# card being spent and the target it goes to, so two same-named Pokemon already
+# in play — which differ in damage taken, Energy attached and tools held — are
+# never treated as interchangeable.
+_DEDUP_TYPES = (OPT_ATTACH, OPT_EVOLVE, OPT_PLAY)
+
+
+def _dedup_key(obs, opt):
+    """A key equal for interchangeable options, or None to never collapse."""
+    t = _g(opt, "type")
+    if t not in _DEDUP_TYPES:
+        return None
+    cid = _g(_option_card(obs, opt), "id")
+    if cid is None and t == OPT_PLAY:
+        # PLAY carries an index into the hand and no area (cg/api.py).
+        me = _g(_g(obs, "current"), "yourIndex", 0)
+        hand = _zone(obs, AREA_HAND, me)
+        idx = _g(opt, "index")
+        if idx is not None and idx < len(hand):
+            cid = _g(hand[idx], "id")
+    if cid is None:
+        cid = _g(opt, "cardId")
+    if cid is None:
+        return None          # unresolvable card: keep it as its own candidate
+    return (t, cid, _g(opt, "inPlayArea"), _g(opt, "inPlayIndex"))
+
+
+def _dedup_options(obs, options) -> tuple[list[int], dict]:
+    """(candidate indices, option index -> the candidate that stands for it)."""
+    groups: dict = {}
+    rep: dict = {}
+    cand: list[int] = []
+    for i, o in enumerate(options):
+        try:
+            key = _dedup_key(obs, o)
+        except Exception:
+            key = None
+        j = groups.get(key) if key is not None else None
+        if j is not None:
+            rep[i] = j
+            continue
+        if key is not None:
+            groups[key] = i
+        rep[i] = i
+        cand.append(i)
+    return cand, rep
+
+
 def _search_main(obs: dict, options: list[dict]) -> int | None:
     """1-ply search over N determinizations; None means "rules policy decides".
 
@@ -908,7 +1064,7 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
         return None
     if not CG_AVAILABLE:
         return None
-    budget = _decision_budget()
+    budget = _decision_budget(obs)
     if budget <= 0.0:
         return None            # bank spent; the rules policy plays it out
 
@@ -945,7 +1101,11 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
     # determinizations or candidates rather than producing a garbage answer.
     deadline = time.monotonic() + budget
     rng = _position_rng(obs)
-    cand = list(range(len(options)))
+    try:
+        cand, rep = _dedup_options(obs, options)
+        rules_i = rep.get(rules_i, rules_i)
+    except Exception:
+        cand = list(range(len(options)))
     acc = {i: 0.0 for i in cand}       # posterior-weighted value
     mass = {i: 0.0 for i in cand}      # weight actually spent on i
     n_eval = {i: 0 for i in cand}      # determinizations i survived
@@ -998,27 +1158,11 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
 
 
 def _rules_choice_for(observation) -> list[int]:
-    """Rule policy over a simulated Observation (dataclass, not dict)."""
-    sel = observation.select
-    opts = sel.option or []
-    if not opts:
-        return [0]
-    types = {getattr(o, "type", None) for o in opts}
-    if types <= {OPT_YES, OPT_NO}:
-        for i, o in enumerate(opts):
-            if getattr(o, "type", None) == OPT_YES:
-                return [i]
-        return [0]
-    best_i, best_rank = 0, -1
-    for i, o in enumerate(opts):
-        rank = MAIN_PRIORITY.get(getattr(o, "type", None), 0)
-        if rank > best_rank:
-            best_i, best_rank = i, rank
-    lo = max(getattr(sel, "minCount", 1) or 1, 1)
-    hi = min(getattr(sel, "maxCount", 1) or 1, len(opts))
-    if lo > 1:
-        return list(range(min(lo, hi)))
-    return [best_i]
+    """Rule policy inside a rollout. The same function live play uses."""
+    try:
+        return _policy(observation)
+    except Exception:
+        return [0]            # a rollout must never raise; scoring goes on
 
 
 def _agent(obs_dict: dict) -> list[int]:
@@ -1027,57 +1171,14 @@ def _agent(obs_dict: dict) -> list[int]:
     if select is None:
         return read_deck_csv()
 
-    options = select.get("option") or []
-    if not options:
-        return [0]
-
-    ctx = select.get("context")
-    min_count = select.get("minCount", 1) or 0
-    max_count = select.get("maxCount", 1) or 1
-    n = len(options)
-    types = {o.get("type") for o in options}
-
-    # Yes/no questions.
-    if types <= {OPT_YES, OPT_NO}:
-        want_yes = ctx != CTX_MULLIGAN   # never redraw a legal opening hand
-        for i, o in enumerate(options):
-            if (o.get("type") == OPT_YES) == want_yes:
-                return [i]
-        return [0]
-
-    # "How many?" — always take the most.
-    if types == {OPT_NUMBER}:
-        best_i, best_n = 0, -1
-        for i, o in enumerate(options):
-            v = o.get("number", 0) or 0
-            if v > best_n:
-                best_i, best_n = i, v
-        return [best_i]
-
     # The main menu: simulate the candidates when we can, fall back to rules.
-    if any(o.get("type") in MAIN_PRIORITY for o in options):
-        if len(options) > 1:
-            picked = _search_main(obs, options)
-            if picked is not None:
-                return [picked]
-        return [_choose_main(options, obs)]
-
-    # Card choices: put the most valuable card where we want it, and the least
-    # valuable card where we don't.
-    if OPT_CARD in types:
-        order = _rank_card_options(options, obs)
-        worst_first = ctx == CTX_DISCARD
-        if worst_first:
-            order = order[::-1]
-        k = max(min_count, 1) if max_count >= 1 else min_count
-        k = min(k, max_count, n)
-        if ctx in (CTX_SETUP_BENCH, CTX_TO_BENCH):
-            k = min(max_count, n)      # a full bench is always better
-        return sorted(order[:max(k, 1)])
-
-    # Anything else (energy picks, tools): smallest legal set.
-    k = min(max(min_count, 1), max_count, n)
-    return list(range(max(k, 1)))
+    options = select.get("option") or []
+    if len(options) > 1 and any(o.get("type") in MAIN_PRIORITY
+                                for o in options):
+        picked = _search_main(obs, options)
+        if picked is not None:
+            return [picked]
+    return _policy(obs)
 
 
 def agent(obs_dict: dict) -> list[int]:
