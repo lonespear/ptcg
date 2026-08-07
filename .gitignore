@@ -39,6 +39,10 @@ data/*
 !data/analysis/
 data/analysis/*
 !data/analysis/trajectory_curves.json
+# Matchup deny-posture spec + its design note: integration surface for the
+# agent side (ptcg/matchup_postures.py regenerates the json).
+!data/analysis/postures.json
+!data/analysis/POSTURES.md
 !data/energy_mechanics.json
 
 # Python
