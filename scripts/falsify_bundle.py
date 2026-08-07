@@ -101,8 +101,30 @@ def main() -> None:
                      "weight would be spent on a flat field rate")
         if not accel:
             sys.exit("FAIL: no energy-mechanics KB in the bundle")
-        for name, src in (("curves", g["_CURVES_SOURCE"]),
-                          ("energy KB", g["_ACCEL_SOURCE"])):
+        # Playbook entry 4: the opponent reply table. Asserted only while the
+        # agent is configured to read it — SEARCH_OPP_BRANCH is 0 today, the
+        # entry having been measured and refused, and the matching assertion is
+        # then the other one: that a table nothing reads is not in the archive.
+        sources = [("curves", g["_CURVES_SOURCE"]),
+                   ("energy KB", g["_ACCEL_SOURCE"])]
+        branch = g["SEARCH_OPP_BRANCH"]
+        pol = g["_opp_policy"]()
+        if branch >= 1:
+            print(f"opponent policy: {len(pol.get('cells') or {})} cells, band "
+                  f"{g['_opp_band']()}, from {g['_OPP_SOURCE']}")
+            if not pol:
+                sys.exit("FAIL: SEARCH_OPP_BRANCH is on and there is no "
+                         "opponent_policy.json in the bundle — every rollout "
+                         "would play their turn under our own priority table, "
+                         "which is the configuration three gates rejected")
+            sources.append(("opponent policy", g["_OPP_SOURCE"]))
+        elif (tmp / "opponent_policy.json").exists():
+            sys.exit("FAIL: opponent_policy.json is in the bundle and "
+                     "SEARCH_OPP_BRANCH is 0, so nothing will ever open it")
+        else:
+            print("opponent policy: correctly absent (SEARCH_OPP_BRANCH = 0)")
+
+        for name, src in sources:
             if not str(Path(src).resolve()).startswith(str(tmp.resolve())):
                 sys.exit(f"FAIL: {name} loaded {src}, outside the bundle")
 
@@ -141,9 +163,11 @@ def main() -> None:
 
         tel = g["TELEMETRY"]
         traj = g["TELEMETRY_TRAJ"]
+        opp = g["TELEMETRY_OPP"]
         print(f"search_begin fired {calls['search_begin']} times")
         print(f"telemetry: {tel}")
         print(f"trajectory: {traj}")
+        print(f"opponent: {opp}")
         if traj["feature_errors"]:
             sys.exit(f"FAIL: the C2 feature raised {traj['feature_errors']} "
                      f"times and scored 0.0 behind its guard")
@@ -154,6 +178,23 @@ def main() -> None:
                      f"{traj['threat_scored']} scored positions")
         if calls["search_begin"] == 0:
             sys.exit("FAIL: search never fired — the agent played rules-only")
+        if g["SEARCH_OPP_BRANCH"] >= 1:
+            if opp["branch_replies"] == 0:
+                sys.exit("FAIL: 2-ply is on and the table was never asked for "
+                         "a reply ordering")
+            if opp["consulted"] == 0:
+                sys.exit("FAIL: the table answered no opponent main menu")
+            if opp["policy_missing"]:
+                sys.exit(f"FAIL: the table was asked for "
+                         f"{opp['policy_missing']} times with nothing loaded")
+            miss = opp["miss"] / max(opp["miss"] + sum(
+                opp["hit_" + lv] for lv in ("L0", "L1", "L2", "L3")), 1)
+            print(f"opponent table answered {opp['consulted']} main menus, "
+                  f"{opp['branch_replies']} branch orderings, "
+                  f"cell miss rate {miss:.4f}")
+            if miss > 0.05:
+                sys.exit(f"FAIL: {miss:.3f} of opponent positions found no "
+                         f"cell — the backoff is not covering the field")
         if tel["calibration_missing"]:
             sys.exit("FAIL: _pwin was asked for with no table loaded")
         if tel["main_decisions"] == 0:

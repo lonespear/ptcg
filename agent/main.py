@@ -482,16 +482,51 @@ SEARCH_ENABLED = True
 # Held at 3 because fair sampling at N=3 measured neutral (51.3%) against the
 # pre-port agent over 200 games, and the cost is linear in it.
 SEARCH_N_DET = 3
-# Opponent replies minimized over at ply 2. Off, because playing their turn
-# out costs 9 points of win rate against the same agent at 0 (40.7% over 200
-# games) and 14 at one reply (36.2%) — a single reply with no minimum taken is
-# the worse of the two, so what fails is the model of how they play, not the
-# branching or the pessimism. A separate one-reply test on a single
-# point-estimate determinization landed in the same place (0.467). The shuffled
-# hand model has since made determinization honest without moving the number,
-# so what is left to fix is the policy the opponent's turn is rolled out under —
-# ours, on a guessed decklist. Turn this on once that is better.
-SEARCH_OPP_BRANCH = 0
+# Opponent replies minimized over at ply 2.
+#
+# History, because this number was 0 for two measured reasons and neither of
+# them was the branching. Playing their turn out cost 9 points of win rate
+# against the same agent at 0 (40.7% over 200 games) and 14 at one reply
+# (36.2%) — a single reply with no minimum taken being the *worse* of the two
+# is what said the defect was the model of how they play rather than the depth.
+# A separate one-reply test on a single point-estimate determinization landed
+# in the same place (0.467). Both of those rolled the opponent's turn out under
+# MAIN_PRIORITY, our own hand-set ordering applied to somebody else.
+#
+# `data/opponent_policy.json` is that missing half — 2,722,350 counted
+# main-menu decisions, band- and archetype-conditional (see `_opp_order`) — and
+# the retest both rejections asked for has now been run. It fails too. Against
+# 5d85b53 on mirror decks with seats swapped, seed block 92000:
+#
+#   one reply, table-chosen, no minimum   0.4855 over 791 decided
+#                                         (Marnie 0.460/491, Garchomp 0.527/300)
+#   three replies, minimum taken          0.4758 over 786
+#                                         (Marnie 0.471/486, Garchomp 0.483/300)
+#   three replies, at TRAJ_K = 3          0.4918 over 791
+#                                         (Marnie 0.485/491, Garchomp 0.503/300)
+#
+# The table is not the part that is broken and this measurement is what says
+# so. It covered every position it was asked about — 865,899 cell lookups over
+# 40 mirror games, all of them at the finest key (band, archetype, turn bucket,
+# within-turn ordinal), zero backoffs and zero misses — and it is anything but
+# inert: the search's override rate goes from 0.5038 with the opponent seat
+# frozen to 0.6041 at one table reply and 0.5993 at three, over ~3,200 searches
+# each. So a better model of their turn moves a tenth of our decisions and
+# moves them the wrong way.
+#
+# That points at the evaluation and not the reply. Handing the position over
+# and scoring what comes back is only worth doing if the score at ply 2 is
+# better than the score at ply 1, and this evaluator is the same 1-ply linear
+# margin either way — the wall D27 hit from the determinization side. Three
+# rejections now (0.407, 0.467, 0.476), each having removed the defect the last
+# one blamed, and the remaining suspect is the leaf.
+#
+# What stays: the table, its builder, and every function below it, so the day
+# the leaf improves this is one constant.
+try:
+    SEARCH_OPP_BRANCH = int(os.environ.get("CABT_OPP_BRANCH") or 0)
+except Exception:
+    SEARCH_OPP_BRANCH = 0
 # WEIGHTS["search_margin"] is the override hysteresis. A half-prize (500)
 # costs 14 points of win rate here — 35.1% against the unported agent versus
 # 48.7% at margin 0 — because this rules policy is the weaker of the two
@@ -860,7 +895,21 @@ TRAJECTORY_FILES = ("trajectory_curves.json",)
 MECHANICS_FILES = ("energy_mechanics.json",)
 
 TRAJ_HORIZON = 5          # ptcg.energy_plan.HORIZON — D32's five-turn cap
-TRAJ_K = 2                # the horizon the t+2 features read
+# The horizon the C2 threat differential is read at, in each side's own turns.
+# The fit prices all four and k=3 is the best of them: 1.71 [0.76, 2.65] at
+# loglik -5501.91, against 1.42 [0.47, 2.36] at -5503.92 for k=2, 1.03
+# [0.05, 2.01] at k=1 and 1.25 [0.15, 2.34] on the present board
+# (`data/analysis/trajectory_fit.json`, "horizons"; same 8,792 positions, same
+# terms). Two log-likelihood units and a coefficient a fifth larger, for a
+# projection that costs the same arithmetic one turn further out — so the
+# weight below moves with it.
+try:
+    TRAJ_K = int(os.environ.get("CABT_TRAJ_K") or 3)
+except Exception:
+    TRAJ_K = 3
+# The fitted coefficient at each horizon, so WEIGHTS below cannot drift out of
+# step with TRAJ_K (`data/analysis/trajectory_fit.json`, "horizons").
+_THREAT_WEIGHT_BY_K = {0: 1.25, 1: 1.03, 2: 1.42, 3: 1.71}
 TRAJ_RATE_CAP = 2         # ptcg.energy_plan.UNBOUNDED_CAP
 TRAJ_MAX_BIN = 9          # the curves' top Energy bin is "9+"
 # Field-wide realized Energy per own turn, the fallback when no cell matches
@@ -1186,10 +1235,10 @@ def _traj_projection(cur, mine, theirs):
     return (slots_m, g_m, e_m), (slots_t, g_t, e_t)
 
 
-def _threat_traj_t2(cur, mine, theirs) -> float:
-    """C2's shipped term: the damage-potential differential at t+2.
+def _threat_traj(cur, mine, theirs) -> float:
+    """C2's shipped term: the damage-potential differential at t+TRAJ_K.
 
-    The hardest attack each side can pay for two of its own turns from now,
+    The hardest attack each side can pay for TRAJ_K of its own turns from now,
     ours minus theirs. This is the only trajectory term the fit priced (see
     WEIGHTS); the other two are measured-null and are not computed here.
     """
@@ -1198,11 +1247,11 @@ def _threat_traj_t2(cur, mine, theirs) -> float:
 
 
 def _trajectory_terms(cur, mine, theirs) -> tuple[float, float, float]:
-    """(online_lead, energy_traj_diff_t2, threat_traj_diff_t2), all three.
+    """(online_lead, energy_traj_diff, threat_traj_diff), all three.
 
     What `scripts/fit_trajectory_features.py` prices. online_lead is their
     earliest online turn minus ours, so positive means we reach an attack
-    first; the other two are our projection at t+2 minus theirs. Only the
+    first; the other two are our projection at t+TRAJ_K minus theirs. Only the
     third one has a weight — this function stays so the other two can be
     re-measured on new data without being reconstructed from the write-up.
     """
@@ -1267,18 +1316,23 @@ def _trajectory_terms(cur, mine, theirs) -> tuple[float, float, float]:
 #           differentials under 2000 each, so the ceiling stays four orders of
 #           magnitude clear of the ±1e6 a decided game scores.
 #   search_margin  how far search must beat the rules pick before it overrides
-#   threat_traj_t2  1.42 [0.47, 2.36], on the damage-potential differential
-#           two of each side's turns from now (playbook C2). Fitted by
+#   threat_traj  the damage-potential differential TRAJ_K of each side's own
+#           turns from now (playbook C2). Fitted by
 #           `scripts/fit_trajectory_features.py` on the same sample and by the
 #           same machinery as the vector above — 8,792 positions, one an
 #           episode, rating >= 1000, turn fixed effects — entered on top of
 #           exactly the terms this evaluator scores
-#           (`data/analysis/trajectory_fit.json`).
+#           (`data/analysis/trajectory_fit.json`). The weight is read out of
+#           the horizon table below, so moving TRAJ_K moves the coefficient
+#           with it and the evaluator never scores one horizon at another's
+#           price. Shipped at k=3: 1.71 [0.76, 2.65], the best-fitting of the
+#           four (k=2 1.42 [0.47, 2.36], k=1 1.03 [0.05, 2.01], present board
+#           1.25 [0.15, 2.34]).
 #           The projection is what carries it, not the board: the same
-#           differential taken on the present board fits 1.25 [0.15, 2.34]
-#           alone and goes null (0.48 [-0.82, 1.79]) once the t+2 version is
-#           in the model beside it, while the t+2 term survives at 1.18
-#           [0.04, 2.32]. That contrast is the C2 result.
+#           differential taken on the present board fits 1.25 alone and goes
+#           null (0.48 [-0.82, 1.79]) once the t+2 version is in the model
+#           beside it, while the t+2 term survives at 1.18 [0.04, 2.32]. That
+#           contrast is the C2 result.
 #   two trajectory features are measured-null and carry no weight, by D30:
 #           online_lead (their earliest attack turn minus ours) 31 [-16, +78]
 #           in the joint fit and 40 [-7, +86] alone; energy_traj_t2 (projected
@@ -1292,7 +1346,7 @@ WEIGHTS = {
     "bench": 153.0,
     "damage": 4.2,
     "no_active": 4000.0,
-    "threat_traj_t2": 1.42,
+    "threat_traj": _THREAT_WEIGHT_BY_K.get(TRAJ_K, 1.42),
     "search_margin": 0.0,
 }
 _DEFAULT_WEIGHTS = dict(WEIGHTS)
@@ -1346,13 +1400,13 @@ def _margin(cur, me: int) -> float:
         score -= w["no_active"]
     # C2: where the board is going. Zero the weight and the projection is not
     # computed at all, so a struck feature costs no time.
-    if w["threat_traj_t2"]:
+    if w["threat_traj"]:
         try:
-            thr = _threat_traj_t2(cur, mine, theirs)
+            thr = _threat_traj(cur, mine, theirs)
             TELEMETRY_TRAJ["threat_scored"] += 1
             if thr:
                 TELEMETRY_TRAJ["threat_nonzero"] += 1
-            score += w["threat_traj_t2"] * thr
+            score += w["threat_traj"] * thr
         except Exception:
             TELEMETRY_TRAJ["feature_errors"] += 1
     return score
@@ -1576,6 +1630,216 @@ def _rules_order_for(observation) -> list[int]:
     return sorted(range(len(opts)), key=rank)
 
 
+# --- the opponent reply model (playbook entry 4) ----------------------------
+#
+# Inside a rollout the opponent's turn used to be played by MAIN_PRIORITY —
+# our own hand-set ordering, applied to a player who is not us. Both prior
+# 2-ply rejections named that as the defect they could not separate from the
+# branching itself (see SEARCH_OPP_BRANCH). This replaces it with the field's
+# own ordering, counted.
+#
+# `data/opponent_policy.json` (scripts/build_opponent_policy.py) holds, for
+# each (rating band, archetype, game-turn bucket, within-turn ordinal bucket),
+# the frequency of each main-menu option type over 2,722,350 main-menu
+# decisions from seven mined days, together with the rate at which each type
+# was legal at all, counted on 7,366 complete menus sampled from the same
+# games. The score a type gets here is the first divided by the second and
+# renormalised over what the live menu offers, which is the only way to read a
+# chosen-rate as a preference: attack is picked on 10.4% of main menus and is
+# legal on roughly half of them, so its rate understates it by a factor of two.
+#
+# Temperature 0. The reply is the modal type of the cell, and the 2-ply branch
+# takes the modal type and its runners-up in the same order — deterministic, so
+# two searches of the same position agree and the decision-stability
+# certificate still means something.
+#
+# Dormant at SEARCH_OPP_BRANCH = 0, which is where the gate left it: read the
+# measurement block up at that constant before turning any of this back on.
+OPPONENT_POLICY_FILES = ("opponent_policy.json",)
+_OPP: dict | None = None
+_OPP_SOURCE = ""
+_OPP_AVAIL_FLOOR = 0.02   # a type legal in under 2% of menus divides by 0.02
+OPP_TURN_BUCKETS = ((2, "1-2"), (5, "3-5"), (9, "6-9"), (10 ** 9, "10+"))
+OPP_TYPE_NAME = {OPT_PLAY: "play", OPT_ATTACH: "attach", OPT_EVOLVE: "evolve",
+                 OPT_ABILITY: "ability", OPT_RETREAT: "retreat",
+                 OPT_ATTACK: "attack", OPT_END: "end_turn"}
+
+TELEMETRY_OPP = {
+    "policy_missing": 0,    # the table was asked for and is not loaded
+    "consulted": 0,         # opponent main menus the table answered
+    "hit_L0": 0,            # ... at band|archetype|turn|ordinal
+    "hit_L1": 0,            # ... backed off to archetype|turn|ordinal
+    "hit_L2": 0,            # ... backed off to turn|ordinal
+    "hit_L3": 0,            # ... backed off to ordinal
+    "miss": 0,              # no cell at any level: MAIN_PRIORITY decided
+    "branch_replies": 0,    # 2-ply replies drawn from the table's ordering
+    "searches": 0,          # completed searches over a deduped candidate set
+    "overrides": 0,         # ... of which moved the pick off the rules answer
+}
+
+# Which band's behaviour to roll the opponent out under. One bundled constant,
+# not a per-game inference: we cannot see an opponent's rating from inside an
+# episode, and the ladder pairs us near our own. The file's `default_band` is
+# the band holding the corpus median (1026) and its interquartile range
+# (987-1076) — the opponents we actually meet.
+OPP_BAND_ENV = os.environ.get("CABT_OPP_BAND") or ""
+
+
+def _opp_policy() -> dict:
+    global _OPP, _OPP_SOURCE
+    if _OPP is not None:
+        return _OPP
+    blob, src = _read_json(_bundle_paths(
+        OPPONENT_POLICY_FILES, ("data", "opponent_policy.json")))
+    _OPP = blob if isinstance(blob, dict) and blob.get("cells") else {}
+    if _OPP:
+        _OPP_SOURCE = src
+    return _OPP
+
+
+def _opp_band() -> str:
+    return OPP_BAND_ENV or _opp_policy().get("default_band", "900-1050")
+
+
+def _opp_turn_bucket(turn) -> str:
+    try:
+        t = int(turn or 1)
+    except (TypeError, ValueError):
+        t = 1
+    for hi, name in OPP_TURN_BUCKETS:
+        if t <= hi:
+            return name
+    return "10+"
+
+
+def _opp_arch() -> str:
+    """The opponent's archetype as the table names it, or OTHER."""
+    label = _TRAJ_ARCH.get("them", "(all)")
+    return label if label in (_opp_policy().get("archetypes") or ()) else "OTHER"
+
+
+def _opp_cell(tb: str, ob: str) -> dict:
+    """The finest cell that exists, backing off band then archetype then turn."""
+    pol = _opp_policy()
+    cells = pol.get("cells") or {}
+    arch = _opp_arch()
+    for level, key in (("L0", "L0|%s|%s|%s|%s" % (_opp_band(), arch, tb, ob)),
+                       ("L1", "L1|%s|%s|%s" % (arch, tb, ob)),
+                       ("L2", "L2|%s|%s" % (tb, ob)),
+                       ("L3", "L3|%s" % ob)):
+        cell = cells.get(key)
+        if cell:
+            TELEMETRY_OPP["hit_" + level] += 1
+            return cell.get("p") or {}
+    TELEMETRY_OPP["miss"] += 1
+    return {}
+
+
+def _opp_avail(tb: str, ob: str) -> dict:
+    av = _opp_policy().get("availability") or {}
+    for key in ("%s|%s" % (tb, ob), ob):
+        rec = av.get(key)
+        if rec and rec.get("rate"):
+            return rec["rate"]
+    return {}
+
+
+def _opp_type_scores(turn, ordinal: int) -> dict:
+    """type -> propensity, for every type the corpus ever saw chosen here."""
+    tb = _opp_turn_bucket(turn)
+    ob = str(ordinal) if ordinal < 3 else "3+"
+    chosen = _opp_cell(tb, ob)
+    if not chosen:
+        return {}
+    avail = _opp_avail(tb, ob)
+    out = {}
+    for name, p in chosen.items():
+        out[name] = p / max(avail.get(name, 1.0), _OPP_AVAIL_FLOOR)
+    return out
+
+
+def _opp_order(observation, turn, ordinal: int) -> list[int]:
+    """One option index per available type, best-supported type first.
+
+    Within a type the sub-choice is the rule policy's: the cheapest knockout or
+    the biggest hit for an attack, the Active for an attach, otherwise the
+    first option of that type — the same tie-break `_choose_main` applies, so
+    what the table changes is which *kind* of move the opponent makes.
+
+    Both sub-choices were measured on the same corpus and neither moved. The
+    field takes the cheapest available knockout on 22 of 26 menus that offered
+    one (0.846) and some knockout on 25 of 26, which is the rule already here;
+    its 0.583 rate of taking the hardest hit is over 84 menus, too few to ship
+    against. The attach target is the honest split: 905 menus with more than
+    one attach went to the Bench 54.1% of the time against the Active's 45.9%,
+    and a modal read of a 46/54 count is a coin flip dressed as a behaviour, so
+    the Active rule stays. Both numbers are in
+    `data/opponent_policy.json` under `attack_profile` and `attach_profile`.
+    """
+    opts = _g(_g(observation, "select"), "option", []) or []
+    scores = _opp_type_scores(turn, ordinal)
+    if not scores:
+        return []
+    reps: dict = {}
+    for i, o in enumerate(opts):
+        t = _g(o, "type")
+        name = OPP_TYPE_NAME.get(t)
+        if name is None or name in reps:
+            continue
+        if t == OPT_ATTACK:
+            alt = _choose_attack(opts, observation)
+        elif t == OPT_ATTACH:
+            alt = _choose_attach(opts, observation)
+        else:
+            alt = i
+        reps[name] = i if alt is None else alt
+    if not reps:
+        return []
+    order = sorted(reps, key=lambda n: (-scores.get(n, 0.0), n))
+    return [reps[n] for n in order]
+
+
+# The opponent's turn is a sequence of main-menu visits and the table is cut by
+# where in that sequence we are, so the rollout counts them. Reset explicitly
+# at each branch rather than inferred from the turn number: the same turn is
+# replayed once per candidate and once per determinization.
+_OPP_ORDINAL = 0
+_SEARCH_ME: int | None = None
+
+
+def _opp_reset(k: int = 0) -> None:
+    global _OPP_ORDINAL
+    _OPP_ORDINAL = k
+
+
+def _opp_choice(observation) -> list[int] | None:
+    """The measured field reply, or None to let the rule policy answer."""
+    global _OPP_ORDINAL
+    if not _opp_policy():
+        TELEMETRY_OPP["policy_missing"] += 1
+        return None
+    sel = _g(observation, "select")
+    if _g(sel, "context") != CTX_MAIN:
+        return None
+    cur = _g(observation, "current")
+    order = _opp_order(observation, _g(cur, "turn", 1), _OPP_ORDINAL)
+    _OPP_ORDINAL += 1
+    if not order:
+        return None
+    TELEMETRY_OPP["consulted"] += 1
+    return [order[0]]
+
+
+def _opp_seat(observation) -> bool:
+    """Is this position the opponent's move inside our own search?"""
+    if _SEARCH_ME is None:
+        return False
+    cur = _g(observation, "current")
+    if cur is None:
+        return False
+    return _g(cur, "yourIndex", _SEARCH_ME) != _SEARCH_ME
+
+
 def _rollout_value(state, me: int, rules_choice, deadline=None) -> float:
     """Finish our turn, then score the worst of the opponent's likely replies.
 
@@ -1599,7 +1863,15 @@ def _rollout_value(state, me: int, rules_choice, deadline=None) -> float:
 
     from cg.api import search_step
     branch_id = state.searchId
-    order = _rules_order_for(o)
+    # The replies are the field's, in the field's order: the modal main-menu
+    # type of the cell first, its runners-up behind it. `_rules_order_for` —
+    # our own priority table standing in for theirs — is the fallback for a
+    # position no cell covers, and every use of it is counted as a miss.
+    order = _opp_order(o, _g(_g(o, "current"), "turn", 1), 0)
+    if order:
+        TELEMETRY_OPP["branch_replies"] += 1
+    else:
+        order = _rules_order_for(o)
     worst = None
     for k in range(min(SEARCH_OPP_BRANCH, len(order))):
         if deadline is not None and time.monotonic() > deadline:
@@ -1608,6 +1880,9 @@ def _rollout_value(state, me: int, rules_choice, deadline=None) -> float:
             reply = search_step(branch_id, [order[k]])
         except Exception:
             continue
+        # That reply was the turn's first main decision; the rest of their turn
+        # continues from ordinal 1.
+        _opp_reset(1)
         reply = _greedy_complete(reply, 1 - me, rules_choice, deadline)
         # our own forced replacement after their attack
         reply = _advance_forced(reply, me, rules_choice, deadline, limit=6)
@@ -1725,6 +2000,11 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
     # determinizations or candidates rather than producing a garbage answer.
     deadline = time.monotonic() + budget
     rng = _position_rng(obs)
+    # Which seat is ours, for as long as this search runs: it is what tells
+    # `_rules_choice_for` whether the position in front of it is ours to play
+    # under the live policy or theirs to play under the field table.
+    global _SEARCH_ME
+    _SEARCH_ME = me
     try:
         cand, rep = _dedup_options(obs, options)
         rules_i = rep.get(rules_i, rules_i)
@@ -1772,18 +2052,34 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
             return None
         avg = {i: acc[i] / mass[i] for i in evaluated}
         best = max(evaluated, key=lambda i: avg[i])
+        # The override rate is the diagnostic that read D27: a change that
+        # leaves it where it was has not changed what the search believes.
+        TELEMETRY_OPP["searches"] += 1
         if best == rules_i:
             return None
         if avg[best] < avg[rules_i] + WEIGHTS["search_margin"]:
             return None
+        TELEMETRY_OPP["overrides"] += 1
         return best
     except Exception:
         return None
+    finally:
+        _SEARCH_ME = None
 
 
 def _rules_choice_for(observation) -> list[int]:
-    """Rule policy inside a rollout. The same function live play uses."""
+    """The rollout policy, one seat each.
+
+    Our seat plays the live policy — D25's invariant, unchanged and still
+    asserted by `scripts/validate_invariant.py`. The opponent's seat plays the
+    counted field table (playbook entry 4); when no cell covers the position it
+    falls back to the same live policy, and the fallback is counted.
+    """
     try:
+        if _opp_seat(observation):
+            picked = _opp_choice(observation)
+            if picked is not None:
+                return picked
         return _policy(observation)
     except Exception:
         return [0]            # a rollout must never raise; scoring goes on

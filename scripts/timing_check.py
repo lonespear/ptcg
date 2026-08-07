@@ -42,7 +42,7 @@ def load_agent():
 
 
 def measure(mod, deck, games: int, seed0: int, weight: float) -> dict:
-    mod.set_weights({"threat_traj_t2": weight})
+    mod.set_weights({"threat_traj": weight})
     calls: list[tuple[float, bool]] = []
 
     def timed(obs):

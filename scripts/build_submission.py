@@ -53,6 +53,20 @@ def write_tables(dest: Path) -> None:
           f"({dest.stat().st_size / 1024:.0f} KB)")
 
 
+def opp_branch() -> int:
+    """The agent's SEARCH_OPP_BRANCH, read off the source it will ship.
+
+    Read rather than imported: importing `agent/main.py` loads `cg`, and this
+    script already loads it once for the card tables.
+    """
+    import re
+    src = (AGENT / "main.py").read_text(encoding="utf-8")
+    m = re.search(r'CABT_OPP_BRANCH"\) or (\d+)\)', src)
+    if m is None:
+        raise ValueError("cannot read SEARCH_OPP_BRANCH out of agent/main.py")
+    return int(m.group(1))
+
+
 def build() -> Path:
     staging = BUILD / "submission"
     if staging.exists():
@@ -101,7 +115,8 @@ def build() -> Path:
             (ROOT / "data" / "energy_mechanics.json",
              "energy_mechanics.json",
              "python -c \"from ptcg.energy_mechanics import write_json; "
-             "write_json()\"")):
+             "write_json()\""),
+            ):
         if src.exists():
             shutil.copy2(src, staging / dest)
             print(f"  {dest}: {src.stat().st_size / 1024:.0f} KB")
@@ -109,6 +124,26 @@ def build() -> Path:
             print(f"  WARNING: no {src.relative_to(ROOT)} — the C1/C2 "
                   f"projection degrades to the field-average rate. "
                   f"Rebuild it with: {rebuild}")
+
+    # Playbook entry 4: the counted opponent reply table. It ships only while
+    # the agent is configured to read it, because a file in the archive that
+    # nothing opens is a bundle audit that lies. SEARCH_OPP_BRANCH is 0 at the
+    # moment — the entry was measured and refused — so this normally copies
+    # nothing and says so.
+    branch = opp_branch()
+    policy = ROOT / "data" / "opponent_policy.json"
+    if branch >= 1:
+        if not policy.exists():
+            raise FileNotFoundError(
+                f"SEARCH_OPP_BRANCH is {branch} and {policy} is missing — the "
+                f"rollout would play their turn under our own priority table. "
+                f"Rebuild it: /usr/bin/python3 scripts/build_opponent_policy.py")
+        shutil.copy2(policy, staging / "opponent_policy.json")
+        print(f"  opponent_policy: {policy.stat().st_size / 1024:.0f} KB "
+              f"(SEARCH_OPP_BRANCH={branch})")
+    else:
+        print("  opponent_policy: not bundled — SEARCH_OPP_BRANCH is 0, so "
+              "nothing in the agent would read it")
 
     # The agent reads card/attack metadata through cg.api, exactly as the
     # official sample does, so the package ships with the bundle. (Importing it

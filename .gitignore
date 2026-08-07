@@ -44,6 +44,9 @@ data/analysis/*
 !data/analysis/postures.json
 !data/analysis/POSTURES.md
 !data/energy_mechanics.json
+# Playbook entry 4: the counted opponent reply table. Same rule again — the
+# agent ships it in the bundle and reads it on every rollout of their turn.
+!data/opponent_policy.json
 
 # Python
 __pycache__/

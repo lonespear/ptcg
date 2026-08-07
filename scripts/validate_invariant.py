@@ -1,4 +1,4 @@
-"""D25 invariant: the rollout policy is the live policy.
+"""D25 invariant: our seat's rollout policy is the live policy.
 
 The agent sees the same game in two shapes — a dict from the grader, and
 dataclasses from `search_step` inside its own rollouts — and it must play them
@@ -7,8 +7,16 @@ asserts the choice is identical:
 
   live     positions the arena hands the agent, checked dict vs the dataclass
            form `to_observation_class` builds from it
-  rollout  positions the search's own rollouts hand `_rules_choice_for`,
-           checked dataclass vs the dict form `dataclasses.asdict` builds
+  rollout  positions of *our own* seat that the search's rollouts hand
+           `_rules_choice_for`, checked dataclass vs the dict form
+           `dataclasses.asdict` builds
+
+The opponent's seat is deliberately outside the invariant since playbook entry
+4: their turn is rolled out under the counted field table
+(`data/opponent_policy.json`), not under our policy, which is the whole point
+of the entry. Those positions are counted separately and the run fails if none
+of them was answered by the table while 2-ply is on — an invariant that passes
+because the new machinery never fired would be worth nothing.
 
 A failure prints the context, the two answers and the option types.
 
@@ -72,8 +80,14 @@ def main() -> None:
     _rules_choice_for = M._rules_choice_for
     checked = {"n": 0}
 
+    seats = Counter()
+
     def checking_rules_choice(observation):
+        theirs = M._opp_seat(observation)
         out = _rules_choice_for(observation)
+        seats["opponent" if theirs else "ours"] += 1
+        if theirs:
+            return out                    # the field table's, not ours to check
         if checked["n"] < args.max_rollout_checks:
             checked["n"] += 1
             try:
@@ -121,12 +135,26 @@ def main() -> None:
         print(f"{kind:8s} positions {n:6d}  mismatches {c['MISMATCH']}")
         print(f"          contexts: {by}")
 
+    opp = M.TELEMETRY_OPP
+    print(f"rollout seats: {seats['ours']} ours, {seats['opponent']} theirs")
+    print(f"opponent table: {opp}")
+
     if fails:
         print("\nFAILURES")
         for f in fails:
             print(" ", f)
         sys.exit(1)
-    print("\nPASS: rollout policy == live policy on every position checked")
+    if M.SEARCH_OPP_BRANCH >= 1:
+        if seats["opponent"] == 0:
+            sys.exit("FAIL: 2-ply is on and no opponent position was rolled "
+                     "out — the table under test never ran")
+        if opp["consulted"] == 0:
+            sys.exit("FAIL: the opponent table answered nothing")
+        if opp["policy_missing"]:
+            sys.exit(f"FAIL: the table was asked for {opp['policy_missing']} "
+                     f"times with nothing loaded")
+    print("\nPASS: on our own seat the rollout policy == the live policy on "
+          "every position checked")
 
 
 if __name__ == "__main__":
