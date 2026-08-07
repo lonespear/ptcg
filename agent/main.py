@@ -280,22 +280,55 @@ def _opponent_active(obs):
     return act[0] if act and act[0] is not None else None
 
 
-def _damage_against(attack_id: int, target) -> int:
-    """Printed damage, doubled if the defender is weak to this attack's type."""
+# Measured off the engine (the game logic is a native dylib, so the number
+# comes from probing search_step, not from source): a Fighting attack into
+# the Abra line (resistance 6) lands 30 under its printed damage, floored at
+# zero — 130 printed dealt 100, 30 printed dealt 0 — while an attack whose
+# text waives Weakness/Resistance dealt exactly its printed number on the
+# same matchup. Weakness x2 confirmed on the same probes (30 printed KO'd a
+# 60-HP weak-to-Fighting body). A card never prints the same type in both
+# fields, so the two modifiers cannot co-occur and their ordering is moot.
+RESISTANCE_DAMAGE = 30
+
+
+def _damage_against(attack_id: int, target, sctx=None,
+                    slot_e: float = 0.0, slot_dmgc: float = 0.0) -> int:
+    """Printed damage, doubled if the defender is weak to this attack's type
+    and reduced by RESISTANCE_DAMAGE if it resists it.
+
+    With a scaling context (CABT_SCALED_DAMAGE, built by `_choose_attack`),
+    an attack the scaler KB names is priced at its observed damage instead —
+    our own scaling attacks stop reading as their printed number too. The
+    resistance subtraction rides the same flag: it is part of the one
+    v3 bundle the gate measures, and the pre-fix baseline ignored it.
+    Both modifiers key on the attack's cost energies, the convention the
+    weakness check has always used; the engine may key on the attacker
+    card's own type instead, but the two coincide on mono-typed attackers,
+    which is what the pool plays.
+    """
     cards, attacks = _tables()
     a = attacks.get(attack_id)
     if a is None:
         return 0
     dmg = getattr(a, "damage", 0) or 0
+    if sctx is not None:
+        try:
+            sc = _scalers().get(int(attack_id or 0))
+            if sc is not None:
+                dmg = _scaled_damage(sc, sctx, slot_e, slot_dmgc)
+        except Exception:
+            TELEMETRY_SCALED["ctx_errors"] += 1
     if not dmg or target is None:
         return dmg
     data = cards.get(_g(target, "id"))
     weakness = getattr(data, "weakness", None) if data else None
-    if weakness is None:
-        return dmg
+    resistance = getattr(data, "resistance", None) if data else None
     energies = [e for e in (getattr(a, "energies", None) or []) if e]
-    if any(e == weakness for e in energies):
-        return dmg * 2
+    if weakness is not None and any(e == weakness for e in energies):
+        dmg = dmg * 2
+    if (SCALED_DAMAGE_ENABLED and resistance is not None
+            and any(e == resistance for e in energies)):
+        dmg = max(dmg - RESISTANCE_DAMAGE, 0)
     return dmg
 
 
@@ -304,12 +337,29 @@ def _choose_attack(options, obs) -> int | None:
     target = _opponent_active(obs)
     target_hp = _g(target, "hp")
 
+    sctx, slot_e, slot_dmgc = None, 0.0, 0.0
+    if SCALED_DAMAGE_ENABLED:
+        try:
+            cur = _g(obs, "current")
+            me = _g(cur, "yourIndex", 0)
+            players = _g(cur, "players", []) or []
+            if len(players) >= 2:
+                sctx = _scale_ctx(players[me], players[1 - me])
+                act = _g(players[me], "active", []) or []
+                if act and act[0] is not None:
+                    slot_e = float(len(_g(act[0], "energies", []) or []))
+                    slot_dmgc = _dmg_counters(act[0])
+        except Exception:
+            TELEMETRY_SCALED["ctx_errors"] += 1
+            sctx = None
+
     ko_i, ko_d = None, None
     big_i, big_d = None, -1
     for i, o in enumerate(options):
         if _g(o, "type") != OPT_ATTACK:
             continue
-        d = _damage_against(_g(o, "attackId"), target)
+        d = _damage_against(_g(o, "attackId"), target, sctx, slot_e,
+                            slot_dmgc)
         if d > big_d:
             big_i, big_d = i, d
         if target_hp is not None and d >= target_hp:
@@ -1061,6 +1111,190 @@ def _attack_profile(card_id: int) -> list[tuple[int, float]]:
     return prof
 
 
+# --- scaled damage: honest numbers for scaling attacks (CABT_SCALED_DAMAGE) -
+# `_attack_profile` reads printed damage, and a scaling attack prints the
+# wrong number: Alakazam's Powerful Hand prints 0 and places 2 damage
+# counters per card in its player's hand, so the threat ladder priced a
+# 20-card Dudunsparce engine at zero while it assembled a 400-damage
+# one-shot. The Energy scalers are the same blindness (attack 339 prints 10
+# and does +50 per Energy on our Active).
+#
+# `attack_scalers.json` is the fix — `ptcg/attack_scalers.py` classifies the
+# pool's unambiguously computable scaling attacks (69 of the 364 with
+# damage-moving text; coin flips, discard-priced scaling and conditionals
+# stay unclassified and keep their printed number) into
+# (base, per, unit-kind) records, numbers only, no card text. Damage is
+# max(base + per * quantity, 0) with the quantity read off the OBSERVED
+# state, both sides. No new evaluator weight: the corrected numbers feed the
+# existing screened threat terms (threat_traj at its fitted coefficient, the
+# k=1 incoming read, the rules policy's attack pick).
+#
+# Future-turn projections hold every scaling quantity at its current
+# observed value — `_threat_at(k)` grows the Energy BUDGET (can the attack
+# be paid) but not the hand/bench/Energy COUNT the damage scales by. A
+# hand-growth model is out of scope; the held quantity understates a growing
+# engine and never invents damage.
+# Default ON: the pre-registered gate passed on 2026-08-07. Targeted cell
+# (codex_alakazam specialist, 500 games an arm, paired seed block 110000,
+# zero forfeits): 0.4340 off -> 0.4680 on, +3.4 pp; the panel's independent
+# alakazam replicate (seed block 321000) read +0.6 pp beside it. Pooled
+# specialist panel (8 entries x 500 an arm, play-share weighted, seed block
+# 320000): clean 0.7540 -> 0.7382 (-0.81 SE), all-games 0.8047 -> 0.8011
+# (-0.27 SE), no per-cell regression at 2 SE — inside the no-regression
+# guard rail the gate pre-registered (`scripts/scaled_damage_gate.py`,
+# `data/analysis/scaled_damage_gate.json`).
+SCALER_FILES = ("attack_scalers.json",)
+try:
+    SCALED_DAMAGE_ENABLED = bool(
+        int(os.environ.get("CABT_SCALED_DAMAGE") or 1))
+except Exception:
+    SCALED_DAMAGE_ENABLED = True
+
+_SCALERS: dict | None = None
+_SCALERS_SOURCE = ""
+_ATTACK_PROFILE_SC: dict = {}
+
+TELEMETRY_SCALED = {
+    "kb_missing": 0,        # priced a position with no KB loaded
+    "ctx_errors": 0,        # a guarded failure; printed damage scored
+    "attacks_scaled": 0,    # attack damages the KB re-priced
+}
+
+
+def _scalers() -> dict:
+    """attackId -> (base, per, unit kind), from the shipped KB."""
+    global _SCALERS, _SCALERS_SOURCE
+    if _SCALERS is not None:
+        return _SCALERS
+    _SCALERS = {}
+    blob, src = _read_json(_bundle_paths(SCALER_FILES))
+    for aid, rec in ((blob or {}).get("attacks") or {}).items():
+        try:
+            _SCALERS[int(aid)] = (float(rec["base"]), float(rec["per"]),
+                                  str(rec["kind"]))
+        except (KeyError, TypeError, ValueError):
+            continue
+    if _SCALERS:
+        _SCALERS_SOURCE = src
+    else:
+        TELEMETRY_SCALED["kb_missing"] += 1
+    return _SCALERS
+
+
+def _attack_profile_sc(card_id: int) -> list:
+    """(cost size, printed damage, scaler-or-None), cheapest first."""
+    prof = _ATTACK_PROFILE_SC.get(card_id)
+    if prof is not None:
+        return prof
+    cards, attacks = _tables()
+    sc = _scalers()
+    prof = []
+    card = cards.get(card_id)
+    for aid in (getattr(card, "attacks", None) or []):
+        atk = attacks.get(aid)
+        if atk is None:
+            continue
+        cost = len(getattr(atk, "energies", None) or [])
+        prof.append((cost, float(getattr(atk, "damage", 0) or 0),
+                     sc.get(int(aid))))
+    prof.sort(key=lambda t: (t[0], t[1]))
+    _ATTACK_PROFILE_SC[card_id] = prof
+    return prof
+
+
+def _hand_count(player) -> int:
+    """Hand size off either side: the count field, else the visible list."""
+    n = int(_g(player, "handCount", 0) or 0)
+    if n:
+        return n
+    return len(_g(player, "hand", []) or [])
+
+
+def _dmg_counters(mon) -> float:
+    """Damage counters on one Pokemon — a counter is 10 damage."""
+    return max((float(_g(mon, "maxHp", 0) or 0)
+                - float(_g(mon, "hp", 0) or 0)) / 10.0, 0.0)
+
+
+def _scale_ctx(attacker, defender) -> dict:
+    """Every board-level scaling quantity, from the attacking side's seat.
+
+    Per-slot quantities (energy_self, dmg_self) come off the slot inside
+    `_threat_at`; everything here is one number per side per evaluation.
+    Both sides get a context — their scaling threats and ours price alike.
+    """
+    _, en_a, bench_a, _ = _side_totals(attacker)
+    _, en_d, bench_d, _ = _side_totals(defender)
+    act = _g(defender, "active", []) or []
+    act = act[0] if act and act[0] is not None else None
+    a_act = _g(attacker, "active", []) or []
+    a_act = a_act[0] if a_act and a_act[0] is not None else None
+    in_play = bench_a + (1 if a_act is not None else 0)
+    en_act_a = (float(len(_g(a_act, "energies", []) or []))
+                if a_act is not None else 0.0)
+    en_act_d = (float(len(_g(act, "energies", []) or []))
+                if act is not None else 0.0)
+    return {
+        "hand_self": float(_hand_count(attacker)),
+        "hand_opp": float(_hand_count(defender)),
+        "energy_self_all": en_a,
+        "energy_opp_all": en_d,
+        "energy_opp_active": en_act_d,
+        "energy_both_active": en_act_a + en_act_d,
+        "bench_self": float(bench_a),
+        "bench_opp": float(bench_d),
+        "bench_both": float(bench_a + bench_d),
+        "in_play_self": float(in_play),
+        "dmg_opp_active": _dmg_counters(act) if act is not None else 0.0,
+        "prizes_taken_self":
+            float(max(6 - len(_g(attacker, "prize", []) or []), 0)),
+        "prizes_taken_opp":
+            float(max(6 - len(_g(defender, "prize", []) or []), 0)),
+        "in_play_self_team_rocket": _named_in_play(attacker, "Team Rocket’s"),
+    }
+
+
+def _named_in_play(player, prefix: str) -> float:
+    """In-play Pokemon whose card name carries the given owner prefix — the
+    engine's own card table supplies the names at run time, so the shipped
+    KB stays numeric."""
+    cards, _ = _tables()
+    n = 0
+    for zone in ("active", "bench"):
+        for mon in _g(player, zone, []) or []:
+            if mon is None:
+                continue
+            data = cards.get(int(_g(mon, "id", 0) or 0))
+            nm = getattr(data, "name", "") if data is not None else ""
+            if nm and nm.replace("'", "’").startswith(prefix):
+                n += 1
+    return float(n)
+
+
+def _scaled_damage(scaler, sctx: dict, slot_e: float, slot_dmgc: float,
+                   on_bench: bool = False) -> float:
+    """max(base + per * observed quantity, 0) for one attack on one slot."""
+    base, per, kind = scaler
+    if kind == "energy_self":
+        q = slot_e
+    elif kind == "dmg_self":
+        q = slot_dmgc
+    elif kind == "if_from_bench":
+        # Whether the attacker switched in this turn is not observable, so
+        # the rider prices on a benched attacker (it can always switch in on
+        # its own turn) and an Active attacker holds at base.
+        q = 1.0 if on_bench else 0.0
+    else:
+        q = sctx.get(kind, 0.0)     # "flat" reads no quantity: base only
+    TELEMETRY_SCALED["attacks_scaled"] += 1
+    return max(base + per * q, 0.0)
+
+
+class _SlotList(list):
+    """One side's slots plus its scaling context, when the KB is live."""
+    __slots__ = ("sctx",)
+
+
 def _traj_bucket(turn) -> str:
     """The curves' turn bucket, in the seat's own turns.
 
@@ -1105,16 +1339,19 @@ def _traj_growth(arch: str, bucket: str, e_now: float, k: int) -> float:
     return g3 + max(g3 - g2, 0.0) * (k - 3)
 
 
-def _traj_slots(player) -> list[tuple[float, int]]:
-    """(Energy on it, card id) for every Pokemon this side has in play."""
-    out = []
-    for zone in ("active", "bench"):
+def _traj_slots(player) -> "_SlotList":
+    """(Energy on it, card id, damage counters on it, benched?) for every
+    Pokemon this side has in play. The last two elements exist for the
+    scaled-damage KB's per-slot quantities and cost a subtraction each."""
+    out = _SlotList()
+    for zone, benched in (("active", False), ("bench", True)):
         for mon in _g(player, zone, []) or []:
             if mon is None:
                 continue
             cid = _g(mon, "id", 0) or 0
             if cid:
-                out.append((float(len(_g(mon, "energies", []) or [])), int(cid)))
+                out.append((float(len(_g(mon, "energies", []) or [])),
+                            int(cid), _dmg_counters(mon), benched))
     return out
 
 
@@ -1153,7 +1390,7 @@ def _online_turn(slots, growth) -> int:
     online inside the horizon returns HORIZON + 1, so the feature is bounded.
     """
     best = TRAJ_HORIZON + 1
-    for e, cid in slots:
+    for e, cid, *_ in slots:
         prof = _attack_profile(cid)
         if not prof:
             continue
@@ -1168,14 +1405,28 @@ def _online_turn(slots, growth) -> int:
 
 
 def _threat_at(slots, growth, k: int) -> float:
-    """The hardest attack this side can pay for k of its turns from now."""
+    """The hardest attack this side can pay for k of its turns from now.
+
+    With a scaling context on the slots (CABT_SCALED_DAMAGE), an attack the
+    KB names is priced at its observed damage instead of its printed number.
+    The budget grows with k; the scaling quantities do not — held at their
+    current observed values, the stated no-hand-growth-model limitation.
+    """
     gain = growth(k)
     best = 0.0
-    for e, cid in slots:
+    sctx = getattr(slots, "sctx", None)
+    for e, cid, dmgc, on_bench in slots:
         budget = e + gain
-        for cost, dmg in _attack_profile(cid):
-            if cost <= budget and dmg > best:
-                best = dmg
+        if sctx is None:
+            for cost, dmg in _attack_profile(cid):
+                if cost <= budget and dmg > best:
+                    best = dmg
+        else:
+            for cost, dmg, sc in _attack_profile_sc(cid):
+                if sc is not None:
+                    dmg = _scaled_damage(sc, sctx, e, dmgc, on_bench)
+                if cost <= budget and dmg > best:
+                    best = dmg
     return best
 
 
@@ -1263,8 +1514,17 @@ def _traj_projection(cur, mine, theirs):
     bucket = _traj_bucket(_g(cur, "turn", 1))
     us, them = _TRAJ_ARCH["us"], _TRAJ_ARCH["them"]
     slots_m, slots_t = _traj_slots(mine), _traj_slots(theirs)
-    e_m = sum(e for e, _ in slots_m)
-    e_t = sum(e for e, _ in slots_t)
+    e_m = sum(s[0] for s in slots_m)
+    e_t = sum(s[0] for s in slots_t)
+    if SCALED_DAMAGE_ENABLED:
+        # Both sides' scaling contexts ride the slots, so every downstream
+        # `_threat_at` — the C2 ladder, the k=1 incoming read, the evo
+        # integral — prices scaling attacks from the observed state.
+        try:
+            slots_m.sctx = _scale_ctx(mine, theirs)
+            slots_t.sctx = _scale_ctx(theirs, mine)
+        except Exception:
+            TELEMETRY_SCALED["ctx_errors"] += 1
     accel_m = _visible_accel(mine)
 
     def g_m(k: int) -> float:
@@ -1550,20 +1810,37 @@ def _evo_threat_at(slots, growth, k: int, side: str, ctx) -> float:
     weighted variant that won the screen)."""
     gain = growth(k)
     best = 0.0
-    for e, cid in slots:
+    sctx = getattr(slots, "sctx", None)
+    for e, cid, dmgc, on_bench in slots:
         budget = e + gain
-        for cost, dmg in _attack_profile(int(cid)):
-            if cost <= budget and dmg > best:
-                best = dmg
+        if sctx is None:
+            for cost, dmg in _attack_profile(int(cid)):
+                if cost <= budget and dmg > best:
+                    best = dmg
+        else:
+            for cost, dmg, sc in _attack_profile_sc(int(cid)):
+                if sc is not None:
+                    dmg = _scaled_damage(sc, sctx, e, dmgc, on_bench)
+                if cost <= budget and dmg > best:
+                    best = dmg
         for evo_id, steps, mid in _evo_edges_for(side, int(cid)):
             if steps > k:
                 continue
             p = _evo_avail(ctx, evo_id, steps, k, mid)
             if p <= 0.0:
                 continue
-            for cost, dmg in _attack_profile(evo_id):
-                if cost <= budget and dmg * p > best:
-                    best = dmg * p
+            # Damage counters survive evolution and the Energy stays, so the
+            # evolution's scaling attacks price off the same slot quantities.
+            if sctx is None:
+                for cost, dmg in _attack_profile(evo_id):
+                    if cost <= budget and dmg * p > best:
+                        best = dmg * p
+            else:
+                for cost, dmg, sc in _attack_profile_sc(evo_id):
+                    if sc is not None:
+                        dmg = _scaled_damage(sc, sctx, e, dmgc, on_bench)
+                    if cost <= budget and dmg * p > best:
+                        best = dmg * p
     return best
 
 

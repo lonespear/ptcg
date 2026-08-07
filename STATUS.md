@@ -1,6 +1,29 @@
-**Last updated: 2026-08-07 ~14:00 ET (Aug 7)**
+**Last updated: 2026-08-07 ~15:00 ET (Aug 7)**
 
 # Status — Austin's side (deck creation + shared infra)
+
+## Update — Aug 7 PM (v3 shipped: the scaling-attack blindness fix)
+
+- **v3 = v2 + the scaled-damage bundle, gated and submitted.** The threat
+  machinery read printed damage only, so Alakazam's Powerful Hand (printed
+  0, 20 x own hand size) registered as ZERO threat while Dudunsparce
+  engines built 20-card hands — the ladder-autopsy loss mode Austin ruled
+  on. `agent/attack_scalers.json` (generator `ptcg/attack_scalers.py`, KB =
+  attackId + numbers only) now prices 100 attacks from the observed state:
+  hand/energy/bench/damage-counter/prize scalers, flat effect damage
+  (Cruel Arrow's printed-0 100), the Gale Thrust from-bench rider, and the
+  engine-verified −30 resistance. No new evaluator weights — honest numbers
+  feeding the existing screened threat terms. Playbook entry 10 holds the
+  full gate: targeted alakazam cell **+3.4 pp** (0.434→0.468, 500/arm,
+  paired seeds, replicate +0.6 pp), pooled 8-entry specialist panel
+  no-regression (clean −0.81 SE, all-games −0.27 SE, no cell past 2 SE).
+  `CABT_SCALED_DAMAGE=0` is the revert.
+- Emergent behavior confirmed in trace: Judge into a 20-card Alakazam hand
+  now evaluates **+547** on the resulting margin through the ordinary
+  1-ply search; the blind build scored it +0.0.
+- Limitation on the record: future-turn projections hold scaling
+  quantities (hand size, Energy counts) at their observed values — no
+  opponent hand-growth model yet.
 
 ## Update — Aug 7 PM (seeded archipelago v3 launched, both machines)
 

@@ -1,0 +1,506 @@
+{
+ "generator": "ptcg/attack_scalers.py",
+ "source": "data/engine_dump/attacks.json (effect text; text itself never enters this file)",
+ "attacks": {
+  "34": {
+   "base": 120,
+   "per": 0,
+   "kind": "flat"
+  },
+  "88": {
+   "base": 10,
+   "per": 30,
+   "kind": "energy_opp_active"
+  },
+  "95": {
+   "base": 50,
+   "per": 0,
+   "kind": "flat"
+  },
+  "115": {
+   "base": 0,
+   "per": 20,
+   "kind": "bench_self"
+  },
+  "119": {
+   "base": 20,
+   "per": 20,
+   "kind": "bench_opp"
+  },
+  "120": {
+   "base": 30,
+   "per": 30,
+   "kind": "energy_both_active"
+  },
+  "123": {
+   "base": 0,
+   "per": 30,
+   "kind": "hand_opp"
+  },
+  "124": {
+   "base": 0,
+   "per": 20,
+   "kind": "dmg_self"
+  },
+  "167": {
+   "base": 20,
+   "per": 120,
+   "kind": "if_from_bench"
+  },
+  "175": {
+   "base": 100,
+   "per": 30,
+   "kind": "dmg_opp_active"
+  },
+  "183": {
+   "base": 100,
+   "per": 0,
+   "kind": "flat"
+  },
+  "184": {
+   "base": 0,
+   "per": 60,
+   "kind": "prizes_taken_opp"
+  },
+  "188": {
+   "base": 110,
+   "per": 0,
+   "kind": "flat"
+  },
+  "195": {
+   "base": 30,
+   "per": 30,
+   "kind": "energy_self_all"
+  },
+  "200": {
+   "base": 180,
+   "per": 0,
+   "kind": "flat"
+  },
+  "201": {
+   "base": 0,
+   "per": 40,
+   "kind": "energy_self"
+  },
+  "224": {
+   "base": 80,
+   "per": 10,
+   "kind": "dmg_self"
+  },
+  "226": {
+   "base": 0,
+   "per": 30,
+   "kind": "energy_self"
+  },
+  "232": {
+   "base": 0,
+   "per": 30,
+   "kind": "bench_self"
+  },
+  "267": {
+   "base": 120,
+   "per": 30,
+   "kind": "prizes_taken_opp"
+  },
+  "274": {
+   "base": 60,
+   "per": 20,
+   "kind": "bench_both"
+  },
+  "277": {
+   "base": 10,
+   "per": 70,
+   "kind": "dmg_self"
+  },
+  "285": {
+   "base": 0,
+   "per": 20,
+   "kind": "energy_opp_active"
+  },
+  "289": {
+   "base": 20,
+   "per": 0,
+   "kind": "flat"
+  },
+  "324": {
+   "base": 0,
+   "per": 60,
+   "kind": "energy_opp_all"
+  },
+  "333": {
+   "base": 0,
+   "per": 10,
+   "kind": "dmg_self"
+  },
+  "339": {
+   "base": 10,
+   "per": 50,
+   "kind": "energy_opp_active"
+  },
+  "342": {
+   "base": 20,
+   "per": 0,
+   "kind": "flat"
+  },
+  "362": {
+   "base": 10,
+   "per": 50,
+   "kind": "energy_self"
+  },
+  "371": {
+   "base": 20,
+   "per": 20,
+   "kind": "bench_both"
+  },
+  "395": {
+   "base": 40,
+   "per": 40,
+   "kind": "dmg_opp_active"
+  },
+  "418": {
+   "base": 50,
+   "per": 0,
+   "kind": "flat"
+  },
+  "420": {
+   "base": 0,
+   "per": 20,
+   "kind": "dmg_self"
+  },
+  "458": {
+   "base": 60,
+   "per": 20,
+   "kind": "bench_self"
+  },
+  "511": {
+   "base": 30,
+   "per": 10,
+   "kind": "dmg_self"
+  },
+  "516": {
+   "base": 50,
+   "per": 0,
+   "kind": "flat"
+  },
+  "560": {
+   "base": 0,
+   "per": 30,
+   "kind": "in_play_self_team_rocket"
+  },
+  "586": {
+   "base": 0,
+   "per": 30,
+   "kind": "energy_self"
+  },
+  "615": {
+   "base": 40,
+   "per": 40,
+   "kind": "energy_opp_active"
+  },
+  "617": {
+   "base": 30,
+   "per": 0,
+   "kind": "flat"
+  },
+  "632": {
+   "base": 30,
+   "per": 0,
+   "kind": "flat"
+  },
+  "719": {
+   "base": 20,
+   "per": 0,
+   "kind": "flat"
+  },
+  "732": {
+   "base": 130,
+   "per": 50,
+   "kind": "prizes_taken_opp"
+  },
+  "745": {
+   "base": 80,
+   "per": 30,
+   "kind": "energy_opp_active"
+  },
+  "760": {
+   "base": 0,
+   "per": 10,
+   "kind": "dmg_self"
+  },
+  "793": {
+   "base": 20,
+   "per": 20,
+   "kind": "bench_self"
+  },
+  "819": {
+   "base": 130,
+   "per": 50,
+   "kind": "prizes_taken_opp"
+  },
+  "822": {
+   "base": 0,
+   "per": 30,
+   "kind": "energy_self"
+  },
+  "823": {
+   "base": 30,
+   "per": 50,
+   "kind": "energy_self"
+  },
+  "836": {
+   "base": 30,
+   "per": 90,
+   "kind": "if_from_bench"
+  },
+  "850": {
+   "base": 70,
+   "per": 0,
+   "kind": "flat"
+  },
+  "885": {
+   "base": 0,
+   "per": 30,
+   "kind": "bench_opp"
+  },
+  "894": {
+   "base": 0,
+   "per": 20,
+   "kind": "energy_self"
+  },
+  "925": {
+   "base": 50,
+   "per": 0,
+   "kind": "flat"
+  },
+  "938": {
+   "base": 20,
+   "per": 40,
+   "kind": "energy_self"
+  },
+  "944": {
+   "base": 60,
+   "per": 30,
+   "kind": "energy_self"
+  },
+  "964": {
+   "base": 40,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1006": {
+   "base": 0,
+   "per": 80,
+   "kind": "prizes_taken_self"
+  },
+  "1012": {
+   "base": 240,
+   "per": -60,
+   "kind": "energy_opp_active"
+  },
+  "1055": {
+   "base": 20,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1072": {
+   "base": 0,
+   "per": 20,
+   "kind": "hand_self"
+  },
+  "1073": {
+   "base": 30,
+   "per": 30,
+   "kind": "energy_opp_active"
+  },
+  "1079": {
+   "base": 0,
+   "per": 50,
+   "kind": "energy_self_all"
+  },
+  "1080": {
+   "base": 0,
+   "per": 20,
+   "kind": "dmg_opp_active"
+  },
+  "1097": {
+   "base": 50,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1114": {
+   "base": 0,
+   "per": 20,
+   "kind": "in_play_self"
+  },
+  "1120": {
+   "base": 120,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1135": {
+   "base": 0,
+   "per": 20,
+   "kind": "energy_self"
+  },
+  "1144": {
+   "base": 10,
+   "per": 20,
+   "kind": "energy_self"
+  },
+  "1145": {
+   "base": 40,
+   "per": 40,
+   "kind": "energy_self"
+  },
+  "1164": {
+   "base": 70,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1178": {
+   "base": 10,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1218": {
+   "base": 60,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1225": {
+   "base": 60,
+   "per": 170,
+   "kind": "if_from_bench"
+  },
+  "1238": {
+   "base": 60,
+   "per": 20,
+   "kind": "energy_self"
+  },
+  "1240": {
+   "base": 0,
+   "per": 50,
+   "kind": "hand_opp"
+  },
+  "1252": {
+   "base": 60,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1290": {
+   "base": 0,
+   "per": 70,
+   "kind": "dmg_opp_active"
+  },
+  "1303": {
+   "base": 20,
+   "per": 90,
+   "kind": "if_from_bench"
+  },
+  "1325": {
+   "base": 70,
+   "per": 50,
+   "kind": "energy_self"
+  },
+  "1334": {
+   "base": 280,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1348": {
+   "base": 0,
+   "per": 20,
+   "kind": "dmg_opp_active"
+  },
+  "1359": {
+   "base": 120,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1367": {
+   "base": 20,
+   "per": 10,
+   "kind": "dmg_opp_active"
+  },
+  "1375": {
+   "base": 20,
+   "per": 20,
+   "kind": "bench_opp"
+  },
+  "1384": {
+   "base": 60,
+   "per": 40,
+   "kind": "energy_self"
+  },
+  "1386": {
+   "base": 0,
+   "per": 20,
+   "kind": "in_play_self"
+  },
+  "1395": {
+   "base": 0,
+   "per": 30,
+   "kind": "energy_self"
+  },
+  "1417": {
+   "base": 50,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1422": {
+   "base": 50,
+   "per": 50,
+   "kind": "dmg_opp_active"
+  },
+  "1444": {
+   "base": 0,
+   "per": 40,
+   "kind": "energy_opp_all"
+  },
+  "1454": {
+   "base": 20,
+   "per": 80,
+   "kind": "energy_opp_active"
+  },
+  "1467": {
+   "base": 0,
+   "per": 20,
+   "kind": "in_play_self"
+  },
+  "1475": {
+   "base": 90,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1495": {
+   "base": 0,
+   "per": 70,
+   "kind": "prizes_taken_self"
+  },
+  "1506": {
+   "base": 30,
+   "per": 30,
+   "kind": "energy_opp_active"
+  },
+  "1522": {
+   "base": 0,
+   "per": 20,
+   "kind": "dmg_self"
+  },
+  "1528": {
+   "base": 30,
+   "per": 0,
+   "kind": "flat"
+  },
+  "1529": {
+   "base": 10,
+   "per": 30,
+   "kind": "bench_opp"
+  },
+  "1537": {
+   "base": 220,
+   "per": 0,
+   "kind": "flat"
+  }
+ }
+}

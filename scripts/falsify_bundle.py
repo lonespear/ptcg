@@ -254,6 +254,32 @@ def main() -> None:
         elif traj.get("evo_scored"):
             sys.exit("FAIL: the evo integral is off and it scored positions "
                      "anyway, which is time spent on nothing")
+        # The scaled-damage KB, under the same rule as every switched
+        # behaviour: loaded, from the bundle, and actually re-pricing attacks
+        # while CABT_SCALED_DAMAGE is on; absent from the archive while off.
+        if g.get("SCALED_DAMAGE_ENABLED"):
+            sc = g["_scalers"]()
+            tsc = g["TELEMETRY_SCALED"]
+            if not sc:
+                sys.exit("FAIL: CABT_SCALED_DAMAGE is on and no "
+                         "attack_scalers.json loaded — every scaling attack "
+                         "prices at its printed number, silently")
+            src = g["_SCALERS_SOURCE"]
+            if not str(Path(src).resolve()).startswith(str(tmp.resolve())):
+                sys.exit(f"FAIL: attack scalers loaded {src}, outside the "
+                         f"bundle")
+            if tsc["attacks_scaled"] == 0:
+                sys.exit("FAIL: the scaler KB loaded and re-priced no attack "
+                         "damage over the falsification games")
+            if tsc["ctx_errors"] or tsc["kb_missing"]:
+                sys.exit(f"FAIL: the scaled-damage guards fired: {tsc}")
+            print(f"attack scalers: {len(sc)} attacks, re-priced "
+                  f"{tsc['attacks_scaled']} damage reads, from {src}")
+        elif (tmp / "attack_scalers.json").exists():
+            sys.exit("FAIL: attack_scalers.json is in the bundle and "
+                     "CABT_SCALED_DAMAGE is 0, so nothing will ever open it")
+        else:
+            print("attack scalers: correctly absent (CABT_SCALED_DAMAGE = 0)")
         if calls["search_begin"] == 0:
             sys.exit("FAIL: search never fired — the agent played rules-only")
         if g["TREE_LEAF_ENABLED"]:

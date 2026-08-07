@@ -79,7 +79,8 @@ def agent_flags() -> dict:
     src = (AGENT / "main.py").read_text(encoding="utf-8")
     out = {}
     for key, name in (("postures", "CABT_POSTURES"), ("protect", "CABT_PROTECT"),
-                      ("tree_leaf", "CABT_TREE_LEAF")):
+                      ("tree_leaf", "CABT_TREE_LEAF"),
+                      ("scaled", "CABT_SCALED_DAMAGE")):
         m = re.search(rf'{name}"\) or (\d+)\)', src)
         if m is None:
             raise ValueError(f"cannot read {name} out of agent/main.py")
@@ -173,6 +174,23 @@ def build() -> Path:
         print("  postures: not bundled — the deny-postures, the protection "
               "rule and the tree leaf are all off, so nothing in the agent "
               "would read it")
+
+    # The attack-scaler KB (the scaling/flat-damage/resistance bundle). Ships
+    # only while CABT_SCALED_DAMAGE defaults on in the source, under the same
+    # audit rule as every other switched file: present iff something opens it.
+    scalers = AGENT / "attack_scalers.json"
+    if flags["scaled"]:
+        if not scalers.exists():
+            raise FileNotFoundError(
+                f"CABT_SCALED_DAMAGE is on and {scalers} is missing — every "
+                f"scaling attack would price at its printed number. Rebuild "
+                f"it: python -m ptcg.attack_scalers --write")
+        shutil.copy2(scalers, staging / "attack_scalers.json")
+        print(f"  attack_scalers: {scalers.stat().st_size / 1024:.0f} KB "
+              f"(CABT_SCALED_DAMAGE={flags['scaled']})")
+    else:
+        print("  attack_scalers: not bundled — CABT_SCALED_DAMAGE is 0, so "
+              "nothing in the agent would read it")
 
     # The D34 tree leaf. Under the same rule the two above get: it ships only
     # while the agent is configured to read it, and CABT_TREE_LEAF defaults to

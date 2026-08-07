@@ -491,7 +491,7 @@ def _expected_damage_features(slots, growth, attack_profile) -> dict:
     attachments instead of multiplying them.
     """
     profs = []
-    for e, cid in slots:
+    for e, cid, *_ in slots:
         p = attack_profile(int(cid))
         if p:
             profs.append((float(e), p))
@@ -688,7 +688,7 @@ def _threat_at_evo(slots, growth, k: int, cards, evo_map, attack_profile,
     """
     gain = growth(k)
     best_w = best_f = 0.0
-    for e, cid in slots:
+    for e, cid, *_ in slots:
         budget = e + gain
         for cost, dmg in attack_profile(int(cid)):
             if cost <= budget:
