@@ -159,13 +159,18 @@ def load_field_panel(priors_path: Path, top_n: int = 8) -> list[dict]:
     return panel
 
 
+def _jsonable_rng(state) -> list:
+    return [state[0], list(state[1]), state[2]]
+
+
 def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
                     phase_a_frac: float = 0.7, pop_size: int = 10,
                     games_per_opponent: int = 24, seed: int = 0,
                     plateau_window: int = 15, pilot_factory=None,
                     git_commit: bool = False, workers: int = 1,
                     generalist_name: str = "jon",
-                    seed_deck: list | None = None) -> None:
+                    seed_deck: list | None = None,
+                    resume: bool = False) -> None:
     rng = random.Random(seed)
     bank = GeneBank(pool())
     p = pool()
@@ -210,11 +215,64 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
                     popn[i] = enforce_purity(
                         mutate(list(seed_deck), ai.island, bank, rng),
                         ai, bank, rng)
-    cache: dict[tuple, float] = {}
+    cache: dict[tuple, tuple] = {}
     best_seen: dict[str, tuple[int, float]] = {}   # set_key -> (era, best)
     frozen: set[str] = set()
     prev_elite: list[int] | None = None
     t0 = time.time()
+
+    # ---- resumable state (a kill loses at most the in-progress era) ------
+    state_path = run_dir / "state.json"
+    archive_path = run_dir / "archive.jsonl"
+    archived: set[tuple] = set()
+    start_era = 0
+    phase_b_entered = False
+    if resume and archive_path.exists():
+        with archive_path.open() as fh:
+            for line in fh:
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue        # torn tail from a mid-write kill
+                key = tuple(rec["k"])
+                cache[key] = (rec["f"], rec["s"], rec["x"], rec.get("p"))
+                archived.add(key)
+    if resume and state_path.exists():
+        st = json.loads(state_path.read_text())
+        for label, popn in st["pops"].items():
+            if label in pops:
+                pops[label] = [list(d) for d in popn]
+        frozen = set(st["frozen"])
+        best_seen = {k: tuple(v) for k, v in st["best_seen"].items()}
+        prev_elite = st["prev_elite"]
+        start_era = st["era"] + 1
+        phase_b_entered = st["phase"] == "B"
+        rs = st.get("rng_state")
+        if rs:
+            rng.setstate((rs[0], tuple(rs[1]), rs[2]))
+        t0 = time.time() - st["elapsed_h"] * 3600
+        print(f"resumed: era {start_era}, phase {st['phase']}, "
+              f"{st['elapsed_h']:.2f}h consumed, {len(cache)} cached evals",
+              flush=True)
+
+    def save_state(era: int, phase: str) -> None:
+        st = {"era": era, "phase": phase,
+              "elapsed_h": round((time.time() - t0) / 3600, 4),
+              "pops": pops, "frozen": sorted(frozen),
+              "best_seen": {k: list(v) for k, v in best_seen.items()},
+              "prev_elite": prev_elite,
+              "rng_state": _jsonable_rng(rng.getstate())}
+        tmp = state_path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(st))
+        tmp.replace(state_path)
+        with archive_path.open("a") as fh:   # append-only fitness ledger
+            for key, v in cache.items():
+                if key in archived:
+                    continue
+                fh.write(json.dumps(
+                    {"k": list(key), "f": v[0], "s": v[1], "x": v[2],
+                     "p": v[3] if len(v) > 3 else None}) + "\n")
+                archived.add(key)
 
     # Expensive specialists (codex ~0.9 s/game vs 16-107 ms for the rest)
     # run at a quarter of the game count during GA fitness; gates and
@@ -229,17 +287,20 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
         key = tuple(sorted(deck))
         if key not in cache:
             score, losses, exh = 0.0, 0, 0
+            profile = []       # per-panel-entry win rate: the matchup vector
             for i, (entry, opp_pilot) in enumerate(zip(panel, panel_pilots)):
                 n = max(6, games_per_opponent // 4) if i in slow \
                     else games_per_opponent
                 m = play_match(pilot_a, opp_pilot, deck, entry["deck"], n)
-                score += m.win_rate(0) * entry["weight"]
+                wr = m.win_rate(0)
+                profile.append(round(wr, 4))
+                score += wr * entry["weight"]
                 for g in m.games:
                     if g.winner == 1:
                         losses += 1
                         exh += g.reason in EXHAUSTION
             frag = exh / losses if losses else 0.0
-            cache[key] = (score - TERM_LAMBDA * frag, score, frag)
+            cache[key] = (score - TERM_LAMBDA * frag, score, frag, profile)
         return cache[key][0]
 
     def breed(ai: ArchIsland, era: int) -> dict:
@@ -306,6 +367,7 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
               "gate_vs_prev_elite_500g": gate}
         (run_dir / f"era_{era:03d}.json").write_text(json.dumps(ck))
         (run_dir / "latest.json").write_text(json.dumps(ck))
+        save_state(era, phase)
         print(f"era {era:3d} [{ck['elapsed_h']:.2f}h {phase}] "
               f"elite={all_best[0]:.3f} ({all_best[2]}) gate={gate} "
               f"frozen={len(frozen)}", flush=True)
@@ -329,9 +391,10 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
             elif era - e0 >= plateau_window:
                 frozen.add(sk)
 
-    era = 0
+    era = start_era
     # -------- Phase A: mono sources --------
-    while (time.time() - t0) / 3600 < hours * phase_a_frac:
+    while (not phase_b_entered
+           and (time.time() - t0) / 3600 < hours * phase_a_frac):
         live = [ai for ai in mono if ai.set_key not in frozen]
         if not live:
             break
@@ -345,26 +408,38 @@ def run_archipelago(run_dir: Path, priors_path: Path, hours: float = 8.0,
         checkpoint(era, "A", reports)
         era += 1
 
-    # -------- founding burst --------
-    refine_elites = {}
-    for ai in mono:
-        if ai.temperament == "refine":
-            top2 = sorted(pops[ai.label], key=fit, reverse=True)[:2]
-            refine_elites[ai.set_key] = top2
-    for ai in downstream:
-        sources = ai.parents or list(refine_elites)
-        stock = [d for sk in sources for d in refine_elites.get(sk, [])]
-        popn = pops[ai.label]
-        for migrant in stock:
+    if not phase_b_entered:
+        # -------- founding burst --------
+        if pfit:      # prefetch: downstream pops have never been scored
+            fresh = [d for ai in downstream for d in pops[ai.label]
+                     if tuple(sorted(d)) not in cache]
+            cache.update(pfit.evaluate_many(fresh))
+        refine_elites = {}
+        for ai in mono:
+            if ai.temperament == "refine":
+                top2 = sorted(pops[ai.label], key=fit, reverse=True)[:2]
+                refine_elites[ai.set_key] = top2
+        for ai in downstream:
+            sources = ai.parents or list(refine_elites)
+            stock = [d for sk in sources for d in refine_elites.get(sk, [])]
+            popn = pops[ai.label]
+            # Batched: children are crossovers of the local elite with each
+            # migrant, replacing the worst locals. Their fitness is deferred
+            # to Phase B's parallel prefetch — the serial per-insertion
+            # re-evaluation here used to cost more wall-clock than an era.
             local = max(popn, key=fit)
-            child = crossover(local, migrant, ai.island, bank, rng)
-            child = enforce_purity(child, ai, bank, rng)
-            worst = min(range(len(popn)), key=lambda i: fit(popn[i]))
-            popn[worst] = child
+            children = [enforce_purity(
+                crossover(local, migrant, ai.island, bank, rng),
+                ai, bank, rng) for migrant in stock]
+            order = sorted(range(len(popn)), key=lambda i: fit(popn[i]))
+            keep = max(len(popn) - len(children), 1)   # elite always survives
+            for slot, child in zip(order[:len(popn) - keep], children):
+                popn[slot] = child
+
+        frozen -= {ai.set_key for ai in downstream}
+        best_seen.clear()
 
     # -------- Phase B: duals + tri --------
-    frozen -= {ai.set_key for ai in downstream}
-    best_seen.clear()
     while (time.time() - t0) / 3600 < hours:
         live = [ai for ai in downstream if ai.set_key not in frozen]
         if not live:  # all converged: give remaining time back to live monos

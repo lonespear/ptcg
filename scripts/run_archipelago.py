@@ -33,6 +33,9 @@ if __name__ == "__main__":
     ap.add_argument("--workers", type=int, default=1)
     ap.add_argument("--seed-deck", default=None,
                     help="csv/json 60-card list; rebuild mode seeds matching islands")
+    ap.add_argument("--resume", action="store_true",
+                    help="continue from runs/<run-id>/state.json; loses at "
+                         "most the era in flight when the run was killed")
     ap.add_argument("--git", action="store_true")
     args = ap.parse_args()
 
@@ -43,6 +46,7 @@ if __name__ == "__main__":
                     plateau_window=args.plateau, git_commit=args.git,
                     pilot_factory=PILOTS[args.pilot], workers=args.workers,
                     generalist_name=args.pilot if args.pilot in ('jon','greedy') else 'jon',
+                    resume=args.resume,
                     seed_deck=__import__('json').load(open(args.seed_deck))
                     if args.seed_deck and args.seed_deck.endswith('.json')
                     else [int(x) for x in open(args.seed_deck).read().split()]

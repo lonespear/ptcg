@@ -47,16 +47,20 @@ def _eval_deck(deck: list[int]) -> tuple[tuple, tuple]:
     from ptcg.creation.harness import play_match
     st = _STATE
     score, losses, exh = 0.0, 0, 0
+    profile = []           # per-panel-entry win rate: the matchup vector
     for i, (entry, pilot) in enumerate(zip(st["panel"], st["pilots"])):
         n = st["slow_games"] if i in st["slow"] else st["games"]
         m = play_match(st["candidate"], pilot, deck, entry["deck"], n)
-        score += m.win_rate(0) * entry["weight"]
+        wr = m.win_rate(0)
+        profile.append(round(wr, 4))
+        score += wr * entry["weight"]
         for g in m.games:
             if g.winner == 1:
                 losses += 1
                 exh += g.reason in EXHAUSTION
     frag = exh / losses if losses else 0.0
-    return tuple(sorted(deck)), (score - TERM_LAMBDA * frag, score, frag)
+    return tuple(sorted(deck)), (score - TERM_LAMBDA * frag, score, frag,
+                                 profile)
 
 
 class ParallelFitness:
