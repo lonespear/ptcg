@@ -357,19 +357,46 @@ def _choose_main(options, obs) -> int:
 
 
 def _rank_card_options(options, obs) -> list[int]:
-    """Option indices, best card first. Unresolvable cards sort last."""
+    """Option indices, best card first. Unresolvable cards sort last.
+
+    When a matchup posture is live this is also where its named gust order
+    lands. `_card_score` reads a card the way we read our own — bulk and
+    damage, minus the prizes it hands over — and applied to the opponent's
+    board that ranking picks their biggest attacker, which is the opposite of
+    what the deny analysis says to gust. The posture's preference order is the
+    correction, and it applies only to cards the option says belong to them,
+    so nothing about how we choose among our own cards can move.
+    """
     try:
         board = _board_context(obs)
     except Exception:
         board = None
+    ranks = _POSTURE_ON["gust_rank"]
+    # A discard prompt reads this list backwards (see `_policy`), so the
+    # preference would invert there. Nothing in our list makes the opponent
+    # discard a Pokemon we choose, but the guard costs a comparison.
+    if _g(_g(obs, "select"), "context") == CTX_DISCARD:
+        ranks = {}
+    me = _g(_g(obs, "current"), "yourIndex", 0)
     scored = []
+    targeted = 0
     for i, o in enumerate(options):
         card = _option_card(obs, o)
         if card is not None:
-            v = _card_score(card, board, _g(o, "area") == AREA_HAND)
+            r = None
+            if ranks and _g(o, "playerIndex") not in (None, me):
+                r = ranks.get(_g(card, "id"))
+            if r is None:
+                v = _card_score(card, board, _g(o, "area") == AREA_HAND)
+            else:
+                v = POSTURE_GUST_BASE - POSTURE_GUST_STEP * r
+                targeted += 1
         else:
             v = -1.0
         scored.append((v, -i, i))
+    if targeted:
+        TELEMETRY_POSTURE["gust_selects"] += 1
+        TELEMETRY_POSTURE["gust_targeted"] += targeted
     scored.sort(reverse=True)
     return [i for _, _, i in scored]
 
@@ -1188,6 +1215,11 @@ def _refresh_traj_arch(obs) -> None:
     the trajectory features are worth most exactly that early. Ours is read
     off our own board, discard and hand, which is private information and
     needs no inference.
+
+    The same read carries the posterior's confidence in that label, over the
+    same top-K it would be spending determinizations on, and hands both to
+    `_set_posture`: the matchup posture and the trajectory curve are keyed on
+    one inference, made once, rather than on two that could disagree.
     """
     try:
         cur = (obs or {}).get("current") or {}
@@ -1197,16 +1229,19 @@ def _refresh_traj_arch(obs) -> None:
         me = cur.get("yourIndex", 0) or 0
         _TRAJ_ARCH["us"] = _label_of_ids(
             _visible_ids(players[me], ("active", "bench", "discard", "hand")))
-        label = "(all)"
+        label, confidence = "(all)", 0.0
         try:
-            post = _deck_posterior(obs, top_k=1)
+            post = _deck_posterior(obs, top_k=POSTERIOR_TOP_K)
             if post:
                 label = _label_of_ids(post[0][0].keys())
+                confidence = float(post[0][1])
         except Exception:
-            label = "(all)"
+            label, confidence = "(all)", 0.0
         if label == "(all)":
             label = _label_of_ids(_visible_ids(players[1 - me]))
+            confidence = 0.0        # a board-derived label is not a posterior
         _TRAJ_ARCH["them"] = label
+        _set_posture(label, confidence)
     except Exception:
         TELEMETRY_TRAJ["feature_errors"] += 1
 
@@ -1260,6 +1295,301 @@ def _trajectory_terms(cur, mine, theirs) -> tuple[float, float, float]:
     energy_diff = (e_m + gm(TRAJ_K)) - (e_t + gt(TRAJ_K))
     threat_diff = _threat_at(sm, gm, TRAJ_K) - _threat_at(st, gt, TRAJ_K)
     return online_lead, energy_diff, threat_diff
+
+
+# --- attacker protection (the bench-out loss mode) --------------------------
+# `data/analysis/DECK_REFINEMENT.md`: 68% of this deck's losses are "no active
+# Pokemon" — we run out of promotable bodies and the game ends with prizes
+# still on both sides. The list carries four Teal Mask Ogerpon ex and nothing
+# else that can attack, so every Pokemon we lose is a quarter of the deck's
+# whole capacity to play the game, and losing the last one loses the game
+# outright regardless of the prize count.
+#
+# The evaluator scored HP and bench width, both of which are averages over
+# bodies. Neither says which of our Pokemon dies on their next turn. This
+# does: `attackers_exposed` counts our attack-capable Pokemon whose remaining
+# HP is at or under the damage the opponent can afford one of their own turns
+# from now — the same `_threat_at` projection C2 already runs on their side,
+# read at k=1 instead of k=TRAJ_K, so the feature costs nothing new.
+#
+# Exposure needs reach as well as damage. Our Active is always reachable.
+# A benched Pokemon is reachable only if their deck can pull it into the
+# Active Spot, which is a property of their archetype and is read off
+# `postures.json`'s `gust_reach` — the play-weighted majority over the mined
+# lists of whether the archetype runs a card whose text switches in one of the
+# opponent's Benched Pokemon (`ptcg/matchup_postures.py`). The measurement
+# came back unanimous: all eleven archetypes in the prior run a gust, Boss's
+# Orders being a field staple, so in the current metagame the bench is always
+# reachable. The table ships anyway because that is a fact about this
+# metagame and not an assumption, and an archetype the table does not name
+# falls back to the same majority.
+#
+# Both of this section's behaviours carry an off switch, read from the
+# environment the way SEARCH_OPP_BRANCH is, so a gate can run either one
+# without the other against the same baseline binary. Both are 0, which is
+# where the gate left them.
+#
+# Against 89995b7 on mirror decks with seats swapped, seed block 94000 —
+# 500 Marnie's Grimmsnarl plus 300 Cynthia's Garchomp an arm:
+#
+#   postures alone     0.4923 over 784 decided (Marnie 0.483/484,
+#                                               Garchomp 0.507/300)
+#   protection alone   0.4918 over 791         (0.491/491, 0.493/300)
+#   both               0.4893 over 791         (0.499/491, 0.473/300)
+#
+# The mirror is the wrong instrument for a matchup feature and we knew it
+# going in — both seats play one deck, so a deny-posture fires against an
+# opponent playing our own archetype, which is one of the two archetypes
+# POSTURES.md says has no lever at all. So the arm that was supposed to
+# decide this was the specialist: our own Ogerpon list against the harvested
+# Grimmsnarl control agent playing the list it was written for
+# (`scripts/specialist_gate.py`, 900 games an arm, seats swapped, seed block
+# 94000). Reported over games neither side forfeited, because that agent's
+# own last-resort fallback returns an empty selection whenever the prompt
+# carries maxCount 0 and it hands over about a third of its games that way:
+#
+#   baseline 89995b7   0.7850 over 572 clean of 900   (0.8633 counting all)
+#   postures alone     0.7986 over 576                 (0.8711)
+#   protection alone   0.7757 over 602                 (0.8500)
+#   both               0.7500 over 592                 (0.8356)
+#
+# Every one of those sits inside 1.5 standard errors of the control on a
+# difference SE of about 2.4 points, and the sign of the best of them is not
+# stable: at 300 games the both-arm read +8.1 points and at 900 it reads
+# -3.5. That swing is the honest headline of this entry. Postures is the only
+# arm whose point estimate is on the right side of the control in both the
+# clean and the all-games counts, and +1.4 points is not a result.
+#
+# So neither behaviour ships on. The machinery stays in the tree exactly as
+# playbook entry 4's reply tables did, and turning either back on is one
+# environment variable — the day the leaf improves, or the day there is a
+# specialist panel wide enough to resolve a two-point matchup effect.
+try:
+    PROTECTION_ENABLED = bool(int(os.environ.get("CABT_PROTECT") or 0))
+except Exception:
+    PROTECTION_ENABLED = False
+try:
+    POSTURE_MATCHUP_ENABLED = bool(int(os.environ.get("CABT_POSTURES") or 0))
+except Exception:
+    POSTURE_MATCHUP_ENABLED = False
+
+POSTURE_FILES = ("postures.json",)
+_POSTURES: dict | None = None
+_POSTURES_SOURCE = ""
+_GUST_REACH: dict = {}
+_GUST_REACH_DEFAULT = True
+
+# A last-attacker exposure is not a linear feature and is not priced as one.
+# When our only remaining attack-capable Pokemon is inside their next-turn
+# knockout range, the position is one attack from the loss mode that takes
+# 68% of our games, and the alternatives available on the same turn — bench
+# another body, retreat it out of reach — are worth taking almost regardless
+# of what else is on the board. So it enters the margin as a named constant
+# rather than a fitted coefficient, and it only ever changes a decision when
+# a line exists that leaves it false: every candidate the search scores gets
+# the same penalty when every candidate leads to the same exposure.
+#
+# Half a prize. Large enough to outrank playing a Basic to the bench (153) or
+# any HP swing the term competes with, small enough that it never outbids the
+# prize the exposure would cost us. Hand-set and screened in the gate arms
+# below, never fitted — the fit sample cannot see the counterfactual.
+LAST_ATTACKER_PENALTY = 500.0 if PROTECTION_ENABLED else 0.0
+
+# The exposure COUNT was fitted and refused, and the refusal is the
+# interesting half of this entry (`scripts/fit_protection_feature.py`,
+# `data/analysis/protection_fit.json`, 8,792 episodes, one position each,
+# rating >= 1000, turn fixed effects, on top of the six terms this evaluator
+# already scores including C2).
+#
+# Pooled over the field the interval excludes zero — and does so with the
+# wrong sign: +136 [+70, +202] entered alone, +166 [+91, +241] jointly, and
+# +139 [+71, +207] with the seat's archetype held fixed, so it is not a deck
+# confound. Positions where more of our attackers sit inside their next-turn
+# knockout range are positions the winner is more often in. Shipping that
+# number as a decision weight would pay the search to walk its Pokemon into
+# range, which is the hand-differential mistake with a sign flip: a fitted
+# advantage component is a description of positions winners reach, and it is
+# only a decision weight if spending the resource produces the advantage it
+# measures.
+#
+# On the one cell that describes the deck we actually play the interval
+# covers zero and the point estimate turns over: Teal Mask Ogerpon ex seats,
+# -213 [-721, +295] over 577 episodes. Narrow boards, the ones the rule below
+# is about, are the same story: +175 [-403, +752] over 1,747. So the term
+# ships at 0.0 as measured-null on our cell, the feature stays computed so
+# new data can re-price it, and CABT_EXPOSED_W is how the pooled number gets
+# measured on the board instead of argued about.
+try:
+    ATTACKERS_EXPOSED_WEIGHT = float(os.environ.get("CABT_EXPOSED_W") or 0.0)
+except Exception:
+    ATTACKERS_EXPOSED_WEIGHT = 0.0
+if not PROTECTION_ENABLED:
+    ATTACKERS_EXPOSED_WEIGHT = 0.0
+
+TELEMETRY_PROT = {
+    "scored": 0,            # positions the exposure count was computed on
+    "exposed": 0,           # ... of which at least one attacker was exposed
+    "last_attacker": 0,     # ... of which it was our last attack-capable one
+}
+
+
+def _posture_specs() -> dict:
+    """{archetype: {"delta": weight deltas, "gust_rank": {card id: rank}}}."""
+    global _POSTURES, _POSTURES_SOURCE, _GUST_REACH, _GUST_REACH_DEFAULT
+    if _POSTURES is not None:
+        return _POSTURES
+    _POSTURES = {}
+    blob, src = _read_json(_bundle_paths(
+        POSTURE_FILES, ("data", "analysis", "postures.json")))
+    for arch, spec in ((blob or {}).get("postures") or {}).items():
+        try:
+            delta = {k: float(v)
+                     for k, v in (spec.get("weight_delta") or {}).items()}
+            order = [int(c) for c in (spec.get("gust_order") or [])]
+        except (TypeError, ValueError):
+            continue
+        if not delta and not order:
+            continue          # a spec that says "no lever here" is not a rule
+        _POSTURES[arch] = {"delta": delta,
+                           "gust_rank": {c: i for i, c in enumerate(order)}}
+    _GUST_REACH = {a: bool(v)
+                   for a, v in ((blob or {}).get("gust_reach") or {}).items()}
+    if blob is not None and blob.get("gust_reach_default") is not None:
+        _GUST_REACH_DEFAULT = bool(blob["gust_reach_default"])
+    if _POSTURES:
+        _POSTURES_SOURCE = src
+    else:
+        TELEMETRY_POSTURE["specs_missing"] += 1
+    return _POSTURES
+
+
+def _attack_capable(card_id) -> bool:
+    """Does this Pokemon print an attack at all?
+
+    The bench-out mode is about bodies that could take over the Active Spot,
+    not about who can pay for an attack this instant, so the test is what the
+    card prints. On our own list every Pokemon passes it, which is the point:
+    the four Ogerpon are the whole deck's capacity to play.
+    """
+    try:
+        return bool(_attack_profile(int(card_id or 0)))
+    except (TypeError, ValueError):
+        return False
+
+
+def _exposure(mine, incoming: float, bench_reachable: bool) -> tuple[int, int]:
+    """(attackers inside their next-turn knockout range, attackers in play)."""
+    exposed = capable = 0
+    for zone, reachable in (("active", True), ("bench", bench_reachable)):
+        for mon in _g(mine, zone, []) or []:
+            if mon is None:
+                continue
+            if not _attack_capable(_g(mon, "id", 0)):
+                continue
+            capable += 1
+            if reachable and float(_g(mon, "hp", 0) or 0) <= incoming:
+                exposed += 1
+    return exposed, capable
+
+
+def _threat_and_exposure(cur, mine, theirs) -> tuple[float, int, int]:
+    """(C2 differential, exposed attackers, attackers in play), one projection.
+
+    Both features read the same `_traj_projection`, so scoring them together
+    costs one projection rather than two — the C2 term at TRAJ_K of each
+    side's own turns, the exposure at one of theirs.
+    """
+    (sm, gm, _), (st, gt, _) = _traj_projection(cur, mine, theirs)
+    thr = _threat_at(sm, gm, TRAJ_K) - _threat_at(st, gt, TRAJ_K)
+    if not PROTECTION_ENABLED:
+        return thr, 0, 0     # a refused feature costs no time
+    incoming = _threat_at(st, gt, 1)
+    _posture_specs()
+    reach = _GUST_REACH.get(_TRAJ_ARCH["them"], _GUST_REACH_DEFAULT)
+    exposed, capable = _exposure(mine, incoming, reach)
+    return thr, exposed, capable
+
+
+# --- matchup deny-postures (playbook: the D30 exploit half) -----------------
+# `data/analysis/POSTURES.md` fitted, per top-8 archetype, which advantage
+# component they convert to wins and which Pokemon on their board embody it.
+# Our list can deny exactly one way — Boss's Orders on a cheap engine body,
+# then knock it out — so each posture is two things: a raise to `bench`, which
+# pays the search for any line that removes a body from their side, and the
+# spec's named preference order over which body to gust.
+#
+# The weight raise is `20 x deny_pp_per_sd x lever_factor`
+# (`ptcg/matchup_postures.py`), between +98 and +178 against a default bench
+# weight of 153, and it is the only term any posture moves. The named order is
+# the one thing a weight cannot express, because the evaluator has no
+# per-target term: bench width scores their board getting smaller and cannot
+# prefer Drakloak over Dreepy. It enters as a bonus in the card ranking, on
+# opponent-owned cards only, so it can only ever reorder a choice among THEIR
+# Pokemon — which is where gust selection happens and nowhere else.
+#
+# Activation is the posterior's own confidence gate, the same 0.80 the search
+# uses to stop spending determinizations on alternative decklists: the top
+# pick is right 84% of the time by turn 3 and 98% of the time when it claims
+# 0.9, so the gate is what keeps a posture off a misidentified opponent.
+#
+# The named order REPLACES the generic score on a named target rather than
+# adding to it, and the first version of this did add to it, which is the
+# reason the distinction is written down. `_card_score` reads a Pokemon as
+# hull plus offence, so among Grimmsnarl's four engine bodies it ranks
+# Munkidori (110 HP, a real attack) about 120 clear of Impidimp (70 HP,
+# almost none) — more than any per-rank step small enough to be called a
+# tie-break could close. An additive bonus therefore preferred named targets
+# over unnamed ones and then re-sorted the named ones by our own generic
+# score, which is precisely the ordering the spec exists to overrule:
+# Impidimp is the better gust BECAUSE it is the cheap body the 320 HP line
+# is built on, not despite it. Replacing the score makes the spec's order the
+# order, and the base sits above `BENCH_EMERGENCY` so no unnamed card can
+# outbid it. It applies to opponent-owned cards outside a discard prompt,
+# which in this pool means gust selection and the odd damage-move target.
+POSTURE_GUST_BASE = 20000.0  # above every score _card_score can produce
+POSTURE_GUST_STEP = 100.0    # one rank down the spec's preference order
+_POSTURE_ON = {"arch": None, "delta": {}, "gust_rank": {}}
+
+TELEMETRY_POSTURE = {
+    "decisions": 0,          # agent calls the posture was re-evaluated on
+    "active": 0,             # ... of which a matchup posture was on
+    "by_archetype": {},      # ... broken out
+    "gust_selects": 0,       # card selects holding a named target of theirs
+    "gust_targeted": 0,      # options a named target's bonus was applied to
+    "specs_missing": 0,      # postures.json did not load
+}
+_W_EFF: dict | None = None
+
+
+def _refresh_weights() -> None:
+    """Fold the live posture's deltas into the vector `_margin` reads."""
+    global _W_EFF
+    delta = _POSTURE_ON["delta"]
+    if not delta:
+        _W_EFF = WEIGHTS
+        return
+    w = dict(WEIGHTS)
+    for key, dv in delta.items():
+        if key in w:
+            w[key] = w[key] + dv
+    _W_EFF = w
+
+
+def _set_posture(label: str, confidence: float) -> None:
+    """Turn the matchup posture for `label` on, off, or over to another one."""
+    spec = None
+    if POSTURE_MATCHUP_ENABLED and label and confidence >= CONFIDENCE_GATE:
+        spec = _posture_specs().get(label)
+    TELEMETRY_POSTURE["decisions"] += 1
+    if spec is None:
+        _POSTURE_ON.update(arch=None, delta={}, gust_rank={})
+    else:
+        _POSTURE_ON.update(arch=label, delta=spec["delta"],
+                           gust_rank=spec["gust_rank"])
+        TELEMETRY_POSTURE["active"] += 1
+        by = TELEMETRY_POSTURE["by_archetype"]
+        by[label] = by.get(label, 0) + 1
+    _refresh_weights()
 
 
 # Every number the position evaluator and the search override use, in one
@@ -1339,6 +1669,16 @@ def _trajectory_terms(cur, mine, theirs) -> tuple[float, float, float]:
 #           Energy differential at t+2) -27 [-58, +3], correlated 0.68 with
 #           the Energy term already in the vector. Both stay computable in
 #           `_trajectory_terms` so they can be re-priced on new data.
+#   attackers_exposed  how many of our attack-capable Pokemon sit inside the
+#           damage the opponent can afford on their next turn, reach included
+#           (`_exposure`). Fitted by `scripts/fit_protection_feature.py` on the
+#           same sample and the same machinery as everything above it — one
+#           position an episode, rating >= 1000, turn fixed effects, entered on
+#           top of exactly the terms this evaluator scores including the
+#           shipped C2 term. Measured-null on our own list and refused with
+#           its sign inverted on the field; the argument is written out at
+#           ATTACKERS_EXPOSED_WEIGHT above. The protection this entry does
+#           ship is LAST_ATTACKER_PENALTY, which is not a slope.
 WEIGHTS = {
     "prize": 1000.0,
     "hp": 2.6,
@@ -1347,9 +1687,11 @@ WEIGHTS = {
     "damage": 4.2,
     "no_active": 4000.0,
     "threat_traj": _THREAT_WEIGHT_BY_K.get(TRAJ_K, 1.42),
+    "attackers_exposed": ATTACKERS_EXPOSED_WEIGHT,
     "search_margin": 0.0,
 }
 _DEFAULT_WEIGHTS = dict(WEIGHTS)
+_W_EFF = WEIGHTS
 
 
 def set_weights(weights: dict | None = None) -> None:
@@ -1367,6 +1709,7 @@ def set_weights(weights: dict | None = None) -> None:
             except (TypeError, ValueError):
                 pass
     WEIGHTS = fresh
+    _refresh_weights()          # an injected vector is still the posture's base
 
 
 def _margin(cur, me: int) -> float:
@@ -1375,8 +1718,12 @@ def _margin(cur, me: int) -> float:
     One implementation over both observation forms (D25): the search scores
     dataclasses through `_evaluate`, the posture below reads the grader's dict,
     and every named term is the same arithmetic in both.
+
+    The vector is `_W_EFF` rather than `WEIGHTS` because a matchup posture is
+    a weight delta: `_set_posture` folds the live one in once a decision, so
+    the leaf reads a plain dict and pays nothing for the mechanism.
     """
-    w = WEIGHTS
+    w = _W_EFF or WEIGHTS
     players = _g(cur, "players", []) or []
     mine, theirs = players[me], players[1 - me]
     hp_m, en_m, bench_m, dmg_m = _side_totals(mine)
@@ -1398,15 +1745,28 @@ def _margin(cur, me: int) -> float:
     active = _g(mine, "active", []) or []
     if not (active and active[0]):
         score -= w["no_active"]
-    # C2: where the board is going. Zero the weight and the projection is not
-    # computed at all, so a struck feature costs no time.
-    if w["threat_traj"]:
+    # C2 (where the board is going) and the protection feature (which of our
+    # bodies does not survive their next turn) read one projection between
+    # them. Zero both weights with the last-attacker rule off and nothing is
+    # projected at all, so a struck feature costs no time.
+    if w["threat_traj"] or w["attackers_exposed"] or LAST_ATTACKER_PENALTY:
         try:
-            thr = _threat_traj(cur, mine, theirs)
+            thr, exposed, capable = _threat_and_exposure(cur, mine, theirs)
             TELEMETRY_TRAJ["threat_scored"] += 1
             if thr:
                 TELEMETRY_TRAJ["threat_nonzero"] += 1
             score += w["threat_traj"] * thr
+            if PROTECTION_ENABLED:
+                TELEMETRY_PROT["scored"] += 1
+                if exposed:
+                    TELEMETRY_PROT["exposed"] += 1
+                score += w["attackers_exposed"] * exposed
+                # The whole deck's remaining capacity to play, one attack
+                # from gone: the bench-out mode, priced as a posture and not
+                # a slope.
+                if capable == 1 and exposed == 1:
+                    TELEMETRY_PROT["last_attacker"] += 1
+                    score -= LAST_ATTACKER_PENALTY
         except Exception:
             TELEMETRY_TRAJ["feature_errors"] += 1
     return score

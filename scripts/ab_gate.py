@@ -108,6 +108,10 @@ def main() -> None:
     ap.add_argument("--b", default="build/agents/base_ef84786/main.py")
     ap.add_argument("--deck", action="append", required=True,
                     help="mirror deck; repeatable, paired with --games")
+    ap.add_argument("--deck-b", default=None,
+                    help="B's decklist, when the arm is not a mirror — the "
+                         "specialist test, where each agent plays its own "
+                         "list and the seats still swap every other game")
     ap.add_argument("--games", action="append", type=int, required=True)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--seed", type=int, default=0)
@@ -118,9 +122,11 @@ def main() -> None:
 
     arms, pooled_a, pooled_n = [], 0, 0
     for deck, games in zip(args.deck, args.games):
-        r = run(ROOT / args.a, ROOT / args.b, ROOT / deck, ROOT / deck,
+        deck_b = args.deck_b or deck
+        r = run(ROOT / args.a, ROOT / args.b, ROOT / deck, ROOT / deck_b,
                 games, args.workers, seed0=args.seed)
         r["deck"] = deck
+        r["deck_b"] = deck_b
         arms.append(r)
         pooled_a += r["a_wins"]
         pooled_n += r["decided"]
@@ -132,7 +138,10 @@ def main() -> None:
 
     pooled = pooled_a / pooled_n if pooled_n else float("nan")
     print(f"\npooled: {pooled_a} / {pooled_n} decided = {pooled:.4f}")
-    blob = {"a": args.a, "b": args.b, "seed0": args.seed,
+    blob = {"a": args.a, "b": args.b, "deck_b": args.deck_b,
+            "env": {k: os.environ[k] for k in sorted(os.environ)
+                    if k.startswith("CABT_")},
+            "seed0": args.seed,
             "arms": arms, "pooled_a_wins": pooled_a,
             "pooled_decided": pooled_n, "pooled_win_rate": round(pooled, 4)}
     if args.out:

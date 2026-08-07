@@ -5,7 +5,8 @@
   "analysis": "data/analysis/archetypes_C.json + REPORT.md #C",
   "lists": "agent/deck_priors.json most-played per archetype",
   "names": "data/engine_dump/cards.json",
-  "posterior_id": "scripts/validate_posterior.py via agent/main.py"
+  "posterior_id": "scripts/validate_posterior.py via agent/main.py",
+  "gust_reach": "play-weighted majority over agent/deck_priors.json of whether an archetype's lists run a card whose effect text switches an opponent's Benched Pokemon into the Active Spot"
  },
  "bench_per_pp_sd": 20.0,
  "postures": {
@@ -59,6 +60,12 @@
     "bench": 172.0
    },
    "scoring_rule": "gust preference order Impidimp > Morgrem > Munkidori > Snorunt when posterior says Grimmsnarl; bump Judge's card score on their setup turns (t<=4) — both need main.py card/target scoring, not weights",
+   "gust_order": [
+    646,
+    647,
+    112,
+    860
+   ],
    "expected_trigger": {
     "encounter_share": 0.298,
     "posterior_id_by_t3": 0.84,
@@ -117,6 +124,10 @@
     "bench": 100.0
    },
    "scoring_rule": "gust preference Buneary > Dunsparce when posterior says Lopunny; value denial highest on turns 2-4 before Mega Lopunny lands",
+   "gust_order": [
+    848,
+    305
+   ],
    "expected_trigger": {
     "encounter_share": 0.16,
     "posterior_id_by_t3": 0.84,
@@ -182,6 +193,10 @@
     "bench": 98.0
    },
    "scoring_rule": "gust preference Abra > Kadabra when posterior says Fezandipiti; their Flip the Script makes our own KOs feed their draw — prefer KO sequencing that closes prizes fast over chip",
+   "gust_order": [
+    741,
+    742
+   ],
    "expected_trigger": {
     "encounter_share": 0.155,
     "posterior_id_by_t3": 0.84,
@@ -235,6 +250,7 @@
    "lever_factor": 0.0,
    "weight_delta": null,
    "scoring_rule": "none expressible: race them — their median winning turn (16) is the slowest in the top 8 and our t11 close beats it; deck refinement ask: bench damage or a cheap-prize secondary attacker",
+   "gust_order": [],
    "expected_trigger": {
     "encounter_share": 0.123,
     "posterior_id_by_t3": 0.84,
@@ -269,6 +285,7 @@
    "lever_factor": 0.0,
    "weight_delta": null,
    "scoring_rule": "none expressible: the mirror is a pure race decided by energy tempo; C4's risk posture (buy variance when behind) is the correct instrument here, not a deny weight",
+   "gust_order": [],
    "expected_trigger": {
     "encounter_share": 0.086,
     "posterior_id_by_t3": 0.84,
@@ -327,6 +344,12 @@
     "bench": 178.0
    },
    "scoring_rule": "gust preference Drakloak > Dreepy > Budew > Munkidori when posterior says Dragapult; this is the flagship posture for the matchup we most need to move",
+   "gust_order": [
+    120,
+    119,
+    235,
+    112
+   ],
    "expected_trigger": {
     "encounter_share": 0.085,
     "posterior_id_by_t3": 0.84,
@@ -375,6 +398,10 @@
     "bench": 118.0
    },
    "scoring_rule": "gust preference Riolu > Lunatone when posterior says Lucario; counter-Judge on their sculpted hands is the real lever and needs card-score integration",
+   "gust_order": [
+    677,
+    675
+   ],
    "expected_trigger": {
     "encounter_share": 0.034,
     "posterior_id_by_t3": 0.84,
@@ -430,6 +457,12 @@
     "bench": 160.0
    },
    "scoring_rule": "gust preference Gabite > Gible > Roselia > Roserade when posterior says Garchomp",
+   "gust_order": [
+    380,
+    379,
+    341,
+    342
+   ],
    "expected_trigger": {
     "encounter_share": 0.019,
     "posterior_id_by_t3": 0.84,
@@ -438,5 +471,33 @@
    },
    "note": "smallest sample in the top 8 (n=321 seats; only prize_diff and ability_diff clear significance)"
   }
- }
+ },
+ "gust_cards": {
+  "221": "Meowstic",
+  "310": "Hop’s Dubwool",
+  "385": "Arven's Toedscruel",
+  "438": "Primeape",
+  "508": "Cryogonal",
+  "674": "Hariyama",
+  "1039": "Clefairy",
+  "1088": "Prime Catcher",
+  "1124": "Pokémon Catcher",
+  "1182": "Boss’s Orders",
+  "1204": "Lisia’s Appeal",
+  "1218": "Team Rocket's Giovanni"
+ },
+ "gust_reach": {
+  "Marnie's Grimmsnarl ex": true,
+  "Fezandipiti ex": true,
+  "Cynthia's Garchomp ex": true,
+  "Mega Kangaskhan ex": true,
+  "Teal Mask Ogerpon ex": true,
+  "Mega Lopunny ex": true,
+  "Team Rocket's Mewtwo ex": true,
+  "Dragapult ex": true,
+  "Mega Lucario ex": true,
+  "Thwackey": true,
+  "Mega Venusaur ex": true
+ },
+ "gust_reach_default": true
 }

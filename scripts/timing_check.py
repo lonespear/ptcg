@@ -28,21 +28,22 @@ from ptcg.arena import load_deck, play_game  # noqa: E402
 MAIN = ROOT / "agent" / "main.py"
 
 
-def load_agent():
+def load_agent(path: Path = MAIN, name: str = "timed_agent"):
     cwd = os.getcwd()
-    os.chdir(MAIN.parent)
+    os.chdir(path.parent)
     try:
-        spec = importlib.util.spec_from_file_location("timed_agent", MAIN)
+        spec = importlib.util.spec_from_file_location(name, path)
         mod = importlib.util.module_from_spec(spec)
-        sys.modules["timed_agent"] = mod
+        sys.modules[name] = mod
         spec.loader.exec_module(mod)
         return mod
     finally:
         os.chdir(cwd)
 
 
-def measure(mod, deck, games: int, seed0: int, weight: float) -> dict:
-    mod.set_weights({"threat_traj": weight})
+def measure(mod, deck, games: int, seed0: int, weight: float | None) -> dict:
+    if weight is not None:
+        mod.set_weights({"threat_traj": weight})
     calls: list[tuple[float, bool]] = []
 
     def timed(obs):
@@ -81,28 +82,41 @@ def main() -> None:
     ap.add_argument("--games", type=int, default=20)
     ap.add_argument("--deck", default="external/grimmsnarl/deck.csv")
     ap.add_argument("--seed", type=int, default=7000)
+    ap.add_argument("--against", default=None,
+                    help="a second agent file to time instead of toggling "
+                         "the C2 weight — each side at its own shipped "
+                         "vector, which is what a ship gate needs")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
     mod = load_agent()
     deck = load_deck(ROOT / args.deck)
-    on = measure(mod, deck, args.games, args.seed, 1.42)
-    for k in mod.TELEMETRY_TRAJ:
-        mod.TELEMETRY_TRAJ[k] = 0
-    off = measure(mod, deck, args.games, args.seed, 0.0)
+    if args.against:
+        on = measure(mod, deck, args.games, args.seed, None)
+        base = load_agent(ROOT / args.against, "timed_baseline")
+        off = measure(base, deck, args.games, args.seed, None)
+        labels = (f"this build", f"{args.against}")
+    else:
+        on = measure(mod, deck, args.games, args.seed, 1.42)
+        for k in mod.TELEMETRY_TRAJ:
+            mod.TELEMETRY_TRAJ[k] = 0
+        off = measure(mod, deck, args.games, args.seed, 0.0)
+        labels = ("feature on", "feature off")
 
     print(f"{args.games} games on {args.deck}, both sides the same agent\n")
     print(f"{'condition':12s} {'calls':>7s} {'mean ms':>9s} {'p95 ms':>9s} "
           f"{'max ms':>9s}")
-    for label, res in (("feature on", on), ("feature off", off)):
+    for label, res in zip(labels, (on, off)):
         for path in ("all", "rules_path", "main_menu"):
             s = res[path]
             if not s.get("n"):
                 continue
-            print(f"{label + ' ' + path:24s} {s['n']:7d} {s['mean_ms']:9.3f} "
+            print(f"{label + ' ' + path:34s} {s['n']:7d} {s['mean_ms']:9.3f} "
                   f"{s['p95_ms']:9.3f} {s['max_ms']:9.3f}")
-    d = on["rules_path"]["mean_ms"] - off["rules_path"]["mean_ms"]
-    print(f"\nrules path: {d:+.3f} ms a decision with the feature on")
+    for path in ("rules_path", "main_menu"):
+        if on[path].get("n") and off[path].get("n"):
+            d = on[path]["mean_ms"] - off[path]["mean_ms"]
+            print(f"\n{path}: {d:+.3f} ms a decision for {labels[0]}")
     print(f"telemetry (on): {on['trajectory_telemetry']}")
     if args.out:
         Path(args.out).write_text(json.dumps({"on": on, "off": off}, indent=1))

@@ -107,6 +107,33 @@ def main() -> None:
         # then the other one: that a table nothing reads is not in the archive.
         sources = [("curves", g["_CURVES_SOURCE"]),
                    ("energy KB", g["_ACCEL_SOURCE"])]
+
+        # The deny-postures and the gust-reach table, asserted only while the
+        # agent is configured to read them. Both behaviours were measured and
+        # refused, so the matching assertion today is the other one: a table
+        # nothing opens is not in the archive.
+        posture_on = g["POSTURE_MATCHUP_ENABLED"] or g["PROTECTION_ENABLED"]
+        if posture_on:
+            specs = g["_posture_specs"]()
+            print(f"postures: {len(specs)} archetypes with a lever, "
+                  f"{len(g['_GUST_REACH'])} gust-reach entries, from "
+                  f"{g['_POSTURES_SOURCE']}")
+            if not specs:
+                sys.exit("FAIL: a posture behaviour is on and there is no "
+                         "postures.json in the bundle — no posture would ever "
+                         "activate and gust reach would be a default rather "
+                         "than a measurement")
+            if not any(s["gust_rank"] for s in specs.values()):
+                sys.exit("FAIL: postures.json carries no gust order, so the "
+                         "named target preference cannot reorder anything")
+            sources.append(("postures", g["_POSTURES_SOURCE"]))
+        elif (tmp / "postures.json").exists():
+            sys.exit("FAIL: postures.json is in the bundle and both the deny-"
+                     "postures and the protection rule are off, so nothing "
+                     "will ever open it")
+        else:
+            print("postures: correctly absent (CABT_POSTURES and CABT_PROTECT "
+                  "both 0)")
         branch = g["SEARCH_OPP_BRANCH"]
         pol = g["_opp_policy"]()
         if branch >= 1:
@@ -202,6 +229,33 @@ def main() -> None:
         rate = tel["posture_behind"] / tel["main_decisions"]
         print(f"posture fired on {tel['posture_behind']}/"
               f"{tel['main_decisions']} main-menu picks ({rate:.3f})")
+
+        # The two behaviours this bundle carries, counted on the game just
+        # played rather than asserted from the source. Off, the assertion is
+        # that they did nothing; on, that they did something.
+        mp = g["TELEMETRY_POSTURE"]
+        prot = g["TELEMETRY_PROT"]
+        print(f"matchup posture: on for {mp['active']}/{mp['decisions']} "
+              f"agent calls {dict(mp['by_archetype'])}, "
+              f"{mp['gust_targeted']} options reordered by the named order")
+        print(f"protection: {prot['exposed']}/{prot['scored']} positions with "
+              f"an exposed attacker, {prot['last_attacker']} of them the last")
+        if mp["specs_missing"]:
+            sys.exit("FAIL: postures.json was asked for and did not load")
+        if g["POSTURE_MATCHUP_ENABLED"]:
+            if mp["active"] == 0:
+                sys.exit("FAIL: no matchup posture activated over the whole "
+                         "game — either the posterior never cleared "
+                         "CONFIDENCE_GATE or the archetype labels do not "
+                         "match the spec's keys")
+        elif mp["active"] or mp["gust_targeted"]:
+            sys.exit("FAIL: the matchup posture is off and it fired anyway")
+        if g["PROTECTION_ENABLED"]:
+            if prot["scored"] == 0:
+                sys.exit("FAIL: the exposure count was never computed")
+        elif prot["scored"]:
+            sys.exit("FAIL: the protection rule is off and the exposure count "
+                     "was computed anyway, which is time spent on nothing")
         print("\nPASS — search fires, the bundled table loads, the posture runs")
     finally:
         os.chdir(cwd)

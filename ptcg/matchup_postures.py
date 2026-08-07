@@ -86,9 +86,20 @@ GUST_AVAILABILITY_20 = 0.711
 
 def _spec(archetype, n_seats, win_condition, lose_condition, deny_component,
           deny_pp_per_sd, engine_pokemon, our_levers, lever_factor,
-          scoring_rule, note=None):
+          scoring_rule, gust_order=(), note=None):
     delta = ({"bench": round(BENCH_PER_PP_SD * deny_pp_per_sd * lever_factor, 1)}
              if lever_factor > 0 else None)
+    # `scoring_rule` states the preference order in prose; `gust_order` is the
+    # same order as card ids, so an integration can read it without parsing
+    # English. The two cannot drift: every id has to be one of the engine
+    # bodies named above it, and a posture with a lever has to state an order.
+    known = {e["card_id"] for e in engine_pokemon}
+    for cid in gust_order:
+        if cid not in known:
+            raise ValueError(f"{archetype}: gust order names {cid}, "
+                             "which is not one of its engine Pokemon")
+    if bool(gust_order) != (lever_factor > 0):
+        raise ValueError(f"{archetype}: gust order and lever disagree")
     return {
         "archetype": archetype,
         "win_condition": win_condition,
@@ -100,6 +111,7 @@ def _spec(archetype, n_seats, win_condition, lose_condition, deny_component,
         "lever_factor": lever_factor,
         "weight_delta": delta,
         "scoring_rule": scoring_rule,
+        "gust_order": list(gust_order),
         "expected_trigger": {
             "encounter_share": round(n_seats / _RATED_SEATS, 3),
             "posterior_id_by_t3": POSTERIOR_ID["t3"],
@@ -140,6 +152,7 @@ POSTURES = {
         "gust preference order Impidimp > Morgrem > Munkidori > Snorunt when "
         "posterior says Grimmsnarl; bump Judge's card score on their setup "
         "turns (t<=4) — both need main.py card/target scoring, not weights",
+        gust_order=(646, 647, 112, 860),
         note="ladder already favors us 0.86 (n=527); the posture defends the "
              "edge rather than creating it"),
 
@@ -166,7 +179,8 @@ POSTURES = {
                          "stands"]},
         1.0,
         "gust preference Buneary > Dunsparce when posterior says Lopunny; "
-        "value denial highest on turns 2-4 before Mega Lopunny lands"),
+        "value denial highest on turns 2-4 before Mega Lopunny lands",
+        gust_order=(848, 305)),
 
     "Fezandipiti ex": _spec(
         "Fezandipiti ex", 2658,
@@ -193,7 +207,8 @@ POSTURES = {
         1.0,
         "gust preference Abra > Kadabra when posterior says Fezandipiti; "
         "their Flip the Script makes our own KOs feed their draw — prefer "
-        "KO sequencing that closes prizes fast over chip"),
+        "KO sequencing that closes prizes fast over chip",
+        gust_order=(741, 742)),
 
     "Mega Kangaskhan ex": _spec(
         "Mega Kangaskhan ex", 2111,
@@ -271,7 +286,8 @@ POSTURES = {
         1.0,
         "gust preference Drakloak > Dreepy > Budew > Munkidori when "
         "posterior says Dragapult; this is the flagship posture for the "
-        "matchup we most need to move"),
+        "matchup we most need to move",
+        gust_order=(120, 119, 235, 112)),
 
     "Mega Lucario ex": _spec(
         "Mega Lucario ex", 585,
@@ -295,7 +311,8 @@ POSTURES = {
         0.5,
         "gust preference Riolu > Lunatone when posterior says Lucario; "
         "counter-Judge on their sculpted hands is the real lever and needs "
-        "card-score integration"),
+        "card-score integration",
+        gust_order=(677, 675)),
 
     "Cynthia's Garchomp ex": _spec(
         "Cynthia's Garchomp ex", 321,
@@ -319,6 +336,7 @@ POSTURES = {
         1.0,
         "gust preference Gabite > Gible > Roselia > Roserade when posterior "
         "says Garchomp",
+        gust_order=(380, 379, 341, 342),
         note="smallest sample in the top 8 (n=321 seats; only prize_diff "
              "and ability_diff clear significance)"),
 }
@@ -352,9 +370,78 @@ def all_deltas() -> dict:
     return {a: s["weight_delta"] for a, s in POSTURES.items()}
 
 
+# --- can they reach our bench? ---------------------------------------------
+# The postures above are about what WE can gust off THEIR bench. The mirror
+# question — whether an archetype can pull a Pokemon off OUR bench and knock
+# it out there — is what decides which of our Pokemon a threat estimate may
+# treat as safe, and it is answerable off the same two files: their known
+# lists, and the effect text of the cards in them.
+#
+# A card gusts if its printed effect moves one of the opponent's Benched
+# Pokemon into the Active Spot. Boss's Orders is the canonical print; the
+# scan below finds every card in the pool whose text says the same thing,
+# including the ones that say it on an attack or an ability, so a Hariyama's
+# Heave-Ho Catcher counts exactly as a Boss's Orders does.
+#
+# The match is the printed phrase itself rather than a bag of keywords: the
+# looser form ("opponent" and "benched" and "active spot" anywhere in the
+# text) pulled in Heavy Baton and Handheld Fan, two tools that mention all
+# three while moving Energy after a knockout and gusting nothing.
+_GUST_PHRASE = "switch in 1 of your opponent's benched"
+
+
+def _norm(text) -> str:
+    return " ".join(str(text or "").lower().replace("’", "'").split())
+
+
+def gust_cards(cards_json: str | Path = None) -> dict:
+    """{card id: name} for every card in the pool that gusts."""
+    root = Path(__file__).resolve().parents[1]
+    path = Path(cards_json) if cards_json else (root / "data" / "engine_dump"
+                                                / "cards.json")
+    pool = json.loads(Path(path).read_text(encoding="utf-8"))
+    attacks = json.loads((Path(path).parent / "attacks.json")
+                         .read_text(encoding="utf-8"))
+    atk_text = {a["attackId"]: _norm(a.get("text")) for a in attacks}
+    out = {}
+    for card in pool:
+        texts = [_norm(s.get("text")) for s in (card.get("skills") or [])]
+        texts += [atk_text.get(aid, "") for aid in (card.get("attacks") or [])]
+        for t in texts:
+            if _GUST_PHRASE in t:
+                out[card["cardId"]] = card.get("name")
+                break
+    return out
+
+
+def gust_reach(priors_json: str | Path = None) -> dict:
+    """{archetype: True if any of its mined lists runs a gust card}.
+
+    Read off `agent/deck_priors.json`, which is the same 40-list prior the
+    agent's own posterior is defined over, so an archetype the agent can
+    identify is an archetype this table has an answer for. Play-weighted:
+    the answer is the one the majority of that archetype's mined seats give,
+    so a single fringe list cannot flip a matchup on its own.
+    """
+    root = Path(__file__).resolve().parents[1]
+    path = (Path(priors_json) if priors_json
+            else root / "agent" / "deck_priors.json")
+    blob = json.loads(Path(path).read_text(encoding="utf-8"))
+    gust = gust_cards()
+    tally: dict = {}
+    for entry in blob.get("decks", []):
+        arch = entry.get("a")
+        plays = int(entry.get("p", 1))
+        has = any(int(cid) in gust for cid in (entry.get("c") or {}))
+        yes, total = tally.get(arch, (0, 0))
+        tally[arch] = (yes + (plays if has else 0), total + plays)
+    return {a: bool(yes * 2 > total) for a, (yes, total) in tally.items()}
+
+
 def write_json(path: str | Path = None) -> Path:
     root = Path(__file__).resolve().parents[1]
     path = Path(path) if path else root / "data" / "analysis" / "postures.json"
+    reach = gust_reach()
     payload = {
         "spec": "matchup deny-postures v1 (D30 component 1, exploit half)",
         "source": "ptcg/matchup_postures.py",
@@ -363,9 +450,17 @@ def write_json(path: str | Path = None) -> Path:
             "lists": "agent/deck_priors.json most-played per archetype",
             "names": "data/engine_dump/cards.json",
             "posterior_id": "scripts/validate_posterior.py via agent/main.py",
+            "gust_reach": ("play-weighted majority over agent/deck_priors.json "
+                           "of whether an archetype's lists run a card whose "
+                           "effect text switches an opponent's Benched Pokemon "
+                           "into the Active Spot"),
         },
         "bench_per_pp_sd": BENCH_PER_PP_SD,
         "postures": POSTURES,
+        "gust_cards": {str(k): v for k, v in sorted(gust_cards().items())},
+        "gust_reach": reach,
+        "gust_reach_default": bool(
+            sum(1 for v in reach.values() if v) * 2 > len(reach)),
     }
     path.write_text(json.dumps(payload, indent=1, ensure_ascii=False) + "\n")
     return path
@@ -377,3 +472,9 @@ if __name__ == "__main__":
     for a, s in POSTURES.items():
         d = s["weight_delta"]
         print(f"  {a}: {d if d else 'no expressible delta — ' + ('deck refinement' if s['lever_factor'] == 0 else '')}")
+    print("\ngust cards in the pool:")
+    for cid, name in sorted(gust_cards().items()):
+        print(f"  {cid:5d}  {name}")
+    print("\ncan they gust our bench?")
+    for a, v in sorted(gust_reach().items()):
+        print(f"  {'yes' if v else ' no'}  {a}")
