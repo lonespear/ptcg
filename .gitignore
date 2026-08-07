@@ -92,6 +92,8 @@ runs/seeded_overnight/*
 !runs/seeded_overnight/README.md
 !runs/seeded_overnight/founders.json
 !runs/seeded_overnight/founders_manifest.json
+!runs/seeded_overnight/HARVEST.md
+!runs/seeded_overnight/harvest_best.json
 
 # OS
 .DS_Store

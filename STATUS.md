@@ -1,4 +1,17 @@
-**Last updated: 2026-08-07 ~17:45 ET (Aug 7)**
+**Last updated: 2026-08-07 ~20:00 ET (Aug 7)**
+
+## Update — Aug 7 night (GA wound down early; harvest banked)
+
+- The seeded-archipelago v3 runs were **stopped early by decision** (~6 h
+  in): the high-value chains (Ogerpon, Darkness) froze at their plateaus
+  by hour 6 and the remaining budget was grinding cold chains. Clean
+  checkpoint stops on both machines; every chain's best-ever elite is
+  banked in `runs/seeded_overnight/HARVEST.md` + `harvest_best.json`
+  (decks + full 27-cell matchup profiles). Every chain beat its founder
+  baseline; headline: anchored Ogerpon 0.654 uniform panel WR (the v4
+  family), Darkness 0.691.
+- A redesigned overnight run launches later tonight; the harvest is its
+  seed bank. The Archaludon panel ask below stands for that run.
 
 ## Update — Aug 7 evening (v4: the GA's first shipped deck)
 
