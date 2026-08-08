@@ -69,6 +69,10 @@ data/analysis/*
 # Playbook entry 4: the counted opponent reply table. Same rule again — the
 # agent ships it in the bundle and reads it on every rollout of their turn.
 !data/opponent_policy.json
+# Top-5 team profiles: per-team submission trajectories, deck repertoires and
+# matchups mined from Meta Kaggle + public replays (report + raw companion).
+!data/analysis/TOP5_PROFILE.md
+!data/analysis/top5_profile.json
 
 # Python
 __pycache__/

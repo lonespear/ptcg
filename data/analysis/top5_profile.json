@@ -1,0 +1,3689 @@
+{
+ "generated": "2026-08-07",
+ "leaderboard_snapshot": "data/leaderboard_snapshot.csv (2026-08-06)",
+ "sources": {
+  "episodes": "Meta Kaggle Episodes.csv/EpisodeAgents.csv v2261 (coverage 2026-06-12 .. 2026-08-06 13:40 UTC)",
+  "identity": "replay TeamNames peek for every submission that ever peaked >=1100 (partial sweep, 1473 mapped rows) + local mined-day joins (2026-07-08, 08-04..08-06)",
+  "decks": "full replay downloads, step-0 visualize, sampled across each submission lifetime"
+ },
+ "teams": {
+  "flg": {
+   "submissions": [
+    {
+     "sub": 55004495,
+     "n": 392,
+     "first": "2026-07-26 15:06:39",
+     "last": "2026-07-27 15:45:09",
+     "wins": 261,
+     "losses": 131,
+     "ep_to_1000": 7,
+     "ep_to_1100": 9,
+     "ep_to_1150": 11,
+     "peak": 1255.5,
+     "final": 1228.3,
+     "longest_win_streak": 14
+    },
+    {
+     "sub": 55004691,
+     "n": 421,
+     "first": "2026-07-26 15:17:47",
+     "last": "2026-07-27 16:13:07",
+     "wins": 271,
+     "losses": 150,
+     "ep_to_1000": 10,
+     "ep_to_1100": 16,
+     "ep_to_1150": 28,
+     "peak": 1222.3,
+     "final": 1169.0,
+     "longest_win_streak": 9
+    },
+    {
+     "sub": 55033309,
+     "n": 1028,
+     "first": "2026-07-27 16:06:01",
+     "last": "2026-08-05 14:48:55",
+     "wins": 585,
+     "losses": 443,
+     "ep_to_1000": 6,
+     "ep_to_1100": 14,
+     "ep_to_1150": 16,
+     "peak": 1227.5,
+     "final": 1100.2,
+     "longest_win_streak": 13
+    },
+    {
+     "sub": 55033457,
+     "n": 1512,
+     "first": "2026-07-27 16:13:33",
+     "last": "2026-08-05 16:02:12",
+     "wins": 876,
+     "losses": 635,
+     "ep_to_1000": 10,
+     "ep_to_1100": 12,
+     "ep_to_1150": 14,
+     "peak": 1219.3,
+     "final": 1035.5,
+     "longest_win_streak": 13
+    },
+    {
+     "sub": 55275219,
+     "n": 147,
+     "first": "2026-08-05 16:08:41",
+     "last": "2026-08-06 05:45:32",
+     "wins": 105,
+     "losses": 42,
+     "ep_to_1000": 14,
+     "ep_to_1100": 25,
+     "ep_to_1150": 33,
+     "peak": 1212.1,
+     "final": 1204.1,
+     "longest_win_streak": 10
+    },
+    {
+     "sub": 55275287,
+     "n": 97,
+     "first": "2026-08-05 16:11:45",
+     "last": "2026-08-06 06:17:31",
+     "wins": 59,
+     "losses": 38,
+     "ep_to_1000": 11,
+     "ep_to_1100": 18,
+     "ep_to_1150": null,
+     "peak": 1136.8,
+     "final": 1099.1,
+     "longest_win_streak": 10
+    },
+    {
+     "sub": 55290684,
+     "n": 66,
+     "first": "2026-08-06 06:24:03",
+     "last": "2026-08-06 12:49:41",
+     "wins": 47,
+     "losses": 19,
+     "ep_to_1000": 13,
+     "ep_to_1100": 51,
+     "ep_to_1150": null,
+     "peak": 1130.9,
+     "final": 1122.7,
+     "longest_win_streak": 8
+    },
+    {
+     "sub": 55290732,
+     "n": 59,
+     "first": "2026-08-06 06:26:18",
+     "last": "2026-08-06 12:45:41",
+     "wins": 46,
+     "losses": 13,
+     "ep_to_1000": 46,
+     "ep_to_1100": null,
+     "ep_to_1150": null,
+     "peak": 1028.8,
+     "final": 1011.4,
+     "longest_win_streak": 20
+    }
+   ],
+   "n_episodes_total": 3722,
+   "n_replays_sampled": 97,
+   "distinct_lists": 7,
+   "lists": [
+    {
+     "sig": "1:13,92:2,93:2,96:4,140:1,150:2,709:2,710:2,917:2,920:2,1071:2,1080:1,1094:4,1097:2,1121:4,1152:3,1182:2,1184:1,1227:4,1231:1,1261:4",
+     "archetype": "Hydrapple ex",
+     "n_sampled": 27,
+     "subs": [
+      55290732
+     ],
+     "episodes": [
+      90365339,
+      90366960,
+      90370713,
+      90373719,
+      90377442,
+      90380421,
+      90384162,
+      90387140
+     ],
+     "deck": [
+      "13x Basic {G} Energy (1)",
+      "2x Applin (92)",
+      "2x Dipplin (93)",
+      "4x Teal Mask Ogerpon ex (96)",
+      "1x Fezandipiti ex (140)",
+      "2x Hydrapple ex (150)",
+      "2x Bayleef (709)",
+      "2x Meganium (710)",
+      "2x Chikorita (917)",
+      "2x Tapu Bulu (920)",
+      "2x Meowth ex (1071)",
+      "1x Unfair Stamp (1080)",
+      "4x Bug Catching Set (1094)",
+      "2x Night Stretcher (1097)",
+      "4x Ultra Ball (1121)",
+      "3x Pok\u00e9 Pad (1152)",
+      "2x Boss\u2019s Orders (1182)",
+      "1x Lana\u2019s Aid (1184)",
+      "4x Lillie's Determination (1227)",
+      "1x Dawn (1231)",
+      "4x Forest of Vitality (1261)"
+     ]
+    },
+    {
+     "sig": "7:10,104:2,112:4,646:4,647:3,648:3,860:2,1079:3,1080:1,1086:4,1097:3,1122:1,1152:4,1161:2,1182:2,1219:4,1227:4,1259:4",
+     "archetype": "Marnie's Grimmsnarl ex",
+     "n_sampled": 18,
+     "subs": [
+      55290684
+     ],
+     "episodes": [
+      90364602,
+      90366288,
+      90369972,
+      90373694,
+      90377522,
+      90380409,
+      90384158,
+      90387887
+     ],
+     "deck": [
+      "10x Basic {D} Energy (7)",
+      "2x Froslass (104)",
+      "4x Munkidori (112)",
+      "4x Marnie's Impidimp (646)",
+      "3x Marnie's Morgrem (647)",
+      "3x Marnie's Grimmsnarl ex (648)",
+      "2x Snorunt (860)",
+      "3x Rare Candy (1079)",
+      "1x Unfair Stamp (1080)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "3x Night Stretcher (1097)",
+      "1x Pok\u00e9gear 3.0 (1122)",
+      "4x Pok\u00e9 Pad (1152)",
+      "2x Handheld Fan (1161)",
+      "2x Boss\u2019s Orders (1182)",
+      "4x Team Rocket's Petrel (1219)",
+      "4x Lillie's Determination (1227)",
+      "4x Spikemuth Gym (1259)"
+     ]
+    },
+    {
+     "sig": "2:4,5:4,7:2,112:2,119:4,120:4,121:3,140:1,235:2,1071:1,1080:1,1086:4,1097:2,1120:4,1121:4,1152:4,1182:3,1198:3,1213:1,1227:4,1231:1,1246:2",
+     "archetype": "Dragapult ex",
+     "n_sampled": 16,
+     "subs": [
+      55004495,
+      55275219
+     ],
+     "episodes": [
+      88270820,
+      88299092,
+      88324732,
+      88347845,
+      88385529,
+      88408529,
+      88432619,
+      88464959
+     ],
+     "deck": [
+      "4x Basic {R} Energy (2)",
+      "4x Basic {P} Energy (5)",
+      "2x Basic {D} Energy (7)",
+      "2x Munkidori (112)",
+      "4x Dreepy (119)",
+      "4x Drakloak (120)",
+      "3x Dragapult ex (121)",
+      "1x Fezandipiti ex (140)",
+      "2x Budew (235)",
+      "1x Meowth ex (1071)",
+      "1x Unfair Stamp (1080)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "2x Night Stretcher (1097)",
+      "4x Crushing Hammer (1120)",
+      "4x Ultra Ball (1121)",
+      "4x Pok\u00e9 Pad (1152)",
+      "3x Boss\u2019s Orders (1182)",
+      "3x Crispin (1198)",
+      "1x Judge (1213)",
+      "4x Lillie's Determination (1227)",
+      "1x Dawn (1231)",
+      "2x Jamming Tower (1246)"
+     ]
+    },
+    {
+     "sig": "7:10,104:2,112:4,646:4,647:3,648:3,860:2,1079:3,1080:1,1086:4,1097:3,1122:1,1137:1,1152:4,1182:2,1219:4,1227:4,1231:1,1259:4",
+     "archetype": "Marnie's Grimmsnarl ex",
+     "n_sampled": 10,
+     "subs": [
+      55004691
+     ],
+     "episodes": [
+      88272396,
+      88295884,
+      88317901,
+      88335126,
+      88351512,
+      88372410,
+      88394318,
+      88415929
+     ],
+     "deck": [
+      "10x Basic {D} Energy (7)",
+      "2x Froslass (104)",
+      "4x Munkidori (112)",
+      "4x Marnie's Impidimp (646)",
+      "3x Marnie's Morgrem (647)",
+      "3x Marnie's Grimmsnarl ex (648)",
+      "2x Snorunt (860)",
+      "3x Rare Candy (1079)",
+      "1x Unfair Stamp (1080)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "3x Night Stretcher (1097)",
+      "1x Pok\u00e9gear 3.0 (1122)",
+      "1x Tool Scrapper (1137)",
+      "4x Pok\u00e9 Pad (1152)",
+      "2x Boss\u2019s Orders (1182)",
+      "4x Team Rocket's Petrel (1219)",
+      "4x Lillie's Determination (1227)",
+      "1x Dawn (1231)",
+      "4x Spikemuth Gym (1259)"
+     ]
+    },
+    {
+     "sig": "1:7,15:4,400:4,401:4,414:2,431:2,434:3,1086:2,1094:3,1121:1,1134:4,1152:4,1159:1,1175:1,1216:4,1217:1,1218:3,1220:4,1227:3,1257:3",
+     "archetype": "Team Rocket's Mewtwo ex",
+     "n_sampled": 10,
+     "subs": [
+      55033309
+     ],
+     "episodes": [
+      88467710,
+      88516412,
+      88681463,
+      88847891,
+      88891547,
+      89037195,
+      89200654,
+      89317066
+     ],
+     "deck": [
+      "7x Basic {G} Energy (1)",
+      "4x Team Rocket's Energy (15)",
+      "4x Team Rocket's Tarountula (400)",
+      "4x Team Rocket's Spidops (401)",
+      "2x Team Rocket's Articuno (414)",
+      "2x Team Rocket's Mewtwo ex (431)",
+      "3x Team Rocket's Mimikyu (434)",
+      "2x Buddy-Buddy Poffin (1086)",
+      "3x Bug Catching Set (1094)",
+      "1x Ultra Ball (1121)",
+      "4x Team Rocket's Transceiver (1134)",
+      "4x Pok\u00e9 Pad (1152)",
+      "1x Hero\u2019s Cape (1159)",
+      "1x Brave Bangle (1175)",
+      "4x Team Rocket's Ariana (1216)",
+      "1x Team Rocket's Archer (1217)",
+      "3x Team Rocket's Giovanni (1218)",
+      "4x Team Rocket's Proton (1220)",
+      "3x Lillie's Determination (1227)",
+      "3x Team Rocket's Factory (1257)"
+     ]
+    },
+    {
+     "sig": "1:2,11:4,14:4,18:4,20:2,117:1,344:4,345:3,756:2,1086:2,1121:2,1122:4,1123:1,1137:1,1147:4,1159:1,1182:4,1194:2,1197:1,1219:4,1225:2,1227:4,1257:1,1264:1",
+     "archetype": "Mega Kangaskhan ex",
+     "n_sampled": 10,
+     "subs": [
+      55033457
+     ],
+     "episodes": [
+      88468826,
+      88531843,
+      88693596,
+      88890308,
+      89055268,
+      89231450,
+      89319703,
+      89423398
+     ],
+     "deck": [
+      "2x Basic {G} Energy (1)",
+      "4x Mist Energy (11)",
+      "4x Spiky Energy (14)",
+      "4x Grow Grass Energy (18)",
+      "2x Rock Fighting Energy (20)",
+      "1x Cornerstone Mask Ogerpon ex (117)",
+      "4x Dwebble (344)",
+      "3x Crustle (345)",
+      "2x Mega Kangaskhan ex (756)",
+      "2x Buddy-Buddy Poffin (1086)",
+      "2x Ultra Ball (1121)",
+      "4x Pok\u00e9gear 3.0 (1122)",
+      "1x Switch (1123)",
+      "1x Tool Scrapper (1137)",
+      "4x Jumbo Ice Cream (1147)",
+      "1x Hero\u2019s Cape (1159)",
+      "4x Boss\u2019s Orders (1182)",
+      "2x Colress\u2019s Tenacity (1194)",
+      "1x Xerosic\u2019s Machinations (1197)",
+      "4x Team Rocket's Petrel (1219)",
+      "2x Hilda (1225)",
+      "4x Lillie's Determination (1227)",
+      "1x Team Rocket's Factory (1257)",
+      "1x Battle Cage (1264)"
+     ]
+    },
+    {
+     "sig": "5:3,19:4,66:3,140:1,305:3,741:4,742:4,743:4,1079:3,1081:4,1086:4,1097:1,1129:1,1152:4,1156:1,1182:3,1184:1,1197:3,1225:3,1231:4,1247:1,1266:1",
+     "archetype": "Fezandipiti ex",
+     "n_sampled": 6,
+     "subs": [
+      55275287
+     ],
+     "episodes": [
+      90211988,
+      90223677,
+      90236545,
+      90250679,
+      90287359,
+      90363391
+     ],
+     "deck": [
+      "3x Basic {P} Energy (5)",
+      "4x Telepath Psychic Energy (19)",
+      "3x Dudunsparce (66)",
+      "1x Fezandipiti ex (140)",
+      "3x Dunsparce (305)",
+      "4x Abra (741)",
+      "4x Kadabra (742)",
+      "4x Alakazam (743)",
+      "3x Rare Candy (1079)",
+      "4x Enhanced Hammer (1081)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "1x Night Stretcher (1097)",
+      "1x Sacred Ash (1129)",
+      "4x Pok\u00e9 Pad (1152)",
+      "1x Lucky Helmet (1156)",
+      "3x Boss\u2019s Orders (1182)",
+      "1x Lana\u2019s Aid (1184)",
+      "3x Xerosic\u2019s Machinations (1197)",
+      "3x Hilda (1225)",
+      "4x Dawn (1231)",
+      "1x Neutralization Zone (1247)",
+      "1x Nighttime Mine (1266)"
+     ]
+    }
+   ],
+   "subs_with_multiple_lists": {},
+   "matchups": {
+    "Marnie's Grimmsnarl ex": {
+     "w": 35,
+     "l": 6
+    },
+    "Fezandipiti ex": {
+     "w": 4,
+     "l": 6
+    },
+    "Mega Lucario ex": {
+     "w": 4,
+     "l": 4
+    },
+    "Mega Kangaskhan ex": {
+     "w": 5,
+     "l": 2
+    },
+    "Team Rocket's Mewtwo ex": {
+     "w": 7,
+     "l": 0
+    },
+    "Mega Lopunny ex": {
+     "w": 4,
+     "l": 1
+    },
+    "Dragapult ex": {
+     "w": 3,
+     "l": 1
+    },
+    "Cynthia's Garchomp ex": {
+     "w": 2,
+     "l": 2
+    },
+    "Teal Mask Ogerpon ex": {
+     "w": 4,
+     "l": 0
+    },
+    "Hydrapple ex": {
+     "w": 2,
+     "l": 0
+    },
+    "Crustle": {
+     "w": 2,
+     "l": 0
+    },
+    "Mega Abomasnow ex": {
+     "w": 1,
+     "l": 0
+    },
+    "Dudunsparce": {
+     "w": 1,
+     "l": 0
+    },
+    "Cornerstone Mask Ogerpon ex": {
+     "w": 1,
+     "l": 0
+    }
+   },
+   "opp_teams": {
+    "flg": {
+     "w": 7,
+     "l": 2
+    },
+    "junlee789": {
+     "w": 2,
+     "l": 1
+    },
+    "@kdcyberdude": {
+     "w": 1,
+     "l": 2
+    },
+    "James Cox": {
+     "w": 1,
+     "l": 1
+    },
+    "Luca": {
+     "w": 1,
+     "l": 1
+    },
+    "kashiwashira": {
+     "w": 2,
+     "l": 0
+    },
+    "\ub300\ub2f5\ud574\ub4dc\ub9ac\ub294\uac8c\uc778\uc9c0\uc0c1\uc815": {
+     "w": 2,
+     "l": 0
+    },
+    "\u674e\u79c9\u53e1\uff08ntumlnoob\uff09": {
+     "w": 1,
+     "l": 1
+    },
+    "Majkel1337": {
+     "w": 2,
+     "l": 0
+    },
+    "Kh0a": {
+     "w": 2,
+     "l": 0
+    },
+    "Dries @ Tufa Labs": {
+     "w": 2,
+     "l": 0
+    },
+    "ANDPAD kaggler team": {
+     "w": 2,
+     "l": 0
+    },
+    "\u30ab\u30f3\u30c8\u30fc\u5730\u65b9\u30de\u30b9\u30bf\u30fc(KantoRegionMaster)": {
+     "w": 2,
+     "l": 0
+    },
+    "skurita": {
+     "w": 0,
+     "l": 2
+    },
+    "kamonabe": {
+     "w": 0,
+     "l": 2
+    },
+    "Charles A Herbst": {
+     "w": 2,
+     "l": 0
+    },
+    "yuki #3": {
+     "w": 2,
+     "l": 0
+    },
+    "Rajan Nagarajan": {
+     "w": 2,
+     "l": 0
+    },
+    "\u674eBCDEFGA": {
+     "w": 2,
+     "l": 0
+    },
+    "onick_man": {
+     "w": 2,
+     "l": 0
+    },
+    "wally0593": {
+     "w": 2,
+     "l": 0
+    },
+    "KouFu": {
+     "w": 2,
+     "l": 0
+    },
+    "pokemon master": {
+     "w": 2,
+     "l": 0
+    },
+    "I4Kaggle": {
+     "w": 2,
+     "l": 0
+    },
+    "alexesn": {
+     "w": 0,
+     "l": 2
+    },
+    "Miscusi": {
+     "w": 1,
+     "l": 0
+    },
+    "Matheus, Dieter, Eduardo": {
+     "w": 1,
+     "l": 0
+    },
+    "Dominic Peel": {
+     "w": 1,
+     "l": 0
+    },
+    "gecogeco": {
+     "w": 1,
+     "l": 0
+    },
+    "Pokemon Siuuuu": {
+     "w": 1,
+     "l": 0
+    },
+    "Eduardo Rocha de Andrade": {
+     "w": 1,
+     "l": 0
+    },
+    "\u61d2\u60f0\u7684\u91d1\u67aa\u9c7c": {
+     "w": 1,
+     "l": 0
+    },
+    "e-toppo + kurupical": {
+     "w": 1,
+     "l": 0
+    },
+    "Shizupoke": {
+     "w": 1,
+     "l": 0
+    },
+    "Boss's Orders Are All You Need": {
+     "w": 1,
+     "l": 0
+    },
+    "Team KASA.": {
+     "w": 0,
+     "l": 1
+    },
+    "Oshbocker": {
+     "w": 0,
+     "l": 1
+    },
+    "\u3084\u308b\u6c17\u5143\u6c17\u30df\u30ef\u30cf\u30eb\u30ad": {
+     "w": 1,
+     "l": 0
+    },
+    "{{ team_name }} \ud83c\udfc6": {
+     "w": 1,
+     "l": 0
+    },
+    "Zhenyu Zhang": {
+     "w": 1,
+     "l": 0
+    },
+    "GuerillaMoon": {
+     "w": 0,
+     "l": 1
+    },
+    "seven": {
+     "w": 1,
+     "l": 0
+    },
+    "ruten": {
+     "w": 1,
+     "l": 0
+    },
+    "lollipop947": {
+     "w": 1,
+     "l": 0
+    },
+    "Aji Samudra": {
+     "w": 1,
+     "l": 0
+    },
+    "vvs": {
+     "w": 1,
+     "l": 0
+    },
+    "Raihan Ramadistra": {
+     "w": 1,
+     "l": 0
+    },
+    "tetsu2131": {
+     "w": 1,
+     "l": 0
+    },
+    "miya": {
+     "w": 0,
+     "l": 1
+    },
+    "Sixth Sense": {
+     "w": 1,
+     "l": 0
+    },
+    "Robert Bach": {
+     "w": 1,
+     "l": 0
+    },
+    "Arthurs Torres24": {
+     "w": 0,
+     "l": 1
+    },
+    "palsystem": {
+     "w": 1,
+     "l": 0
+    },
+    "Zyy7390": {
+     "w": 1,
+     "l": 0
+    },
+    "Team Rot-Wei\u00df": {
+     "w": 0,
+     "l": 1
+    },
+    "S": {
+     "w": 1,
+     "l": 0
+    },
+    "AlphaKarpZero": {
+     "w": 1,
+     "l": 0
+    },
+    "THIRD PTCG Club": {
+     "w": 1,
+     "l": 0
+    },
+    "\u2615 Psyduck Needs Coffee": {
+     "w": 1,
+     "l": 0
+    },
+    "K\u00e4fersammler Max": {
+     "w": 1,
+     "l": 0
+    },
+    "\u4f60\u597d\u54c7": {
+     "w": 0,
+     "l": 1
+    },
+    "\u60f3\u8981\u6210\u4e3akaggle\u5927\u5e08": {
+     "w": 1,
+     "l": 0
+    },
+    "flxwld": {
+     "w": 0,
+     "l": 1
+    }
+   }
+  },
+  "LiamK": {
+   "submissions": [
+    {
+     "sub": 54403820,
+     "n": 868,
+     "first": "2026-07-06 18:17:43",
+     "last": "2026-07-09 06:25:21",
+     "wins": 505,
+     "losses": 362,
+     "ep_to_1000": 18,
+     "ep_to_1100": 155,
+     "ep_to_1150": null,
+     "peak": 1110.5,
+     "final": 1056.6,
+     "longest_win_streak": 8
+    },
+    {
+     "sub": 54405730,
+     "n": 1048,
+     "first": "2026-07-06 20:00:40",
+     "last": "2026-07-09 18:05:22",
+     "wins": 640,
+     "losses": 408,
+     "ep_to_1000": 6,
+     "ep_to_1100": 193,
+     "ep_to_1150": 339,
+     "peak": 1154.1,
+     "final": 1059.9,
+     "longest_win_streak": 12
+    },
+    {
+     "sub": 54484720,
+     "n": 649,
+     "first": "2026-07-09 06:26:20",
+     "last": "2026-07-13 05:19:34",
+     "wins": 381,
+     "losses": 268,
+     "ep_to_1000": 109,
+     "ep_to_1100": 282,
+     "ep_to_1150": 414,
+     "peak": 1160.0,
+     "final": 1069.1,
+     "longest_win_streak": 10
+    },
+    {
+     "sub": 54503495,
+     "n": 1856,
+     "first": "2026-07-09 18:27:33",
+     "last": "2026-07-16 06:51:17",
+     "wins": 1023,
+     "losses": 833,
+     "ep_to_1000": 9,
+     "ep_to_1100": 11,
+     "ep_to_1150": 13,
+     "peak": 1217.3,
+     "final": 1039.1,
+     "longest_win_streak": 12
+    },
+    {
+     "sub": 54634530,
+     "n": 1941,
+     "first": "2026-07-13 05:36:41",
+     "last": "2026-07-20 01:05:23",
+     "wins": 1068,
+     "losses": 873,
+     "ep_to_1000": 7,
+     "ep_to_1100": 26,
+     "ep_to_1150": 63,
+     "peak": 1177.2,
+     "final": 1022.0,
+     "longest_win_streak": 10
+    },
+    {
+     "sub": 54754477,
+     "n": 799,
+     "first": "2026-07-16 06:55:34",
+     "last": "2026-07-20 01:13:22",
+     "wins": 422,
+     "losses": 377,
+     "ep_to_1000": 6,
+     "ep_to_1100": 9,
+     "ep_to_1150": 13,
+     "peak": 1192.9,
+     "final": 1006.1,
+     "longest_win_streak": 9
+    },
+    {
+     "sub": 54895414,
+     "n": 1001,
+     "first": "2026-07-22 05:58:29",
+     "last": "2026-07-26 06:59:51",
+     "wins": 564,
+     "losses": 435,
+     "ep_to_1000": 7,
+     "ep_to_1100": 19,
+     "ep_to_1150": 21,
+     "peak": 1178.1,
+     "final": 1040.8,
+     "longest_win_streak": 13
+    },
+    {
+     "sub": 54907538,
+     "n": 870,
+     "first": "2026-07-22 16:11:23",
+     "last": "2026-07-26 21:40:31",
+     "wins": 516,
+     "losses": 352,
+     "ep_to_1000": 11,
+     "ep_to_1100": 153,
+     "ep_to_1150": 247,
+     "peak": 1173.4,
+     "final": 1093.3,
+     "longest_win_streak": 12
+    },
+    {
+     "sub": 55011514,
+     "n": 1028,
+     "first": "2026-07-26 21:41:40",
+     "last": "2026-08-01 04:46:00",
+     "wins": 606,
+     "losses": 421,
+     "ep_to_1000": 8,
+     "ep_to_1100": 11,
+     "ep_to_1150": 12,
+     "peak": 1212.8,
+     "final": 1093.8,
+     "longest_win_streak": 11
+    },
+    {
+     "sub": 55090635,
+     "n": 760,
+     "first": "2026-07-29 19:15:43",
+     "last": "2026-08-02 22:03:10",
+     "wins": 436,
+     "losses": 324,
+     "ep_to_1000": 7,
+     "ep_to_1100": 16,
+     "ep_to_1150": 21,
+     "peak": 1211.1,
+     "final": 1107.0,
+     "longest_win_streak": 15
+    },
+    {
+     "sub": 55195669,
+     "n": 199,
+     "first": "2026-08-02 22:03:09",
+     "last": "2026-08-04 19:44:38",
+     "wins": 109,
+     "losses": 89,
+     "ep_to_1000": 9,
+     "ep_to_1100": 12,
+     "ep_to_1150": 23,
+     "peak": 1194.1,
+     "final": 1103.2,
+     "longest_win_streak": 8
+    },
+    {
+     "sub": 55195673,
+     "n": 114,
+     "first": "2026-08-02 22:03:33",
+     "last": "2026-08-04 19:32:36",
+     "wins": 76,
+     "losses": 38,
+     "ep_to_1000": 71,
+     "ep_to_1100": null,
+     "ep_to_1150": null,
+     "peak": 1024.4,
+     "final": 1008.9,
+     "longest_win_streak": 17
+    },
+    {
+     "sub": 55248957,
+     "n": 116,
+     "first": "2026-08-04 19:58:33",
+     "last": "2026-08-06 12:33:43",
+     "wins": 79,
+     "losses": 37,
+     "ep_to_1000": 64,
+     "ep_to_1100": null,
+     "ep_to_1150": null,
+     "peak": 1049.7,
+     "final": 1035.2,
+     "longest_win_streak": 8
+    },
+    {
+     "sub": 55248965,
+     "n": 227,
+     "first": "2026-08-04 19:59:05",
+     "last": "2026-08-06 13:25:41",
+     "wins": 139,
+     "losses": 88,
+     "ep_to_1000": 8,
+     "ep_to_1100": 13,
+     "ep_to_1150": 21,
+     "peak": 1195.6,
+     "final": 1185.5,
+     "longest_win_streak": 12
+    }
+   ],
+   "n_episodes_total": 11476,
+   "n_replays_sampled": 144,
+   "distinct_lists": 10,
+   "lists": [
+    {
+     "sig": "5:3,19:4,66:3,140:1,305:4,741:4,742:4,743:4,1079:4,1081:4,1086:4,1097:1,1129:1,1152:4,1182:3,1184:1,1197:3,1225:3,1231:4,1247:1",
+     "archetype": "Fezandipiti ex",
+     "n_sampled": 30,
+     "subs": [
+      54503495,
+      54634530,
+      54754477
+     ],
+     "episodes": [
+      85061409,
+      85133041,
+      85204855,
+      85273748,
+      85399962,
+      85485268,
+      85631609,
+      85804432
+     ],
+     "deck": [
+      "3x Basic {P} Energy (5)",
+      "4x Telepath Psychic Energy (19)",
+      "3x Dudunsparce (66)",
+      "1x Fezandipiti ex (140)",
+      "4x Dunsparce (305)",
+      "4x Abra (741)",
+      "4x Kadabra (742)",
+      "4x Alakazam (743)",
+      "4x Rare Candy (1079)",
+      "4x Enhanced Hammer (1081)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "1x Night Stretcher (1097)",
+      "1x Sacred Ash (1129)",
+      "4x Pok\u00e9 Pad (1152)",
+      "3x Boss\u2019s Orders (1182)",
+      "1x Lana\u2019s Aid (1184)",
+      "3x Xerosic\u2019s Machinations (1197)",
+      "3x Hilda (1225)",
+      "4x Dawn (1231)",
+      "1x Neutralization Zone (1247)"
+     ]
+    },
+    {
+     "sig": "7:10,104:2,112:4,646:4,647:3,648:3,860:2,1079:3,1080:1,1086:4,1097:3,1122:1,1137:1,1152:4,1182:2,1219:4,1227:4,1231:1,1259:4",
+     "archetype": "Marnie's Grimmsnarl ex",
+     "n_sampled": 20,
+     "subs": [
+      55011514,
+      55090635
+     ],
+     "episodes": [
+      88322873,
+      88373510,
+      88420618,
+      88509073,
+      88588126,
+      88691695,
+      88876293,
+      89033984
+     ],
+     "deck": [
+      "10x Basic {D} Energy (7)",
+      "2x Froslass (104)",
+      "4x Munkidori (112)",
+      "4x Marnie's Impidimp (646)",
+      "3x Marnie's Morgrem (647)",
+      "3x Marnie's Grimmsnarl ex (648)",
+      "2x Snorunt (860)",
+      "3x Rare Candy (1079)",
+      "1x Unfair Stamp (1080)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "3x Night Stretcher (1097)",
+      "1x Pok\u00e9gear 3.0 (1122)",
+      "1x Tool Scrapper (1137)",
+      "4x Pok\u00e9 Pad (1152)",
+      "2x Boss\u2019s Orders (1182)",
+      "4x Team Rocket's Petrel (1219)",
+      "4x Lillie's Determination (1227)",
+      "1x Dawn (1231)",
+      "4x Spikemuth Gym (1259)"
+     ]
+    },
+    {
+     "sig": "1:3,3:1,6:1,7:3,16:4,18:2,112:4,117:2,344:4,345:4,414:2,1086:4,1120:1,1147:4,1152:4,1159:1,1198:4,1210:4,1227:4,1236:4",
+     "archetype": "Cornerstone Mask Ogerpon ex",
+     "n_sampled": 17,
+     "subs": [
+      54405730,
+      54484720
+     ],
+     "episodes": [
+      84744553,
+      84800417,
+      84843506,
+      84909792,
+      84951347,
+      84994396,
+      85058871,
+      84973719
+     ],
+     "deck": [
+      "3x Basic {G} Energy (1)",
+      "1x Basic {W} Energy (3)",
+      "1x Basic {F} Energy (6)",
+      "3x Basic {D} Energy (7)",
+      "4x Prism Energy (16)",
+      "2x Grow Grass Energy (18)",
+      "4x Munkidori (112)",
+      "2x Cornerstone Mask Ogerpon ex (117)",
+      "4x Dwebble (344)",
+      "4x Crustle (345)",
+      "2x Team Rocket's Articuno (414)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "1x Crushing Hammer (1120)",
+      "4x Jumbo Ice Cream (1147)",
+      "4x Pok\u00e9 Pad (1152)",
+      "1x Hero\u2019s Cape (1159)",
+      "4x Crispin (1198)",
+      "4x Brock\u2019s Scouting (1210)",
+      "4x Lillie's Determination (1227)",
+      "4x Urbain (1236)"
+     ]
+    },
+    {
+     "sig": "6:13,673:2,674:2,675:2,676:3,677:3,678:4,1121:4,1123:2,1141:4,1142:4,1152:4,1159:1,1182:2,1213:4,1227:4,1229:2",
+     "archetype": "Mega Lucario ex",
+     "n_sampled": 14,
+     "subs": [
+      55248957
+     ],
+     "episodes": [
+      90004448,
+      90009088,
+      90014932,
+      90020174,
+      90024796,
+      90030294,
+      90035801,
+      90041950
+     ],
+     "deck": [
+      "13x Basic {F} Energy (6)",
+      "2x Makuhita (673)",
+      "2x Hariyama (674)",
+      "2x Lunatone (675)",
+      "3x Solrock (676)",
+      "3x Riolu (677)",
+      "4x Mega Lucario ex (678)",
+      "4x Ultra Ball (1121)",
+      "2x Switch (1123)",
+      "4x Premium Power Pro (1141)",
+      "4x Fighting Gong (1142)",
+      "4x Pok\u00e9 Pad (1152)",
+      "1x Hero\u2019s Cape (1159)",
+      "2x Boss\u2019s Orders (1182)",
+      "4x Judge (1213)",
+      "4x Lillie's Determination (1227)",
+      "2x Wally's Compassion (1229)"
+     ]
+    },
+    {
+     "sig": "3:3,11:4,13:1,66:3,174:1,305:4,848:2,849:2,860:2,861:2,1086:4,1087:3,1121:4,1122:2,1152:4,1174:3,1182:2,1225:3,1227:4,1229:4,1264:3",
+     "archetype": "Mega Lopunny ex",
+     "n_sampled": 14,
+     "subs": [
+      55248965
+     ],
+     "episodes": [
+      90004451,
+      90013624,
+      90023536,
+      90030360,
+      90038550,
+      90047591,
+      90086270,
+      90152297
+     ],
+     "deck": [
+      "3x Basic {W} Energy (3)",
+      "4x Mist Energy (11)",
+      "1x Enriching Energy (13)",
+      "3x Dudunsparce (66)",
+      "1x Fan Rotom (174)",
+      "4x Dunsparce (305)",
+      "2x Buneary (848)",
+      "2x Mega Lopunny ex (849)",
+      "2x Snorunt (860)",
+      "2x Mega Froslass ex (861)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "3x Hand Trimmer (1087)",
+      "4x Ultra Ball (1121)",
+      "2x Pok\u00e9gear 3.0 (1122)",
+      "4x Pok\u00e9 Pad (1152)",
+      "3x Air Balloon (1174)",
+      "2x Boss\u2019s Orders (1182)",
+      "3x Hilda (1225)",
+      "4x Lillie's Determination (1227)",
+      "4x Wally's Compassion (1229)",
+      "3x Battle Cage (1264)"
+     ]
+    },
+    {
+     "sig": "1:1,11:4,14:4,18:4,344:4,345:4,756:4,1086:4,1087:2,1122:4,1123:4,1147:4,1159:1,1182:2,1197:4,1225:4,1227:4,1264:2",
+     "archetype": "Mega Kangaskhan ex",
+     "n_sampled": 10,
+     "subs": [
+      54895414
+     ],
+     "episodes": [
+      87410764,
+      87457727,
+      87545490,
+      87676192,
+      87750847,
+      87823169,
+      87901120,
+      87945747
+     ],
+     "deck": [
+      "1x Basic {G} Energy (1)",
+      "4x Mist Energy (11)",
+      "4x Spiky Energy (14)",
+      "4x Grow Grass Energy (18)",
+      "4x Dwebble (344)",
+      "4x Crustle (345)",
+      "4x Mega Kangaskhan ex (756)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "2x Hand Trimmer (1087)",
+      "4x Pok\u00e9gear 3.0 (1122)",
+      "4x Switch (1123)",
+      "4x Jumbo Ice Cream (1147)",
+      "1x Hero\u2019s Cape (1159)",
+      "2x Boss\u2019s Orders (1182)",
+      "4x Xerosic\u2019s Machinations (1197)",
+      "4x Hilda (1225)",
+      "4x Lillie's Determination (1227)",
+      "2x Battle Cage (1264)"
+     ]
+    },
+    {
+     "sig": "1:9,15:4,400:4,401:4,414:2,431:2,434:3,1094:3,1121:1,1134:4,1152:4,1159:1,1175:1,1216:4,1217:1,1218:3,1220:4,1227:3,1257:3",
+     "archetype": "Team Rocket's Mewtwo ex",
+     "n_sampled": 10,
+     "subs": [
+      54907538
+     ],
+     "episodes": [
+      87491748,
+      87544998,
+      87620104,
+      87731231,
+      87775056,
+      87894915,
+      87936709,
+      88076416
+     ],
+     "deck": [
+      "9x Basic {G} Energy (1)",
+      "4x Team Rocket's Energy (15)",
+      "4x Team Rocket's Tarountula (400)",
+      "4x Team Rocket's Spidops (401)",
+      "2x Team Rocket's Articuno (414)",
+      "2x Team Rocket's Mewtwo ex (431)",
+      "3x Team Rocket's Mimikyu (434)",
+      "3x Bug Catching Set (1094)",
+      "1x Ultra Ball (1121)",
+      "4x Team Rocket's Transceiver (1134)",
+      "4x Pok\u00e9 Pad (1152)",
+      "1x Hero\u2019s Cape (1159)",
+      "1x Brave Bangle (1175)",
+      "4x Team Rocket's Ariana (1216)",
+      "1x Team Rocket's Archer (1217)",
+      "3x Team Rocket's Giovanni (1218)",
+      "4x Team Rocket's Proton (1220)",
+      "3x Lillie's Determination (1227)",
+      "3x Team Rocket's Factory (1257)"
+     ]
+    },
+    {
+     "sig": "11:4,14:4,18:4,20:2,117:1,344:4,345:3,756:2,1086:2,1120:4,1121:2,1122:4,1123:1,1147:4,1159:1,1182:4,1197:1,1212:1,1219:4,1225:3,1227:4,1257:1",
+     "archetype": "Mega Kangaskhan ex",
+     "n_sampled": 8,
+     "subs": [
+      55195669
+     ],
+     "episodes": [
+      89596987,
+      89609139,
+      89621099,
+      89716510,
+      89804283,
+      89815342,
+      89825531,
+      90002278
+     ],
+     "deck": [
+      "4x Mist Energy (11)",
+      "4x Spiky Energy (14)",
+      "4x Grow Grass Energy (18)",
+      "2x Rock Fighting Energy (20)",
+      "1x Cornerstone Mask Ogerpon ex (117)",
+      "4x Dwebble (344)",
+      "3x Crustle (345)",
+      "2x Mega Kangaskhan ex (756)",
+      "2x Buddy-Buddy Poffin (1086)",
+      "4x Crushing Hammer (1120)",
+      "2x Ultra Ball (1121)",
+      "4x Pok\u00e9gear 3.0 (1122)",
+      "1x Switch (1123)",
+      "4x Jumbo Ice Cream (1147)",
+      "1x Hero\u2019s Cape (1159)",
+      "4x Boss\u2019s Orders (1182)",
+      "1x Xerosic\u2019s Machinations (1197)",
+      "1x Cook (1212)",
+      "4x Team Rocket's Petrel (1219)",
+      "3x Hilda (1225)",
+      "4x Lillie's Determination (1227)",
+      "1x Team Rocket's Factory (1257)"
+     ]
+    },
+    {
+     "sig": "3:9,104:2,860:4,861:2,1030:3,1031:3,1086:4,1087:2,1097:1,1122:3,1145:3,1152:2,1159:1,1182:2,1189:1,1197:2,1224:2,1225:2,1227:4,1229:4,1262:4",
+     "archetype": "Mega Starmie ex",
+     "n_sampled": 8,
+     "subs": [
+      55195673
+     ],
+     "episodes": [
+      89597382,
+      89605253,
+      89613647,
+      89622211,
+      89678899,
+      89763037,
+      89876507,
+      90000035
+     ],
+     "deck": [
+      "9x Basic {W} Energy (3)",
+      "2x Froslass (104)",
+      "4x Snorunt (860)",
+      "2x Mega Froslass ex (861)",
+      "3x Staryu (1030)",
+      "3x Mega Starmie ex (1031)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "2x Hand Trimmer (1087)",
+      "1x Night Stretcher (1097)",
+      "3x Pok\u00e9gear 3.0 (1122)",
+      "3x Mega Signal (1145)",
+      "2x Pok\u00e9 Pad (1152)",
+      "1x Hero\u2019s Cape (1159)",
+      "2x Boss\u2019s Orders (1182)",
+      "1x Salvatore (1189)",
+      "2x Xerosic\u2019s Machinations (1197)",
+      "2x Cheren (1224)",
+      "2x Hilda (1225)",
+      "4x Lillie's Determination (1227)",
+      "4x Wally's Compassion (1229)",
+      "4x Surfing Beach (1262)"
+     ]
+    },
+    {
+     "sig": "1:13,11:4,14:4,18:4,96:2,344:4,345:4,1086:4,1097:1,1147:4,1159:1,1197:4,1212:4,1227:4,1235:3",
+     "archetype": "Teal Mask Ogerpon ex",
+     "n_sampled": 5,
+     "subs": [
+      54403820
+     ],
+     "episodes": [
+      84735497,
+      84796390,
+      84833153,
+      84913733,
+      84973593
+     ],
+     "deck": [
+      "13x Basic {G} Energy (1)",
+      "4x Mist Energy (11)",
+      "4x Spiky Energy (14)",
+      "4x Grow Grass Energy (18)",
+      "2x Teal Mask Ogerpon ex (96)",
+      "4x Dwebble (344)",
+      "4x Crustle (345)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "1x Night Stretcher (1097)",
+      "4x Jumbo Ice Cream (1147)",
+      "1x Hero\u2019s Cape (1159)",
+      "4x Xerosic\u2019s Machinations (1197)",
+      "4x Cook (1212)",
+      "4x Lillie's Determination (1227)",
+      "3x Waitress (1235)"
+     ]
+    }
+   ],
+   "subs_with_multiple_lists": {},
+   "matchups": {
+    "Marnie's Grimmsnarl ex": {
+     "w": 22,
+     "l": 16
+    },
+    "Fezandipiti ex": {
+     "w": 16,
+     "l": 12
+    },
+    "Mega Kangaskhan ex": {
+     "w": 8,
+     "l": 4
+    },
+    "Mega Lucario ex": {
+     "w": 6,
+     "l": 3
+    },
+    "Mega Lopunny ex": {
+     "w": 5,
+     "l": 3
+    },
+    "Dragapult ex": {
+     "w": 3,
+     "l": 3
+    },
+    "Team Rocket's Mewtwo ex": {
+     "w": 4,
+     "l": 2
+    },
+    "Cynthia's Garchomp ex": {
+     "w": 3,
+     "l": 2
+    },
+    "Alakazam": {
+     "w": 3,
+     "l": 1
+    },
+    "Mega Starmie ex": {
+     "w": 2,
+     "l": 2
+    },
+    "Archaludon ex": {
+     "w": 2,
+     "l": 0
+    },
+    "Cornerstone Mask Ogerpon ex": {
+     "w": 0,
+     "l": 2
+    },
+    "Bloodmoon Ursaluna": {
+     "w": 0,
+     "l": 1
+    },
+    "Hop\u2019s Snorlax": {
+     "w": 1,
+     "l": 0
+    },
+    "Team Rocket's Honchkrow": {
+     "w": 0,
+     "l": 1
+    },
+    "Dudunsparce": {
+     "w": 0,
+     "l": 1
+    },
+    "Brambleghast": {
+     "w": 1,
+     "l": 0
+    },
+    "Mega Abomasnow ex": {
+     "w": 1,
+     "l": 0
+    },
+    "Flareon ex": {
+     "w": 1,
+     "l": 0
+    },
+    "Team Rocket's Articuno": {
+     "w": 1,
+     "l": 0
+    },
+    "Teal Mask Ogerpon ex": {
+     "w": 0,
+     "l": 1
+    },
+    "Iono\u2019s Bellibolt ex": {
+     "w": 0,
+     "l": 1
+    },
+    "Arboliva ex": {
+     "w": 1,
+     "l": 0
+    },
+    "Ethan's Typhlosion": {
+     "w": 1,
+     "l": 0
+    }
+   },
+   "opp_teams": {
+    "LiamK": {
+     "w": 8,
+     "l": 4
+    },
+    "Majkel1337": {
+     "w": 2,
+     "l": 8
+    },
+    "Yushin Ito": {
+     "w": 2,
+     "l": 3
+    },
+    "wwwwwwwwwwwwwwwwwwwwwwwwwwwwww": {
+     "w": 4,
+     "l": 0
+    },
+    "flg": {
+     "w": 4,
+     "l": 0
+    },
+    "__Taichicchi__": {
+     "w": 1,
+     "l": 2
+    },
+    "Raihan Ramadistra": {
+     "w": 2,
+     "l": 1
+    },
+    "ShumpeiNomura": {
+     "w": 2,
+     "l": 0
+    },
+    "Kotaro OKUYAMA": {
+     "w": 1,
+     "l": 1
+    },
+    "THIRD PTCG Club": {
+     "w": 0,
+     "l": 2
+    },
+    "mitomeat823": {
+     "w": 2,
+     "l": 0
+    },
+    "bono": {
+     "w": 0,
+     "l": 2
+    },
+    "\u61d2\u60f0\u7684\u91d1\u67aa\u9c7c": {
+     "w": 2,
+     "l": 0
+    },
+    "\u9f50\u4e50": {
+     "w": 1,
+     "l": 1
+    },
+    "Luca": {
+     "w": 0,
+     "l": 2
+    },
+    "kunihiro": {
+     "w": 2,
+     "l": 0
+    },
+    "Bozo Boys": {
+     "w": 0,
+     "l": 1
+    },
+    "WinDecks": {
+     "w": 0,
+     "l": 1
+    },
+    "5.5": {
+     "w": 1,
+     "l": 0
+    },
+    "Michael Long": {
+     "w": 1,
+     "l": 0
+    },
+    "Cathay_TCG": {
+     "w": 1,
+     "l": 0
+    },
+    "tw_shin": {
+     "w": 1,
+     "l": 0
+    },
+    "LagrangianLocomotive": {
+     "w": 0,
+     "l": 1
+    },
+    "\u307f\u305a\u3042\u3081": {
+     "w": 1,
+     "l": 0
+    },
+    "\u304b\u3059\u307f\u3055\u3093\u3061": {
+     "w": 1,
+     "l": 0
+    },
+    "Michael Krager": {
+     "w": 0,
+     "l": 1
+    },
+    "Nekogami": {
+     "w": 0,
+     "l": 1
+    },
+    "MPGaming": {
+     "w": 0,
+     "l": 1
+    },
+    "XP3RiX": {
+     "w": 0,
+     "l": 1
+    },
+    "Help-Computa": {
+     "w": 0,
+     "l": 1
+    },
+    "soyukke": {
+     "w": 0,
+     "l": 1
+    },
+    "\u4e8e\u7b11\u975elilishyxf": {
+     "w": 1,
+     "l": 0
+    },
+    "Kohei": {
+     "w": 1,
+     "l": 0
+    },
+    "Pok\u00e9sonic": {
+     "w": 1,
+     "l": 0
+    },
+    "rick & shikitora": {
+     "w": 1,
+     "l": 0
+    },
+    "yaki-imo": {
+     "w": 0,
+     "l": 1
+    },
+    "ojicat": {
+     "w": 0,
+     "l": 1
+    },
+    "me and the lads": {
+     "w": 0,
+     "l": 1
+    },
+    "taksai": {
+     "w": 0,
+     "l": 1
+    },
+    "\u30bf\u30cb\u30b7": {
+     "w": 1,
+     "l": 0
+    },
+    "fuga doggo": {
+     "w": 1,
+     "l": 0
+    },
+    "youtube.com/@BigBugginnings": {
+     "w": 1,
+     "l": 0
+    },
+    "denden12": {
+     "w": 1,
+     "l": 0
+    },
+    "Kohecchi": {
+     "w": 1,
+     "l": 0
+    },
+    "mamaPaPa Cloude": {
+     "w": 1,
+     "l": 0
+    },
+    "pokabu1104": {
+     "w": 1,
+     "l": 0
+    },
+    "LumenLiquidity": {
+     "w": 0,
+     "l": 1
+    },
+    "zoroark190": {
+     "w": 0,
+     "l": 1
+    },
+    "Rmy": {
+     "w": 1,
+     "l": 0
+    },
+    "SQUIRTLE (prime)": {
+     "w": 1,
+     "l": 0
+    },
+    "{{ team_name }}": {
+     "w": 1,
+     "l": 0
+    },
+    "amaotone": {
+     "w": 1,
+     "l": 0
+    },
+    "Rafael": {
+     "w": 0,
+     "l": 1
+    },
+    "monnosuke": {
+     "w": 0,
+     "l": 1
+    },
+    "junlee789": {
+     "w": 1,
+     "l": 0
+    },
+    "Roman Stupin": {
+     "w": 1,
+     "l": 0
+    },
+    "ktr": {
+     "w": 0,
+     "l": 1
+    },
+    "lmaffei": {
+     "w": 0,
+     "l": 1
+    },
+    "James Cox": {
+     "w": 1,
+     "l": 0
+    },
+    "\u3084\u308b\u6c17\u5143\u6c17\u30df\u30ef\u30cf\u30eb\u30ad": {
+     "w": 0,
+     "l": 1
+    },
+    "Matheus, Dieter, Eduardo": {
+     "w": 0,
+     "l": 1
+    },
+    "Dominic Peel": {
+     "w": 1,
+     "l": 0
+    },
+    "Azat Akhtyamov": {
+     "w": 0,
+     "l": 1
+    },
+    "\u30ab\u30f3\u30c8\u30fc\u5730\u65b9\u30de\u30b9\u30bf\u30fc(KantoRegionMaster)": {
+     "w": 1,
+     "l": 0
+    },
+    "e-toppo + kurupical": {
+     "w": 0,
+     "l": 1
+    },
+    "Raja Biswas": {
+     "w": 0,
+     "l": 1
+    },
+    "ANDPAD kaggler team": {
+     "w": 1,
+     "l": 0
+    },
+    "2-38.com": {
+     "w": 0,
+     "l": 1
+    },
+    "Dries @ Tufa Labs": {
+     "w": 1,
+     "l": 0
+    },
+    "jiatu.l": {
+     "w": 1,
+     "l": 0
+    },
+    "llkarill": {
+     "w": 1,
+     "l": 0
+    },
+    "Watta": {
+     "w": 1,
+     "l": 0
+    },
+    "NguyenThanhNhan": {
+     "w": 0,
+     "l": 1
+    },
+    "Julian": {
+     "w": 1,
+     "l": 0
+    },
+    "Shiv Satyam": {
+     "w": 1,
+     "l": 0
+    },
+    "Pokopia": {
+     "w": 1,
+     "l": 0
+    },
+    "kashiwashira": {
+     "w": 1,
+     "l": 0
+    },
+    "Octavi Grau": {
+     "w": 0,
+     "l": 1
+    },
+    "lilishyxf": {
+     "w": 1,
+     "l": 0
+    },
+    "Martin Balla": {
+     "w": 1,
+     "l": 0
+    },
+    "Vibe_Moon": {
+     "w": 1,
+     "l": 0
+    },
+    "xiaoxin zhao": {
+     "w": 1,
+     "l": 0
+    },
+    "Dustin Rubin": {
+     "w": 1,
+     "l": 0
+    },
+    "NoOne": {
+     "w": 1,
+     "l": 0
+    },
+    "suguuuuu & hiehie": {
+     "w": 1,
+     "l": 0
+    },
+    "Yudai Ueno": {
+     "w": 1,
+     "l": 0
+    },
+    "HCRL": {
+     "w": 1,
+     "l": 0
+    },
+    "IPL": {
+     "w": 1,
+     "l": 0
+    },
+    "pokemon master": {
+     "w": 1,
+     "l": 0
+    },
+    "GPT-5.6 Sol\ud83c\udfc6": {
+     "w": 0,
+     "l": 1
+    },
+    "\u5c71\u4e0a\u6d77\u8cca\u56e3": {
+     "w": 1,
+     "l": 0
+    },
+    "tuannm3812": {
+     "w": 1,
+     "l": 0
+    },
+    "palsystem": {
+     "w": 0,
+     "l": 1
+    }
+   }
+  },
+  "Raihan Ramadistra": {
+   "submissions": [
+    {
+     "sub": 54421283,
+     "n": 192,
+     "first": "2026-07-07 08:03:53",
+     "last": "2026-07-08 01:05:24",
+     "wins": 114,
+     "losses": 78,
+     "ep_to_1000": 11,
+     "ep_to_1100": null,
+     "ep_to_1150": null,
+     "peak": 1087.4,
+     "final": 1019.2,
+     "longest_win_streak": 7
+    },
+    {
+     "sub": 54445400,
+     "n": 603,
+     "first": "2026-07-08 01:13:57",
+     "last": "2026-07-09 15:09:17",
+     "wins": 366,
+     "losses": 237,
+     "ep_to_1000": 17,
+     "ep_to_1100": 137,
+     "ep_to_1150": null,
+     "peak": 1145.1,
+     "final": 1070.8,
+     "longest_win_streak": 10
+    },
+    {
+     "sub": 54499492,
+     "n": 642,
+     "first": "2026-07-09 15:43:17",
+     "last": "2026-07-11 05:15:11",
+     "wins": 381,
+     "losses": 261,
+     "ep_to_1000": 7,
+     "ep_to_1100": 10,
+     "ep_to_1150": 142,
+     "peak": 1172.5,
+     "final": 1112.7,
+     "longest_win_streak": 10
+    },
+    {
+     "sub": 55153037,
+     "n": 112,
+     "first": "2026-08-01 03:42:35",
+     "last": "2026-08-02 04:23:05",
+     "wins": 65,
+     "losses": 47,
+     "ep_to_1000": 13,
+     "ep_to_1100": null,
+     "ep_to_1150": null,
+     "peak": 1054.6,
+     "final": 1031.9,
+     "longest_win_streak": 8
+    },
+    {
+     "sub": 55171940,
+     "n": 328,
+     "first": "2026-08-01 22:35:31",
+     "last": "2026-08-03 05:07:18",
+     "wins": 185,
+     "losses": 143,
+     "ep_to_1000": 11,
+     "ep_to_1100": 15,
+     "ep_to_1150": 27,
+     "peak": 1237.8,
+     "final": 1116.6,
+     "longest_win_streak": 11
+    },
+    {
+     "sub": 55177269,
+     "n": 800,
+     "first": "2026-08-02 04:23:37",
+     "last": "2026-08-06 13:29:43",
+     "wins": 466,
+     "losses": 334,
+     "ep_to_1000": 13,
+     "ep_to_1100": 66,
+     "ep_to_1150": 137,
+     "peak": 1226.2,
+     "final": 1116.1,
+     "longest_win_streak": 9
+    },
+    {
+     "sub": 55202823,
+     "n": 382,
+     "first": "2026-08-03 05:09:03",
+     "last": "2026-08-06 12:37:41",
+     "wins": 239,
+     "losses": 143,
+     "ep_to_1000": 34,
+     "ep_to_1100": 88,
+     "ep_to_1150": 189,
+     "peak": 1182.0,
+     "final": 1127.3,
+     "longest_win_streak": 11
+    }
+   ],
+   "n_episodes_total": 3059,
+   "n_replays_sampled": 72,
+   "distinct_lists": 3,
+   "lists": [
+    {
+     "sig": "7:10,104:2,112:4,646:4,647:3,648:3,860:2,1079:3,1080:1,1086:4,1097:3,1122:1,1137:1,1152:4,1182:2,1219:4,1227:4,1231:1,1259:4",
+     "archetype": "Marnie's Grimmsnarl ex",
+     "n_sampled": 44,
+     "subs": [
+      55153037,
+      55171940,
+      55177269,
+      55202823
+     ],
+     "episodes": [
+      90434709,
+      90297572,
+      90281503,
+      90263090,
+      90069475,
+      90032413,
+      90018312,
+      90005533
+     ],
+     "deck": [
+      "10x Basic {D} Energy (7)",
+      "2x Froslass (104)",
+      "4x Munkidori (112)",
+      "4x Marnie's Impidimp (646)",
+      "3x Marnie's Morgrem (647)",
+      "3x Marnie's Grimmsnarl ex (648)",
+      "2x Snorunt (860)",
+      "3x Rare Candy (1079)",
+      "1x Unfair Stamp (1080)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "3x Night Stretcher (1097)",
+      "1x Pok\u00e9gear 3.0 (1122)",
+      "1x Tool Scrapper (1137)",
+      "4x Pok\u00e9 Pad (1152)",
+      "2x Boss\u2019s Orders (1182)",
+      "4x Team Rocket's Petrel (1219)",
+      "4x Lillie's Determination (1227)",
+      "1x Dawn (1231)",
+      "4x Spikemuth Gym (1259)"
+     ]
+    },
+    {
+     "sig": "1:1,11:4,14:4,18:4,344:3,345:3,756:4,1086:3,1087:1,1121:1,1122:3,1123:2,1147:4,1159:1,1161:1,1182:4,1186:2,1197:1,1204:1,1219:4,1225:3,1227:4,1242:1,1257:1",
+     "archetype": "Mega Kangaskhan ex",
+     "n_sampled": 20,
+     "subs": [
+      54445400,
+      54499492
+     ],
+     "episodes": [
+      85342314,
+      85302680,
+      85268679,
+      85241963,
+      85211226,
+      85178740,
+      85128228,
+      85095346
+     ],
+     "deck": [
+      "1x Basic {G} Energy (1)",
+      "4x Mist Energy (11)",
+      "4x Spiky Energy (14)",
+      "4x Grow Grass Energy (18)",
+      "3x Dwebble (344)",
+      "3x Crustle (345)",
+      "4x Mega Kangaskhan ex (756)",
+      "3x Buddy-Buddy Poffin (1086)",
+      "1x Hand Trimmer (1087)",
+      "1x Ultra Ball (1121)",
+      "3x Pok\u00e9gear 3.0 (1122)",
+      "2x Switch (1123)",
+      "4x Jumbo Ice Cream (1147)",
+      "1x Hero\u2019s Cape (1159)",
+      "1x Handheld Fan (1161)",
+      "4x Boss\u2019s Orders (1182)",
+      "2x Eri (1186)",
+      "1x Xerosic\u2019s Machinations (1197)",
+      "1x Lisia\u2019s Appeal (1204)",
+      "4x Team Rocket's Petrel (1219)",
+      "3x Hilda (1225)",
+      "4x Lillie's Determination (1227)",
+      "1x Community Center (1242)",
+      "1x Team Rocket's Factory (1257)"
+     ]
+    },
+    {
+     "sig": "7:10,66:3,112:3,140:1,235:1,305:3,646:4,647:2,648:4,689:1,1079:4,1086:4,1137:1,1152:4,1159:1,1182:2,1197:1,1227:4,1231:3,1259:3,1260:1",
+     "archetype": "Marnie's Grimmsnarl ex",
+     "n_sampled": 8,
+     "subs": [
+      54421283
+     ],
+     "episodes": [
+      84751391,
+      84738056,
+      84721905,
+      84706693,
+      84689795,
+      84609635,
+      84591237,
+      84574504
+     ],
+     "deck": [
+      "10x Basic {D} Energy (7)",
+      "3x Dudunsparce (66)",
+      "3x Munkidori (112)",
+      "1x Fezandipiti ex (140)",
+      "1x Budew (235)",
+      "3x Dunsparce (305)",
+      "4x Marnie's Impidimp (646)",
+      "2x Marnie's Morgrem (647)",
+      "4x Marnie's Grimmsnarl ex (648)",
+      "1x Yveltal (689)",
+      "4x Rare Candy (1079)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "1x Tool Scrapper (1137)",
+      "4x Pok\u00e9 Pad (1152)",
+      "1x Hero\u2019s Cape (1159)",
+      "2x Boss\u2019s Orders (1182)",
+      "1x Xerosic\u2019s Machinations (1197)",
+      "4x Lillie's Determination (1227)",
+      "3x Dawn (1231)",
+      "3x Spikemuth Gym (1259)",
+      "1x Risky Ruins (1260)"
+     ]
+    }
+   ],
+   "subs_with_multiple_lists": {},
+   "matchups": {
+    "Marnie's Grimmsnarl ex": {
+     "w": 11,
+     "l": 8
+    },
+    "Fezandipiti ex": {
+     "w": 9,
+     "l": 5
+    },
+    "Mega Kangaskhan ex": {
+     "w": 6,
+     "l": 3
+    },
+    "Mega Lopunny ex": {
+     "w": 2,
+     "l": 2
+    },
+    "Cynthia's Garchomp ex": {
+     "w": 3,
+     "l": 1
+    },
+    "Dudunsparce": {
+     "w": 1,
+     "l": 3
+    },
+    "Alakazam": {
+     "w": 2,
+     "l": 2
+    },
+    "Teal Mask Ogerpon ex": {
+     "w": 1,
+     "l": 2
+    },
+    "Cornerstone Mask Ogerpon ex": {
+     "w": 2,
+     "l": 0
+    },
+    "Mega Lucario ex": {
+     "w": 1,
+     "l": 1
+    },
+    "Archaludon ex": {
+     "w": 2,
+     "l": 0
+    },
+    "Dragapult ex": {
+     "w": 1,
+     "l": 0
+    },
+    "Mega Venusaur ex": {
+     "w": 0,
+     "l": 1
+    },
+    "Hydrapple ex": {
+     "w": 0,
+     "l": 1
+    },
+    "Brambleghast": {
+     "w": 1,
+     "l": 0
+    },
+    "Mega Starmie ex": {
+     "w": 1,
+     "l": 0
+    }
+   },
+   "opp_teams": {
+    "Raihan Ramadistra": {
+     "w": 4,
+     "l": 3
+    },
+    "AlphaStarmie": {
+     "w": 2,
+     "l": 1
+    },
+    "Majkel1337": {
+     "w": 0,
+     "l": 3
+    },
+    "\u60f3\u8981\u6210\u4e3akaggle\u5927\u5e08": {
+     "w": 1,
+     "l": 1
+    },
+    "Sixth Sense": {
+     "w": 2,
+     "l": 0
+    },
+    "\u674e\u79c9\u53e1\uff08ntumlnoob\uff09": {
+     "w": 1,
+     "l": 1
+    },
+    "James Cox & Henry Chao": {
+     "w": 1,
+     "l": 1
+    },
+    "EricYang03": {
+     "w": 2,
+     "l": 0
+    },
+    "M Sato": {
+     "w": 2,
+     "l": 0
+    },
+    "keidroid": {
+     "w": 1,
+     "l": 1
+    },
+    "\u3084\u308b\u6c17\u5143\u6c17\u30df\u30ef\u30cf\u30eb\u30ad": {
+     "w": 0,
+     "l": 2
+    },
+    "Yushin Ito": {
+     "w": 1,
+     "l": 1
+    },
+    "Team Rot-Wei\u00df": {
+     "w": 1,
+     "l": 0
+    },
+    "LumenLiquidity": {
+     "w": 1,
+     "l": 0
+    },
+    "zhangshuosc": {
+     "w": 0,
+     "l": 1
+    },
+    "Roman Nesterov": {
+     "w": 1,
+     "l": 0
+    },
+    "\u30ab\u30f3\u30c8\u30fc\u5730\u65b9\u30de\u30b9\u30bf\u30fc(KantoRegionMaster)": {
+     "w": 1,
+     "l": 0
+    },
+    "NIWATORI": {
+     "w": 1,
+     "l": 0
+    },
+    "Petit Canard": {
+     "w": 0,
+     "l": 1
+    },
+    "MissingNo.": {
+     "w": 1,
+     "l": 0
+    },
+    "tonakaiiii": {
+     "w": 0,
+     "l": 1
+    },
+    "flg": {
+     "w": 1,
+     "l": 0
+    },
+    "@kdcyberdude": {
+     "w": 0,
+     "l": 1
+    },
+    "junlee789": {
+     "w": 0,
+     "l": 1
+    },
+    "Matsu": {
+     "w": 1,
+     "l": 0
+    },
+    "Jose Coronel": {
+     "w": 0,
+     "l": 1
+    },
+    "PavelLiashkov": {
+     "w": 1,
+     "l": 0
+    },
+    "Gijs Smit": {
+     "w": 0,
+     "l": 1
+    },
+    "Urazalinov Baurzhan": {
+     "w": 1,
+     "l": 0
+    },
+    "Pocket Arena": {
+     "w": 1,
+     "l": 0
+    },
+    "Kento Umeda": {
+     "w": 1,
+     "l": 0
+    },
+    "Boss's Orders Are All You Need": {
+     "w": 1,
+     "l": 0
+    },
+    "Budew": {
+     "w": 0,
+     "l": 1
+    },
+    "nasuo445": {
+     "w": 0,
+     "l": 1
+    },
+    "wkonishi": {
+     "w": 1,
+     "l": 0
+    },
+    "Mykhailo Kalus": {
+     "w": 1,
+     "l": 0
+    },
+    "matsurih": {
+     "w": 0,
+     "l": 1
+    },
+    "trickstar": {
+     "w": 0,
+     "l": 1
+    },
+    "LagrangianLocomotive": {
+     "w": 1,
+     "l": 0
+    },
+    "Sota Uchiyama": {
+     "w": 1,
+     "l": 0
+    },
+    "\u304f\u308a\u305f\u3093\u3068\u305f\u3051\u3061\u3083\u3093": {
+     "w": 1,
+     "l": 0
+    },
+    "Klein Houmani": {
+     "w": 1,
+     "l": 0
+    },
+    "wally0593": {
+     "w": 0,
+     "l": 1
+    },
+    "Ajishio": {
+     "w": 0,
+     "l": 1
+    },
+    "btk15049": {
+     "w": 1,
+     "l": 0
+    },
+    "Hase2727": {
+     "w": 1,
+     "l": 0
+    },
+    "WinDecks": {
+     "w": 1,
+     "l": 0
+    },
+    "\u307f\u305a\u3042\u3081": {
+     "w": 0,
+     "l": 1
+    },
+    "soyukke": {
+     "w": 1,
+     "l": 0
+    },
+    "syosinsya": {
+     "w": 1,
+     "l": 0
+    },
+    "Oleksandr_Savsunenko": {
+     "w": 0,
+     "l": 1
+    },
+    "\u8c46\u672c\u8c46\u8c46\u5305": {
+     "w": 1,
+     "l": 0
+    },
+    "k66": {
+     "w": 1,
+     "l": 0
+    }
+   }
+  },
+  "James Cox & Henry Chao": {
+   "submissions": [
+    {
+     "sub": 54935503,
+     "n": 1045,
+     "first": "2026-07-23 20:03:43",
+     "last": "2026-07-28 18:33:27",
+     "wins": 639,
+     "losses": 406,
+     "ep_to_1000": 38,
+     "ep_to_1100": 191,
+     "ep_to_1150": 296,
+     "peak": 1252.2,
+     "final": 1141.7,
+     "longest_win_streak": 10
+    },
+    {
+     "sub": 54954310,
+     "n": 1139,
+     "first": "2026-07-24 15:18:14",
+     "last": "2026-07-30 13:30:10",
+     "wins": 683,
+     "losses": 456,
+     "ep_to_1000": 7,
+     "ep_to_1100": 9,
+     "ep_to_1150": 11,
+     "peak": 1202.9,
+     "final": 1159.5,
+     "longest_win_streak": 14
+    },
+    {
+     "sub": 55063047,
+     "n": 455,
+     "first": "2026-07-28 19:05:22",
+     "last": "2026-07-31 10:32:43",
+     "wins": 277,
+     "losses": 178,
+     "ep_to_1000": 7,
+     "ep_to_1100": 11,
+     "ep_to_1150": 11,
+     "peak": 1217.0,
+     "final": 1166.1,
+     "longest_win_streak": 14
+    },
+    {
+     "sub": 55135508,
+     "n": 344,
+     "first": "2026-07-31 11:11:03",
+     "last": "2026-08-01 21:34:49",
+     "wins": 214,
+     "losses": 130,
+     "ep_to_1000": 28,
+     "ep_to_1100": 70,
+     "ep_to_1150": 193,
+     "peak": 1177.1,
+     "final": 1134.4,
+     "longest_win_streak": 11
+    },
+    {
+     "sub": 55188658,
+     "n": 393,
+     "first": "2026-08-02 14:58:20",
+     "last": "2026-08-05 17:56:51",
+     "wins": 239,
+     "losses": 154,
+     "ep_to_1000": 20,
+     "ep_to_1100": 95,
+     "ep_to_1150": 278,
+     "peak": 1172.5,
+     "final": 1139.6,
+     "longest_win_streak": 8
+    },
+    {
+     "sub": 55188672,
+     "n": 154,
+     "first": "2026-08-02 14:59:08",
+     "last": "2026-08-05 17:56:51",
+     "wins": 94,
+     "losses": 60,
+     "ep_to_1000": 31,
+     "ep_to_1100": null,
+     "ep_to_1150": null,
+     "peak": 1037.1,
+     "final": 1027.3,
+     "longest_win_streak": 9
+    },
+    {
+     "sub": 55278235,
+     "n": 106,
+     "first": "2026-08-05 18:31:13",
+     "last": "2026-08-06 13:17:41",
+     "wins": 67,
+     "losses": 39,
+     "ep_to_1000": 9,
+     "ep_to_1100": 14,
+     "ep_to_1150": 16,
+     "peak": 1213.3,
+     "final": 1108.7,
+     "longest_win_streak": 14
+    },
+    {
+     "sub": 55278240,
+     "n": 126,
+     "first": "2026-08-05 18:31:27",
+     "last": "2026-08-06 12:09:42",
+     "wins": 82,
+     "losses": 44,
+     "ep_to_1000": 6,
+     "ep_to_1100": 10,
+     "ep_to_1150": null,
+     "peak": 1140.9,
+     "final": 1124.5,
+     "longest_win_streak": 10
+    }
+   ],
+   "n_episodes_total": 3762,
+   "n_replays_sampled": 147,
+   "distinct_lists": 2,
+   "lists": [
+    {
+     "sig": "1:9,3:2,4:2,5:1,6:2,63:2,96:3,108:1,140:1,184:2,272:1,756:3,978:1,1071:3,1088:1,1097:2,1098:2,1116:4,1121:4,1182:2,1197:2,1198:4,1205:2,1250:4",
+     "archetype": "Mega Kangaskhan ex",
+     "n_sampled": 78,
+     "subs": [
+      54935503,
+      54954310,
+      55063047,
+      55135508,
+      55188658,
+      55188672
+     ],
+     "episodes": [
+      90230099,
+      90040040,
+      89899370,
+      89778526,
+      89598295,
+      89560342,
+      89549401,
+      89539027
+     ],
+     "deck": [
+      "9x Basic {G} Energy (1)",
+      "2x Basic {W} Energy (3)",
+      "2x Basic {L} Energy (4)",
+      "1x Basic {P} Energy (5)",
+      "2x Basic {F} Energy (6)",
+      "2x Raging Bolt ex (63)",
+      "3x Teal Mask Ogerpon ex (96)",
+      "1x Wellspring Mask Ogerpon ex (108)",
+      "1x Fezandipiti ex (140)",
+      "2x Latias ex (184)",
+      "1x Lillie\u2019s Clefairy ex (272)",
+      "3x Mega Kangaskhan ex (756)",
+      "1x Passimian (978)",
+      "3x Meowth ex (1071)",
+      "1x Prime Catcher (1088)",
+      "2x Night Stretcher (1097)",
+      "2x Glass Trumpet (1098)",
+      "4x Energy Switch (1116)",
+      "4x Ultra Ball (1121)",
+      "2x Boss\u2019s Orders (1182)",
+      "2x Xerosic\u2019s Machinations (1197)",
+      "4x Crispin (1198)",
+      "2x Cyrano (1205)",
+      "4x Area Zero Underdepths (1250)"
+     ]
+    },
+    {
+     "sig": "1:9,3:1,4:2,5:2,6:2,63:2,96:3,108:1,140:1,184:2,272:1,756:3,978:1,1071:3,1088:1,1097:2,1098:2,1116:4,1121:4,1182:2,1197:2,1198:4,1205:2,1250:4",
+     "archetype": "Mega Kangaskhan ex",
+     "n_sampled": 39,
+     "subs": [
+      55278235,
+      55278240
+     ],
+     "episodes": [
+      90429179,
+      90345644,
+      90297552,
+      90292330,
+      90288702,
+      90282963,
+      90277296,
+      90272193
+     ],
+     "deck": [
+      "9x Basic {G} Energy (1)",
+      "1x Basic {W} Energy (3)",
+      "2x Basic {L} Energy (4)",
+      "2x Basic {P} Energy (5)",
+      "2x Basic {F} Energy (6)",
+      "2x Raging Bolt ex (63)",
+      "3x Teal Mask Ogerpon ex (96)",
+      "1x Wellspring Mask Ogerpon ex (108)",
+      "1x Fezandipiti ex (140)",
+      "2x Latias ex (184)",
+      "1x Lillie\u2019s Clefairy ex (272)",
+      "3x Mega Kangaskhan ex (756)",
+      "1x Passimian (978)",
+      "3x Meowth ex (1071)",
+      "1x Prime Catcher (1088)",
+      "2x Night Stretcher (1097)",
+      "2x Glass Trumpet (1098)",
+      "4x Energy Switch (1116)",
+      "4x Ultra Ball (1121)",
+      "2x Boss\u2019s Orders (1182)",
+      "2x Xerosic\u2019s Machinations (1197)",
+      "4x Crispin (1198)",
+      "2x Cyrano (1205)",
+      "4x Area Zero Underdepths (1250)"
+     ]
+    }
+   ],
+   "subs_with_multiple_lists": {},
+   "matchups": {
+    "Marnie's Grimmsnarl ex": {
+     "w": 33,
+     "l": 11
+    },
+    "Mega Kangaskhan ex": {
+     "w": 8,
+     "l": 16
+    },
+    "Fezandipiti ex": {
+     "w": 15,
+     "l": 4
+    },
+    "Mega Lopunny ex": {
+     "w": 3,
+     "l": 5
+    },
+    "Cynthia's Garchomp ex": {
+     "w": 2,
+     "l": 4
+    },
+    "Teal Mask Ogerpon ex": {
+     "w": 0,
+     "l": 6
+    },
+    "Dragapult ex": {
+     "w": 2,
+     "l": 2
+    },
+    "Ceruledge ex": {
+     "w": 2,
+     "l": 0
+    },
+    "Crustle": {
+     "w": 2,
+     "l": 0
+    },
+    "Mega Lucario ex": {
+     "w": 2,
+     "l": 0
+    }
+   },
+   "opp_teams": {
+    "James Cox & Henry Chao": {
+     "w": 4,
+     "l": 7
+    },
+    "me and the lads": {
+     "w": 6,
+     "l": 0
+    },
+    "JZ": {
+     "w": 2,
+     "l": 2
+    },
+    "Brahim": {
+     "w": 2,
+     "l": 2
+    },
+    "szlachetny snieg": {
+     "w": 4,
+     "l": 0
+    },
+    "keidroid": {
+     "w": 0,
+     "l": 4
+    },
+    "M Sato": {
+     "w": 2,
+     "l": 1
+    },
+    "ShumpeiNomura": {
+     "w": 1,
+     "l": 2
+    },
+    "palsystem": {
+     "w": 1,
+     "l": 1
+    },
+    "Lunariz": {
+     "w": 2,
+     "l": 0
+    },
+    "\u61d2\u60f0\u7684\u91d1\u67aa\u9c7c": {
+     "w": 2,
+     "l": 0
+    },
+    "crey joswick": {
+     "w": 2,
+     "l": 0
+    },
+    "THIRD PTCG Club": {
+     "w": 0,
+     "l": 2
+    },
+    "Yudai Ueno": {
+     "w": 0,
+     "l": 2
+    },
+    "qb": {
+     "w": 2,
+     "l": 0
+    },
+    "\u0431\u0443\u0440\u043c\u0430\u043b\u0434\u0438\u043d\u0438 (cifcifcifarrr-67)": {
+     "w": 0,
+     "l": 2
+    },
+    "vvs": {
+     "w": 2,
+     "l": 0
+    },
+    "\u5c71\u4e0a\u6d77\u8cca\u56e3": {
+     "w": 0,
+     "l": 2
+    },
+    "MissingNo.": {
+     "w": 0,
+     "l": 2
+    },
+    "Kh0a": {
+     "w": 2,
+     "l": 0
+    },
+    "Cabrera Consulting Group": {
+     "w": 2,
+     "l": 0
+    },
+    "Phil_Hellmuth": {
+     "w": 2,
+     "l": 0
+    },
+    "miya": {
+     "w": 2,
+     "l": 0
+    },
+    "Iolzpo + emonga": {
+     "w": 0,
+     "l": 2
+    },
+    "Iliamna": {
+     "w": 2,
+     "l": 0
+    },
+    "Majkel1337": {
+     "w": 0,
+     "l": 2
+    },
+    "sadwat": {
+     "w": 0,
+     "l": 2
+    },
+    "Rmy": {
+     "w": 0,
+     "l": 2
+    },
+    "Marshall Maximizer": {
+     "w": 0,
+     "l": 2
+    },
+    "flg": {
+     "w": 2,
+     "l": 0
+    },
+    "Jackuang": {
+     "w": 2,
+     "l": 0
+    },
+    "poppy457": {
+     "w": 2,
+     "l": 0
+    },
+    "MtN": {
+     "w": 2,
+     "l": 0
+    },
+    "Raja Biswas": {
+     "w": 2,
+     "l": 0
+    },
+    "Pokemon Siuuuu": {
+     "w": 0,
+     "l": 2
+    },
+    "nsytsqdtn": {
+     "w": 2,
+     "l": 0
+    },
+    "Aji Samudra": {
+     "w": 2,
+     "l": 0
+    },
+    "__Taichicchi__": {
+     "w": 2,
+     "l": 0
+    },
+    "malone001": {
+     "w": 2,
+     "l": 0
+    },
+    "Oshbocker": {
+     "w": 0,
+     "l": 2
+    },
+    "ScottZiemke": {
+     "w": 2,
+     "l": 0
+    },
+    "MTADA": {
+     "w": 0,
+     "l": 1
+    },
+    "tyffee": {
+     "w": 1,
+     "l": 0
+    },
+    "wwwwwwwwwwwwwwwwwwwwwwwwwwwwww": {
+     "w": 1,
+     "l": 0
+    },
+    "Ayanokoji Fan Club": {
+     "w": 1,
+     "l": 0
+    },
+    "Raihan Ramadistra": {
+     "w": 1,
+     "l": 0
+    },
+    "Battle Data Base": {
+     "w": 1,
+     "l": 0
+    },
+    "saeNeko": {
+     "w": 1,
+     "l": 0
+    },
+    "hotpotbro": {
+     "w": 0,
+     "l": 1
+    },
+    "AlphaStarmie": {
+     "w": 0,
+     "l": 1
+    },
+    "Pushu?": {
+     "w": 0,
+     "l": 1
+    },
+    "cyrus": {
+     "w": 0,
+     "l": 1
+    },
+    "Where is my orbit": {
+     "w": 1,
+     "l": 0
+    }
+   }
+  },
+  "@kdcyberdude": {
+   "submissions": [
+    {
+     "sub": 55183271,
+     "n": 205,
+     "first": "2026-08-02 10:19:50",
+     "last": "2026-08-03 16:39:36",
+     "wins": 123,
+     "losses": 82,
+     "ep_to_1000": 7,
+     "ep_to_1100": 11,
+     "ep_to_1150": 104,
+     "peak": 1170.4,
+     "final": 1121.3,
+     "longest_win_streak": 12
+    },
+    {
+     "sub": 55187358,
+     "n": 316,
+     "first": "2026-08-02 13:53:41",
+     "last": "2026-08-06 12:57:43",
+     "wins": 188,
+     "losses": 128,
+     "ep_to_1000": 9,
+     "ep_to_1100": 158,
+     "ep_to_1150": null,
+     "peak": 1148.8,
+     "final": 1132.2,
+     "longest_win_streak": 9
+    },
+    {
+     "sub": 55217189,
+     "n": 140,
+     "first": "2026-08-03 16:48:32",
+     "last": "2026-08-06 12:45:41",
+     "wins": 74,
+     "losses": 66,
+     "ep_to_1000": 7,
+     "ep_to_1100": null,
+     "ep_to_1150": null,
+     "peak": 1059.2,
+     "final": 946.3,
+     "longest_win_streak": 6
+    }
+   ],
+   "n_episodes_total": 661,
+   "n_replays_sampled": 36,
+   "distinct_lists": 2,
+   "lists": [
+    {
+     "sig": "7:10,104:2,112:4,646:4,647:3,648:3,860:2,1079:3,1080:1,1086:4,1097:3,1122:1,1137:1,1152:4,1182:2,1219:4,1227:4,1231:1,1259:4",
+     "archetype": "Marnie's Grimmsnarl ex",
+     "n_sampled": 22,
+     "subs": [
+      55183271,
+      55187358
+     ],
+     "episodes": [
+      90438257,
+      90294549,
+      90270909,
+      90106763,
+      90038624,
+      90024898,
+      90011214,
+      89865263
+     ],
+     "deck": [
+      "10x Basic {D} Energy (7)",
+      "2x Froslass (104)",
+      "4x Munkidori (112)",
+      "4x Marnie's Impidimp (646)",
+      "3x Marnie's Morgrem (647)",
+      "3x Marnie's Grimmsnarl ex (648)",
+      "2x Snorunt (860)",
+      "3x Rare Candy (1079)",
+      "1x Unfair Stamp (1080)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "3x Night Stretcher (1097)",
+      "1x Pok\u00e9gear 3.0 (1122)",
+      "1x Tool Scrapper (1137)",
+      "4x Pok\u00e9 Pad (1152)",
+      "2x Boss\u2019s Orders (1182)",
+      "4x Team Rocket's Petrel (1219)",
+      "4x Lillie's Determination (1227)",
+      "1x Dawn (1231)",
+      "4x Spikemuth Gym (1259)"
+     ]
+    },
+    {
+     "sig": "1:1,11:4,14:4,18:4,344:3,345:3,756:4,1086:4,1120:4,1122:4,1123:4,1147:4,1159:1,1182:2,1197:4,1225:4,1227:4,1264:2",
+     "archetype": "Mega Kangaskhan ex",
+     "n_sampled": 14,
+     "subs": [
+      55217189
+     ],
+     "episodes": [
+      90436202,
+      90338154,
+      90254259,
+      90149837,
+      90058539,
+      89998157,
+      89884810,
+      89809220
+     ],
+     "deck": [
+      "1x Basic {G} Energy (1)",
+      "4x Mist Energy (11)",
+      "4x Spiky Energy (14)",
+      "4x Grow Grass Energy (18)",
+      "3x Dwebble (344)",
+      "3x Crustle (345)",
+      "4x Mega Kangaskhan ex (756)",
+      "4x Buddy-Buddy Poffin (1086)",
+      "4x Crushing Hammer (1120)",
+      "4x Pok\u00e9gear 3.0 (1122)",
+      "4x Switch (1123)",
+      "4x Jumbo Ice Cream (1147)",
+      "1x Hero\u2019s Cape (1159)",
+      "2x Boss\u2019s Orders (1182)",
+      "4x Xerosic\u2019s Machinations (1197)",
+      "4x Hilda (1225)",
+      "4x Lillie's Determination (1227)",
+      "2x Battle Cage (1264)"
+     ]
+    }
+   ],
+   "subs_with_multiple_lists": {},
+   "matchups": {
+    "Marnie's Grimmsnarl ex": {
+     "w": 7,
+     "l": 4
+    },
+    "Fezandipiti ex": {
+     "w": 5,
+     "l": 2
+    },
+    "Mega Lopunny ex": {
+     "w": 3,
+     "l": 4
+    },
+    "Mega Kangaskhan ex": {
+     "w": 0,
+     "l": 4
+    },
+    "Dragapult ex": {
+     "w": 1,
+     "l": 1
+    },
+    "Hydrapple ex": {
+     "w": 1,
+     "l": 0
+    },
+    "Teal Mask Ogerpon ex": {
+     "w": 1,
+     "l": 0
+    },
+    "Cynthia's Garchomp ex": {
+     "w": 0,
+     "l": 1
+    },
+    "Mega Venusaur ex": {
+     "w": 1,
+     "l": 0
+    },
+    "Team Rocket's Mewtwo ex": {
+     "w": 0,
+     "l": 1
+    }
+   },
+   "opp_teams": {
+    "@kdcyberdude": {
+     "w": 2,
+     "l": 1
+    },
+    "Roy Pidril": {
+     "w": 0,
+     "l": 2
+    },
+    "M Sato": {
+     "w": 1,
+     "l": 1
+    },
+    "\u3084\u308b\u6c17\u5143\u6c17\u30df\u30ef\u30cf\u30eb\u30ad": {
+     "w": 1,
+     "l": 1
+    },
+    "flg": {
+     "w": 1,
+     "l": 0
+    },
+    "Takumu Hata": {
+     "w": 1,
+     "l": 0
+    },
+    "Pachirisu": {
+     "w": 1,
+     "l": 0
+    },
+    "Matsu": {
+     "w": 1,
+     "l": 0
+    },
+    "takayosi": {
+     "w": 1,
+     "l": 0
+    },
+    "Battle Data Base": {
+     "w": 0,
+     "l": 1
+    },
+    "NoOneAhead": {
+     "w": 0,
+     "l": 1
+    },
+    "ZETADIVISION": {
+     "w": 1,
+     "l": 0
+    },
+    "Yigit Kayali": {
+     "w": 0,
+     "l": 1
+    },
+    "tonakaiiii": {
+     "w": 1,
+     "l": 0
+    },
+    "cabbage patch": {
+     "w": 0,
+     "l": 1
+    },
+    "213tubo": {
+     "w": 1,
+     "l": 0
+    },
+    "James Cox & Henry Chao": {
+     "w": 0,
+     "l": 1
+    },
+    "insuperabilehart": {
+     "w": 0,
+     "l": 1
+    },
+    "\u60f3\u8981\u6210\u4e3akaggle\u5927\u5e08": {
+     "w": 0,
+     "l": 1
+    },
+    "AlphaStarmie": {
+     "w": 1,
+     "l": 0
+    },
+    "\u5c71\u4e0a\u6d77\u8cca\u56e3": {
+     "w": 1,
+     "l": 0
+    },
+    "__Taichicchi__": {
+     "w": 0,
+     "l": 1
+    },
+    "LumenLiquidity": {
+     "w": 0,
+     "l": 1
+    },
+    "\u5b9d\u7cd5\u624b": {
+     "w": 1,
+     "l": 0
+    },
+    "Mega Regigigas Ex Vmax": {
+     "w": 1,
+     "l": 0
+    },
+    "lmaffei": {
+     "w": 0,
+     "l": 1
+    },
+    "ShumpeiNomura": {
+     "w": 0,
+     "l": 1
+    },
+    "\u674e\u79c9\u53e1\uff08ntumlnoob\uff09": {
+     "w": 1,
+     "l": 0
+    },
+    "LiamK": {
+     "w": 0,
+     "l": 1
+    },
+    "bono": {
+     "w": 1,
+     "l": 0
+    },
+    "lolzpo + emonga": {
+     "w": 1,
+     "l": 0
+    }
+   }
+  }
+ },
+ "trajectories": [
+  {
+   "team": "@kdcyberdude",
+   "sub": 55183271,
+   "n": 205,
+   "first": "2026-08-02 10:19:50",
+   "last": "2026-08-03 16:39:36",
+   "wins": 123,
+   "losses": 82,
+   "to1000": 7,
+   "to1100": 11.0,
+   "to1150": 104.0,
+   "peak": 1170.4,
+   "final": 1121.3,
+   "streak": 12
+  },
+  {
+   "team": "@kdcyberdude",
+   "sub": 55187358,
+   "n": 316,
+   "first": "2026-08-02 13:53:41",
+   "last": "2026-08-06 12:57:43",
+   "wins": 188,
+   "losses": 128,
+   "to1000": 9,
+   "to1100": 158.0,
+   "to1150": NaN,
+   "peak": 1148.8,
+   "final": 1132.2,
+   "streak": 9
+  },
+  {
+   "team": "@kdcyberdude",
+   "sub": 55217189,
+   "n": 140,
+   "first": "2026-08-03 16:48:32",
+   "last": "2026-08-06 12:45:41",
+   "wins": 74,
+   "losses": 66,
+   "to1000": 7,
+   "to1100": NaN,
+   "to1150": NaN,
+   "peak": 1059.2,
+   "final": 946.3,
+   "streak": 6
+  },
+  {
+   "team": "James Cox & Henry Chao",
+   "sub": 54935503,
+   "n": 1045,
+   "first": "2026-07-23 20:03:43",
+   "last": "2026-07-28 18:33:27",
+   "wins": 639,
+   "losses": 406,
+   "to1000": 38,
+   "to1100": 191.0,
+   "to1150": 296.0,
+   "peak": 1252.2,
+   "final": 1141.7,
+   "streak": 10
+  },
+  {
+   "team": "James Cox & Henry Chao",
+   "sub": 54954310,
+   "n": 1139,
+   "first": "2026-07-24 15:18:14",
+   "last": "2026-07-30 13:30:10",
+   "wins": 683,
+   "losses": 456,
+   "to1000": 7,
+   "to1100": 9.0,
+   "to1150": 11.0,
+   "peak": 1202.9,
+   "final": 1159.5,
+   "streak": 14
+  },
+  {
+   "team": "James Cox & Henry Chao",
+   "sub": 55063047,
+   "n": 455,
+   "first": "2026-07-28 19:05:22",
+   "last": "2026-07-31 10:32:43",
+   "wins": 277,
+   "losses": 178,
+   "to1000": 7,
+   "to1100": 11.0,
+   "to1150": 11.0,
+   "peak": 1217.0,
+   "final": 1166.1,
+   "streak": 14
+  },
+  {
+   "team": "James Cox & Henry Chao",
+   "sub": 55135508,
+   "n": 344,
+   "first": "2026-07-31 11:11:03",
+   "last": "2026-08-01 21:34:49",
+   "wins": 214,
+   "losses": 130,
+   "to1000": 28,
+   "to1100": 70.0,
+   "to1150": 193.0,
+   "peak": 1177.1,
+   "final": 1134.4,
+   "streak": 11
+  },
+  {
+   "team": "James Cox & Henry Chao",
+   "sub": 55188658,
+   "n": 393,
+   "first": "2026-08-02 14:58:20",
+   "last": "2026-08-05 17:56:51",
+   "wins": 239,
+   "losses": 154,
+   "to1000": 20,
+   "to1100": 95.0,
+   "to1150": 278.0,
+   "peak": 1172.5,
+   "final": 1139.6,
+   "streak": 8
+  },
+  {
+   "team": "James Cox & Henry Chao",
+   "sub": 55188672,
+   "n": 154,
+   "first": "2026-08-02 14:59:08",
+   "last": "2026-08-05 17:56:51",
+   "wins": 94,
+   "losses": 60,
+   "to1000": 31,
+   "to1100": NaN,
+   "to1150": NaN,
+   "peak": 1037.1,
+   "final": 1027.3,
+   "streak": 9
+  },
+  {
+   "team": "James Cox & Henry Chao",
+   "sub": 55278235,
+   "n": 106,
+   "first": "2026-08-05 18:31:13",
+   "last": "2026-08-06 13:17:41",
+   "wins": 67,
+   "losses": 39,
+   "to1000": 9,
+   "to1100": 14.0,
+   "to1150": 16.0,
+   "peak": 1213.3,
+   "final": 1108.7,
+   "streak": 14
+  },
+  {
+   "team": "James Cox & Henry Chao",
+   "sub": 55278240,
+   "n": 126,
+   "first": "2026-08-05 18:31:27",
+   "last": "2026-08-06 12:09:42",
+   "wins": 82,
+   "losses": 44,
+   "to1000": 6,
+   "to1100": 10.0,
+   "to1150": NaN,
+   "peak": 1140.9,
+   "final": 1124.5,
+   "streak": 10
+  },
+  {
+   "team": "LiamK",
+   "sub": 54403820,
+   "n": 868,
+   "first": "2026-07-06 18:17:43",
+   "last": "2026-07-09 06:25:21",
+   "wins": 505,
+   "losses": 362,
+   "to1000": 18,
+   "to1100": 155.0,
+   "to1150": NaN,
+   "peak": 1110.5,
+   "final": 1056.6,
+   "streak": 8
+  },
+  {
+   "team": "LiamK",
+   "sub": 54405730,
+   "n": 1048,
+   "first": "2026-07-06 20:00:40",
+   "last": "2026-07-09 18:05:22",
+   "wins": 640,
+   "losses": 408,
+   "to1000": 6,
+   "to1100": 193.0,
+   "to1150": 339.0,
+   "peak": 1154.1,
+   "final": 1059.9,
+   "streak": 12
+  },
+  {
+   "team": "LiamK",
+   "sub": 54484720,
+   "n": 649,
+   "first": "2026-07-09 06:26:20",
+   "last": "2026-07-13 05:19:34",
+   "wins": 381,
+   "losses": 268,
+   "to1000": 109,
+   "to1100": 282.0,
+   "to1150": 414.0,
+   "peak": 1160.0,
+   "final": 1069.1,
+   "streak": 10
+  },
+  {
+   "team": "LiamK",
+   "sub": 54503495,
+   "n": 1856,
+   "first": "2026-07-09 18:27:33",
+   "last": "2026-07-16 06:51:17",
+   "wins": 1023,
+   "losses": 833,
+   "to1000": 9,
+   "to1100": 11.0,
+   "to1150": 13.0,
+   "peak": 1217.3,
+   "final": 1039.1,
+   "streak": 12
+  },
+  {
+   "team": "LiamK",
+   "sub": 54634530,
+   "n": 1941,
+   "first": "2026-07-13 05:36:41",
+   "last": "2026-07-20 01:05:23",
+   "wins": 1068,
+   "losses": 873,
+   "to1000": 7,
+   "to1100": 26.0,
+   "to1150": 63.0,
+   "peak": 1177.2,
+   "final": 1022.0,
+   "streak": 10
+  },
+  {
+   "team": "LiamK",
+   "sub": 54754477,
+   "n": 799,
+   "first": "2026-07-16 06:55:34",
+   "last": "2026-07-20 01:13:22",
+   "wins": 422,
+   "losses": 377,
+   "to1000": 6,
+   "to1100": 9.0,
+   "to1150": 13.0,
+   "peak": 1192.9,
+   "final": 1006.1,
+   "streak": 9
+  },
+  {
+   "team": "LiamK",
+   "sub": 54895414,
+   "n": 1001,
+   "first": "2026-07-22 05:58:29",
+   "last": "2026-07-26 06:59:51",
+   "wins": 564,
+   "losses": 435,
+   "to1000": 7,
+   "to1100": 19.0,
+   "to1150": 21.0,
+   "peak": 1178.1,
+   "final": 1040.8,
+   "streak": 13
+  },
+  {
+   "team": "LiamK",
+   "sub": 54907538,
+   "n": 870,
+   "first": "2026-07-22 16:11:23",
+   "last": "2026-07-26 21:40:31",
+   "wins": 516,
+   "losses": 352,
+   "to1000": 11,
+   "to1100": 153.0,
+   "to1150": 247.0,
+   "peak": 1173.4,
+   "final": 1093.3,
+   "streak": 12
+  },
+  {
+   "team": "LiamK",
+   "sub": 55011514,
+   "n": 1028,
+   "first": "2026-07-26 21:41:40",
+   "last": "2026-08-01 04:46:00",
+   "wins": 606,
+   "losses": 421,
+   "to1000": 8,
+   "to1100": 11.0,
+   "to1150": 12.0,
+   "peak": 1212.8,
+   "final": 1093.8,
+   "streak": 11
+  },
+  {
+   "team": "LiamK",
+   "sub": 55090635,
+   "n": 760,
+   "first": "2026-07-29 19:15:43",
+   "last": "2026-08-02 22:03:10",
+   "wins": 436,
+   "losses": 324,
+   "to1000": 7,
+   "to1100": 16.0,
+   "to1150": 21.0,
+   "peak": 1211.1,
+   "final": 1107.0,
+   "streak": 15
+  },
+  {
+   "team": "LiamK",
+   "sub": 55195669,
+   "n": 199,
+   "first": "2026-08-02 22:03:09",
+   "last": "2026-08-04 19:44:38",
+   "wins": 109,
+   "losses": 89,
+   "to1000": 9,
+   "to1100": 12.0,
+   "to1150": 23.0,
+   "peak": 1194.1,
+   "final": 1103.2,
+   "streak": 8
+  },
+  {
+   "team": "LiamK",
+   "sub": 55195673,
+   "n": 114,
+   "first": "2026-08-02 22:03:33",
+   "last": "2026-08-04 19:32:36",
+   "wins": 76,
+   "losses": 38,
+   "to1000": 71,
+   "to1100": NaN,
+   "to1150": NaN,
+   "peak": 1024.4,
+   "final": 1008.9,
+   "streak": 17
+  },
+  {
+   "team": "LiamK",
+   "sub": 55248957,
+   "n": 116,
+   "first": "2026-08-04 19:58:33",
+   "last": "2026-08-06 12:33:43",
+   "wins": 79,
+   "losses": 37,
+   "to1000": 64,
+   "to1100": NaN,
+   "to1150": NaN,
+   "peak": 1049.7,
+   "final": 1035.2,
+   "streak": 8
+  },
+  {
+   "team": "LiamK",
+   "sub": 55248965,
+   "n": 227,
+   "first": "2026-08-04 19:59:05",
+   "last": "2026-08-06 13:25:41",
+   "wins": 139,
+   "losses": 88,
+   "to1000": 8,
+   "to1100": 13.0,
+   "to1150": 21.0,
+   "peak": 1195.6,
+   "final": 1185.5,
+   "streak": 12
+  },
+  {
+   "team": "Raihan Ramadistra",
+   "sub": 54421283,
+   "n": 192,
+   "first": "2026-07-07 08:03:53",
+   "last": "2026-07-08 01:05:24",
+   "wins": 114,
+   "losses": 78,
+   "to1000": 11,
+   "to1100": NaN,
+   "to1150": NaN,
+   "peak": 1087.4,
+   "final": 1019.2,
+   "streak": 7
+  },
+  {
+   "team": "Raihan Ramadistra",
+   "sub": 54445400,
+   "n": 603,
+   "first": "2026-07-08 01:13:57",
+   "last": "2026-07-09 15:09:17",
+   "wins": 366,
+   "losses": 237,
+   "to1000": 17,
+   "to1100": 137.0,
+   "to1150": NaN,
+   "peak": 1145.1,
+   "final": 1070.8,
+   "streak": 10
+  },
+  {
+   "team": "Raihan Ramadistra",
+   "sub": 54499492,
+   "n": 642,
+   "first": "2026-07-09 15:43:17",
+   "last": "2026-07-11 05:15:11",
+   "wins": 381,
+   "losses": 261,
+   "to1000": 7,
+   "to1100": 10.0,
+   "to1150": 142.0,
+   "peak": 1172.5,
+   "final": 1112.7,
+   "streak": 10
+  },
+  {
+   "team": "Raihan Ramadistra",
+   "sub": 55153037,
+   "n": 112,
+   "first": "2026-08-01 03:42:35",
+   "last": "2026-08-02 04:23:05",
+   "wins": 65,
+   "losses": 47,
+   "to1000": 13,
+   "to1100": NaN,
+   "to1150": NaN,
+   "peak": 1054.6,
+   "final": 1031.9,
+   "streak": 8
+  },
+  {
+   "team": "Raihan Ramadistra",
+   "sub": 55171940,
+   "n": 328,
+   "first": "2026-08-01 22:35:31",
+   "last": "2026-08-03 05:07:18",
+   "wins": 185,
+   "losses": 143,
+   "to1000": 11,
+   "to1100": 15.0,
+   "to1150": 27.0,
+   "peak": 1237.8,
+   "final": 1116.6,
+   "streak": 11
+  },
+  {
+   "team": "Raihan Ramadistra",
+   "sub": 55177269,
+   "n": 800,
+   "first": "2026-08-02 04:23:37",
+   "last": "2026-08-06 13:29:43",
+   "wins": 466,
+   "losses": 334,
+   "to1000": 13,
+   "to1100": 66.0,
+   "to1150": 137.0,
+   "peak": 1226.2,
+   "final": 1116.1,
+   "streak": 9
+  },
+  {
+   "team": "Raihan Ramadistra",
+   "sub": 55202823,
+   "n": 382,
+   "first": "2026-08-03 05:09:03",
+   "last": "2026-08-06 12:37:41",
+   "wins": 239,
+   "losses": 143,
+   "to1000": 34,
+   "to1100": 88.0,
+   "to1150": 189.0,
+   "peak": 1182.0,
+   "final": 1127.3,
+   "streak": 11
+  },
+  {
+   "team": "flg",
+   "sub": 55004495,
+   "n": 392,
+   "first": "2026-07-26 15:06:39",
+   "last": "2026-07-27 15:45:09",
+   "wins": 261,
+   "losses": 131,
+   "to1000": 7,
+   "to1100": 9.0,
+   "to1150": 11.0,
+   "peak": 1255.5,
+   "final": 1228.3,
+   "streak": 14
+  },
+  {
+   "team": "flg",
+   "sub": 55004691,
+   "n": 421,
+   "first": "2026-07-26 15:17:47",
+   "last": "2026-07-27 16:13:07",
+   "wins": 271,
+   "losses": 150,
+   "to1000": 10,
+   "to1100": 16.0,
+   "to1150": 28.0,
+   "peak": 1222.3,
+   "final": 1169.0,
+   "streak": 9
+  },
+  {
+   "team": "flg",
+   "sub": 55033309,
+   "n": 1028,
+   "first": "2026-07-27 16:06:01",
+   "last": "2026-08-05 14:48:55",
+   "wins": 585,
+   "losses": 443,
+   "to1000": 6,
+   "to1100": 14.0,
+   "to1150": 16.0,
+   "peak": 1227.5,
+   "final": 1100.2,
+   "streak": 13
+  },
+  {
+   "team": "flg",
+   "sub": 55033457,
+   "n": 1512,
+   "first": "2026-07-27 16:13:33",
+   "last": "2026-08-05 16:02:12",
+   "wins": 876,
+   "losses": 635,
+   "to1000": 10,
+   "to1100": 12.0,
+   "to1150": 14.0,
+   "peak": 1219.3,
+   "final": 1035.5,
+   "streak": 13
+  },
+  {
+   "team": "flg",
+   "sub": 55275219,
+   "n": 147,
+   "first": "2026-08-05 16:08:41",
+   "last": "2026-08-06 05:45:32",
+   "wins": 105,
+   "losses": 42,
+   "to1000": 14,
+   "to1100": 25.0,
+   "to1150": 33.0,
+   "peak": 1212.1,
+   "final": 1204.1,
+   "streak": 10
+  },
+  {
+   "team": "flg",
+   "sub": 55275287,
+   "n": 97,
+   "first": "2026-08-05 16:11:45",
+   "last": "2026-08-06 06:17:31",
+   "wins": 59,
+   "losses": 38,
+   "to1000": 11,
+   "to1100": 18.0,
+   "to1150": NaN,
+   "peak": 1136.8,
+   "final": 1099.1,
+   "streak": 10
+  },
+  {
+   "team": "flg",
+   "sub": 55290684,
+   "n": 66,
+   "first": "2026-08-06 06:24:03",
+   "last": "2026-08-06 12:49:41",
+   "wins": 47,
+   "losses": 19,
+   "to1000": 13,
+   "to1100": 51.0,
+   "to1150": NaN,
+   "peak": 1130.9,
+   "final": 1122.7,
+   "streak": 8
+  },
+  {
+   "team": "flg",
+   "sub": 55290732,
+   "n": 59,
+   "first": "2026-08-06 06:26:18",
+   "last": "2026-08-06 12:45:41",
+   "wins": 46,
+   "losses": 13,
+   "to1000": 46,
+   "to1100": NaN,
+   "to1150": NaN,
+   "peak": 1028.8,
+   "final": 1011.4,
+   "streak": 20
+  }
+ ]
+}
