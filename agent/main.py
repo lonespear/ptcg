@@ -495,6 +495,32 @@ def _policy(obs) -> list[int]:
     if any(_g(o, "type") in MAIN_PRIORITY for o in options):
         return [_choose_main(options, obs)]
 
+    # E8: effect-damage target prompts (DAMAGE_COUNTER / _ANY / DAMAGE).
+    # The >=1100 field secures kills here: lowest remaining HP among
+    # opposing in-play targets, with the counter-mover engine (Munkidori)
+    # worth ~50 HP of extra priority. The generic card ranking below picked
+    # their biggest, healthiest card instead (field agreement 0.11-0.13).
+    if ctx in (13, 14, 15) and OPT_CARD in types and max_count == 1:
+        me = _g(_g(obs, "current"), "yourIndex", 0)
+        best_i, best_key = None, None
+        for i, o in enumerate(options):
+            pi = _g(o, "playerIndex")
+            if pi is None or pi == me:
+                continue
+            zone = _zone(obs, _g(o, "area"), pi)
+            idx = _g(o, "index")
+            mon = zone[idx] if (idx is not None and idx < len(zone)) \
+                else None
+            if not mon:
+                continue
+            hp = _g(mon, "hp", 0) or 0
+            bonus = 50.0 if int(_g(mon, "id", 0) or 0) in (112,) else 0.0
+            key = (bonus - hp, -i)
+            if best_key is None or key > best_key:
+                best_i, best_key = i, key
+        if best_i is not None:
+            return [best_i]
+
     # Card choices: put the most valuable card where we want it, and the least
     # valuable card where we don't.
     if OPT_CARD in types:
