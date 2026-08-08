@@ -46,7 +46,23 @@ def main() -> None:
         # Explicit encoding: the file contains "Pokémon", and Windows would
         # otherwise decode it as cp1252 and raise — which silently skipped this
         # whole gate once.
-        src = (tmp / "main.py").read_text(encoding="utf-8")
+        # The grader resolves the entry point as the LAST callable by dict
+        # insertion order — `[v for v in env.values() if callable(v)][-1]` — not
+        # by the name `agent`. So a helper defined after agent() silently
+        # becomes the submitted agent, and the episode dies as INVALID. This is
+        # one edit away at all times, so it is checked rather than remembered.
+        import ast
+        src_path = tmp / "main.py"
+        tree = ast.parse(src_path.read_text(encoding="utf-8"))
+        funcs = [n.name for n in tree.body
+                 if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+        if funcs and funcs[-1] != "agent":
+            sys.exit(f"FAIL: agent() must be the last function defined in "
+                     f"main.py, but {funcs[-1]}() comes after it. The grader "
+                     f"would run {funcs[-1]}() as the agent.")
+        print("  agent() is the last callable — grader will pick it")
+
+        src = src_path.read_text(encoding="utf-8")
         if "__file__" in src and "except NameError" not in src:
             sys.exit("FAIL: main.py uses __file__ without a NameError guard — "
                      "the grader exec()s the file and __file__ is undefined")
