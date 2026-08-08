@@ -1,4 +1,19 @@
-**Last updated: 2026-08-08 ~02:35 UTC (Aug 7 night)**
+**Last updated: 2026-08-08 ~11:50 UTC (Aug 8 morning)**
+
+## Update — Aug 8 morning (v6 up: pilot fix + the proven list)
+
+- **v6 SUBMITTED**: the overnight-gated effect-target fix (on ctx-13/14/15
+  damage-counter prompts, secure the kill on the lowest-HP opposing target,
+  Munkidori prioritized — +4.7pt driving Grimmsnarl over 900 games, 5-cell
+  no-regression clean) on the ORIGINAL Ogerpon list. Ladder verdict from
+  the overnight pair: both GA deck variants converged below the original
+  list (629/692 vs 863), so deck experiments yield to pilot gains for now.
+  Scored pair = v5 + v6; 3 team slots remain today.
+- D46 GA finished both machines (90 + 30 eras, 37-cell real-ladder panel):
+  grimmsnarl-mirror elite 0.64 raw is our best deck but unsubmittable (our
+  pilot can't drive the ability engine — measured 0/30, fix queue open);
+  the low-energy ENGINE chain hit 0.50 and was still improving at era 65.
+  v6-b challenger gate (GA elites under the v6 pilot) is running now.
 
 ## Update — Aug 7 late night (v5 up; a pilot gap measured)
 
