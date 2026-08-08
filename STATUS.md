@@ -1,4 +1,39 @@
-**Last updated: 2026-08-08 ~12:40 UTC (Aug 8 afternoon)**
+**Last updated: 2026-08-08 ~14:30 UTC (Aug 8 afternoon)**
+
+## Update — Aug 8 late afternoon: **our 300-game gates were lying to us**
+
+Jon — this is the most useful thing we've learned all week, and it applies
+to your gates as much as ours.
+
+We re-ran four candidate/cell combinations at 600 games on a fresh seed
+block. **Three of four flipped sign**, always in the same direction, always
+understating the candidate:
+
+| cell / arm | 300 games | 600 games |
+|---|---|---|
+| grimmsnarl / lethal1 | −2.7 pt | **+6.2 pt** (z=+2.79) |
+| lucario / lethal2 | −4.7 pt | **+12.5 pt** (z=+5.24) |
+| lucario / lethal1 | −1.7 pt | **+12.9 pt** (z=+5.38) |
+| self-mirror / lethal2 | 0.4733 | **0.6733** (z=+8.49) |
+
+The consequence: v7 is not a +2.4 pt change as our 300-game gate reported.
+Against the frozen v6 arm at 600 games a cell it is **+13 points pooled**
+(0.4111 → 0.5411 over 1800 games), and the Dud-Alakazam cell — our worst
+matchup, the archetype the 22-day leader plays — goes 0.2817 → 0.4783. The
+self-mirror says v7 beats v6 about 2:1.
+
+**We've retired 300-game cells as a decision instrument.** They resolve only
+effects above roughly 8-10 points. Ship and kill decisions now need 600
+games minimum on a named seed block against a baseline pinned to a commit,
+never to the working tree. If you have candidates you killed on ~300-game
+evidence, they deserve a rerun — we're re-testing four of ours, including a
+neural evaluator that "failed" by 0.7 points against a 3-point bar.
+
+v7 was also re-staged as a result (commit 7656b69): the arm that teaches the
+evaluator about damage walls, not just the damage function. The two arms are
+indistinguishable on the panel, but only this one stops the search from
+*valuing* punches into an immune defender — it cuts wasted attack turns 27%
+against the Cornerstone list where the other managed 8%.
 
 ## Update — Aug 8 afternoon: v6 crashed back to 782; v7 staged on a real bug
 
