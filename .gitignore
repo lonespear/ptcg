@@ -39,6 +39,10 @@ data/*
 !data/analysis/
 data/analysis/*
 !data/analysis/trajectory_curves.json
+# D47 neural leaf: winning model + fit reports + gate results + attribution
+# examples (ptcg/leaf/train.py and scripts/leaf_gates.sh regenerate them;
+# the training parquets stay out — 8 GB, rebuilt by ptcg/leaf/build_table.py).
+!data/analysis/leaf/
 # The v2 ladder autopsy: loss taxonomy over the real ladder games (report +
 # machine-readable companion; scripts/autopsy_v2.py regenerates the json).
 !data/analysis/LADDER_AUTOPSY_V2.md

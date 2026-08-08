@@ -1,0 +1,73 @@
+[
+ {
+  "group": 162074686255291,
+  "date": "selfplay_archaludon_gate",
+  "our_archetype": "archaludon",
+  "opp_archetype": "Teal Mask Ogerpon ex",
+  "turn": 6,
+  "candidates": [
+   {
+    "cand": 0,
+    "net": 0.7365355268120766,
+    "linear": -2838.35,
+    "p_win": 0.6357306640023922,
+    "is_chosen": false
+   },
+   {
+    "cand": 2,
+    "net": -0.6224414929747581,
+    "linear": 245.8,
+    "p_win": 0.7536097247382112,
+    "is_chosen": true
+   },
+   {
+    "cand": 3,
+    "net": -2.0441397055983543,
+    "linear": -1140.35,
+    "p_win": 0.7903025902340814,
+    "is_chosen": false
+   },
+   {
+    "cand": 5,
+    "net": -2.601384960114956,
+    "linear": -1430.8,
+    "p_win": 0.7083907164634807,
+    "is_chosen": false
+   }
+  ],
+  "net_top_vs_runnerup_drivers": [
+   {
+    "feature": "damage_me",
+    "delta_contrib": 2.224949687719345
+   },
+   {
+    "feature": "evo_avail_them",
+    "delta_contrib": 0.7500847578048706
+   },
+   {
+    "feature": "bench_me_lag2",
+    "delta_contrib": 0.6126276701688766
+   },
+   {
+    "feature": "hand_them",
+    "delta_contrib": 0.5557407736778259
+   },
+   {
+    "feature": "bench_them_lag2",
+    "delta_contrib": 0.5393356382846832
+   },
+   {
+    "feature": "min_prizes",
+    "delta_contrib": -0.4981963261961937
+   },
+   {
+    "feature": "evo_steps_min_them",
+    "delta_contrib": -0.4938012808561325
+   },
+   {
+    "feature": "bench_them",
+    "delta_contrib": -0.4451204240322113
+   }
+  ]
+ }
+]

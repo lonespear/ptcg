@@ -1,0 +1,66 @@
+[
+ {
+  "group": 90643609079,
+  "date": "2026-08-07",
+  "our_archetype": "Marnie's Grimmsnarl ex",
+  "opp_archetype": "Fezandipiti ex",
+  "turn": 6,
+  "candidates": [
+   {
+    "cand": 0,
+    "net": 5.213847078382969,
+    "linear": 2809.8,
+    "p_win": 0.7744152483740668,
+    "is_chosen": true
+   },
+   {
+    "cand": 1,
+    "net": 3.660918153822422,
+    "linear": 2749.8,
+    "p_win": 0.7604247185653701,
+    "is_chosen": false
+   },
+   {
+    "cand": 2,
+    "net": 0.6330564394593239,
+    "linear": 336.8,
+    "p_win": 0.543466032628557,
+    "is_chosen": false
+   }
+  ],
+  "net_top_vs_runnerup_drivers": [
+   {
+    "feature": "hp_me",
+    "delta_contrib": 0.7321318089962006
+   },
+   {
+    "feature": "energy_traj",
+    "delta_contrib": -0.6532340026460588
+   },
+   {
+    "feature": "no_active_them",
+    "delta_contrib": 0.44278237223625183
+   },
+   {
+    "feature": "energy_gaink_me",
+    "delta_contrib": 0.4318292438983917
+   },
+   {
+    "feature": "accel_rate_me",
+    "delta_contrib": -0.42860302329063416
+   },
+   {
+    "feature": "energy_me_lag3",
+    "delta_contrib": -0.40824756026268005
+   },
+   {
+    "feature": "energy_accel_me",
+    "delta_contrib": -0.3506945166736841
+   },
+   {
+    "feature": "hp_diff",
+    "delta_contrib": 0.332319974899292
+   }
+  ]
+ }
+]

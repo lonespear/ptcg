@@ -1,0 +1,26 @@
+{
+ "a": "agent/main.py",
+ "deck_a": "data/v6b_engine_deck.csv",
+ "specialist": "external/archaludon_agent.py",
+ "deck_specialist": "external/archaludon_deck.json",
+ "env": {},
+ "games": 300,
+ "seed0": 94000,
+ "decided": 300,
+ "a_wins": 192,
+ "b_wins": 108,
+ "draws": 0,
+ "a_win_rate": 0.64,
+ "clean_games": 126,
+ "a_clean": 18,
+ "b_clean": 108,
+ "a_win_rate_clean": 0.1429,
+ "a_error_forfeits": 0,
+ "b_error_forfeits": 174,
+ "n_errors": 174,
+ "errors": [
+  "agent 1 returned []",
+  "agent 0 returned []"
+ ],
+ "seconds": 13.7
+}

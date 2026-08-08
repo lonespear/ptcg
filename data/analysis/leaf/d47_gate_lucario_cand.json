@@ -1,0 +1,23 @@
+{
+ "a": "build/agents/neural_leaf_v1/main.py",
+ "deck_a": "agent/deck.csv",
+ "specialist": "external/lucario_agent.py",
+ "deck_specialist": "external/lucario_deck.json",
+ "env": {},
+ "games": 300,
+ "seed0": 94000,
+ "decided": 300,
+ "a_wins": 106,
+ "b_wins": 194,
+ "draws": 0,
+ "a_win_rate": 0.3533,
+ "clean_games": 300,
+ "a_clean": 106,
+ "b_clean": 194,
+ "a_win_rate_clean": 0.3533,
+ "a_error_forfeits": 0,
+ "b_error_forfeits": 0,
+ "n_errors": 0,
+ "errors": [],
+ "seconds": 37.3
+}

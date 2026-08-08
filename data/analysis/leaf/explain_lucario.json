@@ -1,0 +1,80 @@
+[
+ {
+  "group": 90627549091,
+  "date": "2026-08-07",
+  "our_archetype": "Mega Lucario ex",
+  "opp_archetype": "Marnie's Grimmsnarl ex",
+  "turn": 6,
+  "candidates": [
+   {
+    "cand": 0,
+    "net": 2.732234872877598,
+    "linear": 3511.7,
+    "p_win": 0.7908597344086251,
+    "is_chosen": false
+   },
+   {
+    "cand": 1,
+    "net": 3.1095749512314796,
+    "linear": 3791.7,
+    "p_win": 0.8596307310467817,
+    "is_chosen": true
+   },
+   {
+    "cand": 3,
+    "net": 1.6405212059617043,
+    "linear": 2808.7,
+    "p_win": 0.7988906060753657,
+    "is_chosen": false
+   },
+   {
+    "cand": 4,
+    "net": 2.138910688459873,
+    "linear": 2808.7,
+    "p_win": 0.7933226077829428,
+    "is_chosen": false
+   },
+   {
+    "cand": 5,
+    "net": 0.3706170693039894,
+    "linear": 2626.7,
+    "p_win": 0.831306361380856,
+    "is_chosen": false
+   }
+  ],
+  "net_top_vs_runnerup_drivers": [
+   {
+    "feature": "damage_diff",
+    "delta_contrib": 0.8067964315414429
+   },
+   {
+    "feature": "deck_me",
+    "delta_contrib": 0.6498798131942749
+   },
+   {
+    "feature": "threat_me_now",
+    "delta_contrib": -0.596287190914154
+   },
+   {
+    "feature": "damage_them",
+    "delta_contrib": 0.5385316908359528
+   },
+   {
+    "feature": "threat_traj",
+    "delta_contrib": -0.49470254778862
+   },
+   {
+    "feature": "prizes_me_lag3",
+    "delta_contrib": -0.46366503462195396
+   },
+   {
+    "feature": "evo_avail_me",
+    "delta_contrib": -0.42120926827192307
+   },
+   {
+    "feature": "evo_steps_min_me",
+    "delta_contrib": 0.4075583927333355
+   }
+  ]
+ }
+]

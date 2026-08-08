@@ -1,0 +1,26 @@
+{
+ "a": "build/agents/neural_leaf_v1/main.py",
+ "deck_a": "data/v6b_grimmsnarl_deck.csv",
+ "specialist": "external/grimmsnarl_agent.py",
+ "deck_specialist": "external/grimmsnarl_deck.json",
+ "env": {},
+ "games": 300,
+ "seed0": 94000,
+ "decided": 300,
+ "a_wins": 30,
+ "b_wins": 270,
+ "draws": 0,
+ "a_win_rate": 0.1,
+ "clean_games": 278,
+ "a_clean": 8,
+ "b_clean": 270,
+ "a_win_rate_clean": 0.0288,
+ "a_error_forfeits": 0,
+ "b_error_forfeits": 22,
+ "n_errors": 22,
+ "errors": [
+  "agent 1 returned []",
+  "agent 0 returned []"
+ ],
+ "seconds": 31.2
+}
