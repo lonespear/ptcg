@@ -86,6 +86,78 @@ bug #1 was real and expensive, this one gets the same priority.
 | Verify team roster alignment | Can't verify from here; Jon's call. |
 | Validate the two grader bugs | #1 confirmed and fixed (§1). #2 unverified (§2). |
 
+## 0. Update, 8 Aug — one landmine, one caution
+
+Checked your `deck-creation` head (`ea9d6ba`) against the two failure modes that
+have already cost us submissions. **Your agent is safe on both** — verified, not
+assumed:
+
+| Check | Your `agent/main.py` |
+|---|---|
+| `agent()` is the last callable | **safe** — line 3338 of 3371 |
+| module-level `cg` import | **present** — line 83 |
+| `sys.path` insert before it | **present** — lines 79–80 |
+
+### The landmine: `agent()` must be the LAST function in the file
+
+`kaggle_environments` resolves the submitted agent as
+
+```python
+[v for v in env.values() if callable(v)][-1]
+```
+
+— the last callable **by dict insertion order**, not the one named `agent`. And
+rebinding an existing name does *not* move its position.
+
+So **defining any helper after `agent()` silently makes that helper the
+submission**, and every episode returns `INVALID`. You have 100 top-level
+functions and are adding more; you are one appended helper away from this at all
+times, and the failure gives you nothing useful to debug from.
+
+I hit it building an instrumentation probe, which is how it surfaced.
+`scripts/validate_submission.py` on our `main` now refuses to submit if anything
+is defined after `agent()`:
+
+```python
+tree = ast.parse(src_path.read_text(encoding="utf-8"))
+funcs = [n.name for n in tree.body
+         if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+if funcs and funcs[-1] != "agent":
+    sys.exit(f"FAIL: {funcs[-1]}() is defined after agent()")
+```
+
+Also on our `main`: `scripts/probe_grader.py`, a standing check that search
+actually **runs** in the grader rather than merely that the episode passes — the
+lazy-import bug was invisible precisely because the agent kept playing. Current
+bundle: search decided 19 of 39 calls.
+
+Minor, while you are in there: lines **2810, 2836, 3094** still do
+`from cg.api import search_step` inside function bodies. They work *only*
+because the `sys.path` insert at line 79 persists for the process. If that line
+ever moves or is refactored away, all three start raising and search dies
+silently again. Cheap to hoist.
+
+### The caution: 1004.2 at 8 episodes is not top-100 yet
+
+Your `STATUS` commit reads "v6 crossed 1000 (1004.2, top-100), 8 episodes in."
+
+Your own twin experiment is the reason to hold that loosely: **v6 and v6-twin
+are byte-identical and scored 833.8 and 691.2** — 142 points apart. The repeated
+"v3: scaled-damage KB" scored 863.2 and 713.0, another 150. Scores also drift
+live; I read v6 at 817.6 and 833.8 minutes apart.
+
+At 8 episodes the interval is far wider than that. So 1004.2 is a promising
+draw, not a level reached — and the same arithmetic retroactively demotes
+several of *my* claims, including "search is worth +50 in production", which
+sits well inside the band.
+
+That twin probe was a genuinely good idea and it is the most useful measurement
+either of us has taken this week. Worth doing routinely before trusting any
+ladder comparison — and it argues for spending the 5-a-day quota on *bracketing*
+one change rather than testing five.
+
+---
+
 ## 4. RETRACTION — do not point the GA at "deck fragility"
 
 **Read this before acting on §4 below. I got it wrong and you are downstream of
