@@ -1,4 +1,18 @@
-**Last updated: 2026-08-07 ~20:00 ET (Aug 7)**
+**Last updated: 2026-08-08 ~02:35 UTC (Aug 7 night)**
+
+## Update — Aug 7 late night (v5 up; a pilot gap measured)
+
+- **v5 SUBMITTED** (tonight's last slot): the GA's 0.654 Ogerpon sibling,
+  gated 0.407 mean vs v4's 0.367 on the gatekeeper cells. Scored pair is
+  now v4 + v5 (champion/challenger; fresh quota in the morning).
+- **Measured pilot gap:** our pilot cannot drive ability-engine decks —
+  the 0.691 harvest Grimmsnarl AND the field's stock Grimmsnarl netdeck
+  both gate at 0.02-0.06 under main.py (0/30 in the mirror) because
+  Adrena-Brain/Punk Up never fire. Own-side ability usage is now a
+  named pilot workstream; until it lands, Grimmsnarl-class decks are
+  panel opponents, not candidates. Large-scale overnight GA (new
+  ladder-derived panel, 6 chains incl. a low-energy engine chain) is
+  launching tonight on both machines.
 
 ## Update — Aug 7 night (GA wound down early; harvest banked)
 
