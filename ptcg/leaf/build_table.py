@@ -506,8 +506,10 @@ def run_corpus(path: str, args) -> None:
     fh = gzip.open(path, "rt")
     header = json.loads(fh.readline())
     cell = header.get("cell", Path(path).stem)
+    stem = Path(path).name.replace(".jsonl.gz", "")
+    name = stem if stem.startswith("selfplay_") else f"corpus_{cell}"
     deck = [int(c) for c in header["deck"]]
-    outdir = OUT_ROOT / f"corpus_{cell}"
+    outdir = OUT_ROOT / name
     outdir.mkdir(parents=True, exist_ok=True)
     sink = RowSink(outdir)
     stats: Counter = Counter()
@@ -536,10 +538,12 @@ def run_corpus(path: str, args) -> None:
                             stats)
         if not rows:
             continue
-        group = (abs(hash((cell, r.get("seed"), r.get("i")))) % (10 ** 12))
+        import hashlib
+        h = hashlib.md5(f"{name}|{r.get('seed')}|{r.get('i')}".encode())
+        group = int.from_bytes(h.digest()[:6], "big")  # deterministic id
         for row in rows:
             row.update(group=group, episode_id=int(r.get("seed") or 0),
-                       date=f"corpus_{cell}", seat=0,
+                       date=name, seat=0,
                        agent_name=f"specialist_{cell}",
                        agent_rating=0.0, our_archetype=cell,
                        opp_archetype="Teal Mask Ogerpon ex",
