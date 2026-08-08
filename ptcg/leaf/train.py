@@ -306,8 +306,10 @@ def stage_fit(args) -> None:
             model.adam(grads, lr=args.lr)
             tot_loss += loss
             nb += 1
-        # holdout read each epoch
+        # holdout read each epoch (the value-solo arm ranks by its win head)
         _, _, s_ho, v_ho = model.forward(Xs[ho_idx])
+        if args.objective == "value":
+            s_ho = v_ho
         ev = eval_split(s_ho, v_ho, ho_ptr, chosen[ho_idx], won[ho_idx],
                         linear[ho_idx], arch[ho_idx], arch_names)
         print(f"epoch {epoch}: loss {tot_loss / max(nb, 1):.4f}  "
@@ -318,18 +320,26 @@ def stage_fit(args) -> None:
 
     # final evals
     _, _, s_tr, v_tr = model.forward(Xs[tr_idx])
+    if args.objective == "value":
+        s_tr = v_tr
     ev_tr = eval_split(s_tr, v_tr, tr_ptr, chosen[tr_idx], won[tr_idx],
                        linear[tr_idx], arch[tr_idx], arch_names)
     _, _, s_ho, v_ho = model.forward(Xs[ho_idx])
+    if args.objective == "value":
+        s_ho = v_ho
     ev_ho = eval_split(s_ho, v_ho, ho_ptr, chosen[ho_idx], won[ho_idx],
                        linear[ho_idx], arch[ho_idx], arch_names)
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
+    # a value-solo arm ranks leaves by its win head: export it as the score
+    # head so the runtime consumer never needs to know which arm won
+    ws_out = model.p["wv"] if args.objective == "value" else model.p["ws"]
+    bs_out = model.p["bv"] if args.objective == "value" else model.p["bs"]
     np.savez(str(out) + ".npz",
              W1=model.p["W1"], b1=model.p["b1"],
              W2=model.p["W2"], b2=model.p["b2"],
-             ws=model.p["ws"], bs=model.p["bs"],
+             ws=ws_out, bs=bs_out,
              wv=model.p["wv"], bv=model.p["bv"],
              mu=mu.astype(np.float32), sd=sd.astype(np.float32),
              feature_names=np.array(feature_names))
