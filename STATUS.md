@@ -1,4 +1,47 @@
-**Last updated: 2026-08-08 ~11:50 UTC (Aug 8 morning)**
+**Last updated: 2026-08-08 ~12:40 UTC (Aug 8 afternoon)**
+
+## Update — Aug 8 afternoon: v6 crashed back to 782; v7 staged on a real bug
+
+- **The 1000 did not hold.** v6 peaked at 1004.2 on episode 8 and then went
+  9W-21L down to 782 over the next 31 episodes. Its twin never launched
+  (652). Same shape as v3's 850→730. Treat single-submission peaks as
+  variance, not strength, when you pick your final pair.
+- **Autopsy of all 39 episodes.** The opponent mix matched our panel almost
+  exactly, so this was not an unseen-archetype problem. The real split:
+  **8-4 vs Grimmsnarl, 2-17 vs everything else** — our panel-weighted
+  fitness was being carried by the single 34.6% Grimmsnarl cell. 14 of 20
+  losses came from AHEAD in the prize race. With an all-ex board every
+  Pokemon we concede pays 2 prizes while our KOs average 1.37, so seven
+  losses had even KO counts and a prize deficit anyway.
+- **The bug worth your attention: wall blindness.** The autopsy first flagged
+  "payable lethal never taken" in one loss. That was a false positive, and
+  chasing it found something better. We *did* attack — into a Cornerstone
+  Mask Ogerpon ex, whose ability prevents all damage from attackers that
+  have an Ability. Every Pokemon in our deck has one. The engine dealt 0
+  four times while both the detector and our own `_damage_against` priced
+  the attack at 780-900 into a 240 HP target. Three of 39 episodes met a
+  damage wall. The pool has a family of these: Crustle and Sylveon wall ex
+  (our whole deck), Milotic ex walls Tera, Farigiraf ex walls Basic ex,
+  Drednaw walls hits of 200+. **If your agent prices printed damage without
+  a prevention model, it has this bug too.**
+- **v7 staged** (commit cf12850): wall conditions parsed from the engine's
+  own runtime skill text, plus a hard rule that takes a genuinely
+  game-winning lethal ahead of the search. Gated at 300 games a cell,
+  paired: pooled 0.5833 vs 0.5592, worst cell -0.98 SE, self-mirror 0.5467,
+  and +11.0 pt on the Dud-Alakazam cell (z=+2.76) — our worst matchup and
+  the archetype the 22-day leader plays. Registered honestly: no panel cell
+  holds a wall card, so those gates price the change's cost, not its
+  benefit. A wall-cell test against the real ladder decks that beat us is
+  running.
+- **A negative result worth your time.** We spent five experiments raising
+  our agreement with strong players' decisions. The evolve-timing one moved
+  its bucket from 21% to 69% agreement (z=+21) and did not move win rate at
+  all (0.576 vs 0.591 over 1200 paired games). Neither did three others. The
+  single conversion was a near context-free rule (always secure the kill on
+  the lowest-HP target). Copying good players' choices pays only where the
+  choice does not depend on their plan — we've stopped using agreement as a
+  candidate generator and switched to autopsying our own ladder losses,
+  which produced the wall bug directly.
 
 ## Update — Aug 8 midday: **v6 crossed 1000 (1004.2, top-100)**
 
