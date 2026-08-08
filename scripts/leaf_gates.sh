@@ -24,30 +24,29 @@ run_cell() {  # name deck_a spec_agent spec_deck arm main
       --games "$GAMES" --workers "$WORKERS" --seed "$SEED" --out "$out"
 }
 
-case "${1:-all}" in
-  g1|all)
-    for arm_main in "cand:$CAND" "base:agent/main.py"; do
-      arm="${arm_main%%:*}"; main="${arm_main#*:}"
-      run_cell grimmsnarl agent/deck.csv external/grimmsnarl_agent.py \
-          external/grimmsnarl_deck.json "$arm" "$main"
-      run_cell alakazam agent/deck.csv external/codex_alakazam_agent.py \
-          external/codex_alakazam_deck.json "$arm" "$main"
-      run_cell archaludon agent/deck.csv external/archaludon_agent.py \
-          external/archaludon_deck.json "$arm" "$main"
-      run_cell lucario agent/deck.csv external/lucario_agent.py \
-          external/lucario_deck.json "$arm" "$main"
-    done
-    ;;&
-  g2|all)
-    for arm_main in "cand:$CAND" "base:agent/main.py"; do
-      arm="${arm_main%%:*}"; main="${arm_main#*:}"
-      run_cell drive_grimm data/v6b_grimmsnarl_deck.csv \
-          external/grimmsnarl_agent.py external/grimmsnarl_deck.json \
-          "$arm" "$main"
-      run_cell drive_engine data/v6b_engine_deck.csv \
-          external/archaludon_agent.py external/archaludon_deck.json \
-          "$arm" "$main"
-    done
-    ;;
-esac
-echo "gates pass ${1:-all} done"
+PASS="${1:-all}"
+if [ "$PASS" = "g1" ] || [ "$PASS" = "all" ]; then
+  for arm_main in "cand:$CAND" "base:agent/main.py"; do
+    arm="${arm_main%%:*}"; main="${arm_main#*:}"
+    run_cell grimmsnarl agent/deck.csv external/grimmsnarl_agent.py \
+        external/grimmsnarl_deck.json "$arm" "$main"
+    run_cell alakazam agent/deck.csv external/codex_alakazam_agent.py \
+        external/codex_alakazam_deck.json "$arm" "$main"
+    run_cell archaludon agent/deck.csv external/archaludon_agent.py \
+        external/archaludon_deck.json "$arm" "$main"
+    run_cell lucario agent/deck.csv external/lucario_agent.py \
+        external/lucario_deck.json "$arm" "$main"
+  done
+fi
+if [ "$PASS" = "g2" ] || [ "$PASS" = "all" ]; then
+  for arm_main in "cand:$CAND" "base:agent/main.py"; do
+    arm="${arm_main%%:*}"; main="${arm_main#*:}"
+    run_cell drive_grimm data/v6b_grimmsnarl_deck.csv \
+        external/grimmsnarl_agent.py external/grimmsnarl_deck.json \
+        "$arm" "$main"
+    run_cell drive_engine data/v6b_engine_deck.csv \
+        external/archaludon_agent.py external/archaludon_deck.json \
+        "$arm" "$main"
+  done
+fi
+echo "gates pass $PASS done"
