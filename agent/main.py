@@ -1383,7 +1383,9 @@ def _scalers() -> dict:
 
 
 def _attack_profile_sc(card_id: int) -> list:
-    """(cost size, printed damage, scaler-or-None), cheapest first."""
+    """(cost size, printed damage, scaler-or-None, attackId), cheapest
+    first. The attackId rides along so `_threat_at` can ask whether the
+    attack's own text goes through a damage wall (E11)."""
     prof = _ATTACK_PROFILE_SC.get(card_id)
     if prof is not None:
         return prof
@@ -1397,7 +1399,7 @@ def _attack_profile_sc(card_id: int) -> list:
             continue
         cost = len(getattr(atk, "energies", None) or [])
         prof.append((cost, float(getattr(atk, "damage", 0) or 0),
-                     sc.get(int(aid))))
+                     sc.get(int(aid)), int(aid)))
     prof.sort(key=lambda t: (t[0], t[1]))
     _ATTACK_PROFILE_SC[card_id] = prof
     return prof
@@ -1492,8 +1494,13 @@ def _scaled_damage(scaler, sctx: dict, slot_e: float, slot_dmgc: float,
 
 
 class _SlotList(list):
-    """One side's slots plus its scaling context, when the KB is live."""
-    __slots__ = ("sctx",)
+    """One side's slots plus its scaling context, when the KB is live.
+
+    `wall_def` (E11) is the OPPOSING Active's cardId when set: `_threat_at`
+    zeroes any slot attack that Active's wall ability prevents. Held at its
+    current observed value across the horizon, the same convention every
+    other projected quantity follows."""
+    __slots__ = ("sctx", "wall_def")
 
 
 def _traj_bucket(turn) -> str:
@@ -1616,6 +1623,7 @@ def _threat_at(slots, growth, k: int) -> float:
     gain = growth(k)
     best = 0.0
     sctx = getattr(slots, "sctx", None)
+    wall_def = getattr(slots, "wall_def", None)
     for e, cid, dmgc, on_bench in slots:
         budget = e + gain
         if sctx is None:
@@ -1623,9 +1631,12 @@ def _threat_at(slots, growth, k: int) -> float:
                 if cost <= budget and dmg > best:
                     best = dmg
         else:
-            for cost, dmg, sc in _attack_profile_sc(cid):
+            for cost, dmg, sc, aid in _attack_profile_sc(cid):
                 if sc is not None:
                     dmg = _scaled_damage(sc, sctx, e, dmgc, on_bench)
+                if wall_def is not None \
+                        and _wall_prevents(aid, cid, wall_def, dmg):
+                    continue
                 if cost <= budget and dmg > best:
                     best = dmg
     return best
@@ -1726,6 +1737,19 @@ def _traj_projection(cur, mine, theirs):
             slots_t.sctx = _scale_ctx(theirs, mine)
         except Exception:
             TELEMETRY_SCALED["ctx_errors"] += 1
+        # E11: each side's threat prices against the wall on the OTHER
+        # side's Active, held at its current observed value like every
+        # other projected quantity.
+        try:
+            if WALL_DAMAGE_ENABLED:
+                act_t = _g(theirs, "active", []) or []
+                act_m = _g(mine, "active", []) or []
+                if act_t and act_t[0] is not None:
+                    slots_m.wall_def = _g(act_t[0], "id")
+                if act_m and act_m[0] is not None:
+                    slots_t.wall_def = _g(act_m[0], "id")
+        except Exception:
+            pass
     accel_m = _visible_accel(mine)
 
     def g_m(k: int) -> float:
@@ -2019,7 +2043,7 @@ def _evo_threat_at(slots, growth, k: int, side: str, ctx) -> float:
                 if cost <= budget and dmg > best:
                     best = dmg
         else:
-            for cost, dmg, sc in _attack_profile_sc(int(cid)):
+            for cost, dmg, sc, _aid in _attack_profile_sc(int(cid)):
                 if sc is not None:
                     dmg = _scaled_damage(sc, sctx, e, dmgc, on_bench)
                 if cost <= budget and dmg > best:
@@ -2037,7 +2061,7 @@ def _evo_threat_at(slots, growth, k: int, side: str, ctx) -> float:
                     if cost <= budget and dmg * p > best:
                         best = dmg * p
             else:
-                for cost, dmg, sc in _attack_profile_sc(evo_id):
+                for cost, dmg, sc, _aid in _attack_profile_sc(evo_id):
                     if sc is not None:
                         dmg = _scaled_damage(sc, sctx, e, dmgc, on_bench)
                     if cost <= budget and dmg * p > best:
