@@ -86,6 +86,81 @@ bug #1 was real and expensive, this one gets the same priority.
 | Verify team roster alignment | Can't verify from here; Jon's call. |
 | Validate the two grader bugs | #1 confirmed and fixed (§1). #2 unverified (§2). |
 
+## 00. Verdicts, 8 Aug — your agent is clean; Archaludon diagnosed
+
+Ran our guard suite against your `deck-creation` head (`b26af42`) in an isolated
+worktree, with our Ogerpon deck supplied since `deck.csv` is gitignored.
+
+| Check | Result |
+|---|---|
+| `agent()` is the last callable | **PASS** — line 3338 of 3371 |
+| Entry point + full validation episode | **PASS** — 133 steps, both DONE |
+| Search actually runs in the grader | **PASS** — `cg_available`, 18 of 39 calls decided (46%) |
+| Rollout realism vs real replays | same profile as ours (below) |
+
+Your bundle builds clean and the optional artefacts degrade with warnings rather
+than raising. Nothing is broken.
+
+### Archaludon: it is a Fire tech aimed at us
+
+The most-played Archaludon list in our mined history runs **4× Cinderace, a
+Fire attacker (160 HP)** alongside the Metal core. **Teal Mask Ogerpon ex is
+weak to Fire.** They are teching against exactly our plan — the mirror image of
+why we chose Grass.
+
+That also corrects a line in our README, which claimed nothing in the field
+plays the Fire we are weak to. True of the top six by global share; false of
+what we actually face.
+
+### …and our gauntlet cannot see it. This is the important part.
+
+Local measurement, our pilot on both sides:
+
+> **Ogerpon vs Archaludon: 71–9, win rate 0.887**
+
+Your ladder autopsy: **8–18**. That is 0.89 against 0.31 — the local number is
+not merely optimistic, it is inverted.
+
+The cause is the gauntlet's known symmetric-pilot bias, and this is the first
+time it has cost us something concrete. Archaludon is a Duraludon → Archaludon ex
+evolution line *plus* a Fire tech — a deck that needs piloting. **Our agent pilots
+it badly, so the gauntlet reports that we beat it.** The better the opponent's
+deck needs to be played, the more the gauntlet flatters us.
+
+Practical rule: **the gauntlet ranks decks, it does not measure matchups.** For
+any matchup verdict, your ladder autopsy is the instrument, not our field score.
+
+### The field weights are wrong for our rating band
+
+| Source | Archaludon share |
+|---|---|
+| Our 16-day mining (all 146,376 replays) | **0.31%** |
+| Your ladder autopsy (games *we* played) | **14%** |
+
+**A 46× discrepancy.** Not a contradiction — the mining samples the whole
+6,500-team population, which is dominated by the copy-paste middle, while
+matchmaking pairs us with a rating-matched slice. As we climb, the two diverge
+further.
+
+We already measured the same effect in the opponent model: top-1 decklist
+accuracy drops 0.715 → 0.609 against strong agents, while coverage holds. Same
+cause.
+
+**So `scripts/gauntlet.py` weights, and any GA fitness built on them, are
+calibrated to a field we no longer play.** Your ladder autopsy is the right
+weighting source. If you can emit archetype shares from it as a CSV, I will wire
+the gauntlet and the field SPRT harness to consume that instead of the global
+mining, and re-run the deck rankings — several may move.
+
+### One caveat on our own rollout-realism numbers
+
+Your agent shows the same divergences from real replays as ours (games 0.62×
+as long, 2.7× the Energy attachments per turn, 0.52× the attacks per turn). I am
+**not** calling that a defect: it is measured on an Ogerpon mirror, which is
+inherently faster and more Energy-dense than the all-archetype replay average.
+Attributing it would need Ogerpon-only replays as the baseline. Flagging it as
+unexplained rather than as a bug.
+
 ## 0. Update, 8 Aug — one landmine, one caution
 
 Checked your `deck-creation` head (`ea9d6ba`) against the two failure modes that

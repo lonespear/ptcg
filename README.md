@@ -197,8 +197,16 @@ It is chosen entirely to exploit one fact about the field.
 - **Cynthia's Garchomp ex**, another top-six deck, is weak to Grass on all four
   of its Pokémon.
 - So roughly **half the field takes double damage** from our only attacker.
-- Teal Mask Ogerpon ex is weak only to **Fire** — and no top-six deck plays Fire.
-  Our one vulnerability is unexploited.
+- Teal Mask Ogerpon ex is weak only to **Fire**, which no top-six deck plays *by
+  global share*. **But that is the wrong denominator** — see below.
+
+> **Correction.** The Archaludon ex deck runs 4× Cinderace, a Fire attacker,
+> specifically to punish Grass. It is 0.31% of all mined replays but **14% of
+> the games we actually play**, because matchmaking pairs us by rating rather
+> than sampling the whole field. Our one vulnerability is very much exploited at
+> our band, and our local gauntlet cannot see it: it reports we beat Archaludon
+> 71–9, while the ladder says 8–18. The gauntlet pilots both sides with our own
+> agent, and Archaludon needs piloting.
 
 Measured: our agent piloting this deck beats Marnie's Grimmsnarl ex **92–8**
 over 100 games, and scores **0.942** against the play-weighted field.
