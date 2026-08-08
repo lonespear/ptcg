@@ -290,9 +290,171 @@ def _opponent_active(obs):
 # fields, so the two modifiers cannot co-occur and their ordering is moot.
 RESISTANCE_DAMAGE = 30
 
+# --- damage-prevention walls (E11) ------------------------------------------
+# A family of abilities prevents ALL damage from attacks whose attacker meets
+# a condition the ability names, and every input to that condition is visible:
+# Cornerstone Mask Ogerpon ex walls attackers that have an Ability, Crustle
+# and Sylveon wall Pokemon ex, Milotic ex walls Tera Pokemon, Farigiraf ex
+# walls Basic Pokemon ex, Drednaw walls hits of 200+. Ladder episode 91003847
+# priced our only attack at 900 into Cornerstone for six straight turns while
+# the engine dealt 0 each time. The conditions are parsed once per defender
+# from the engine's own runtime skill text (all_card_data), so nothing new
+# ships with the bundle. Unrecognized prevention wording is ignored — zeroing
+# a real attack is the costly direction. An attack whose own text waives
+# opposing effects (e.g. Demolish, Spiky Hopper) goes through the wall.
+try:
+    WALL_DAMAGE_ENABLED = bool(int(os.environ.get("CABT_WALL_DAMAGE") or 1))
+except Exception:
+    WALL_DAMAGE_ENABLED = True
+
+_WALL_COND: dict = {}       # defender cardId -> tuple of condition tags
+_ATTACK_BYPASS: dict = {}   # attackId -> attack text waives opposing effects
+_ATTACK_UNSURE: dict = {}   # attackId -> coin-gated / conditional text
+
+
+def _wall_conditions(defender_cid: int) -> tuple:
+    """Visible always-on damage walls on this defender while it is Active."""
+    got = _WALL_COND.get(defender_cid)
+    if got is not None:
+        return got
+    conds = []
+    cards, _ = _tables()
+    data = cards.get(defender_cid)
+    for sk in (getattr(data, "skills", None) or []):
+        text = getattr(sk, "text", "") or ""
+        if "revent all damage" not in text:
+            continue
+        if "on your Bench" in text or "Benched Pok" in text:
+            continue                      # bench walls; this defender is Active
+        if "Special Energy" in text:
+            continue                      # per-slot energies not modeled here
+        if "have an Ability" in text:
+            conds.append("ability")
+        elif "Basic Pok" in text and "{ex}" in text:
+            conds.append("basic_ex")
+        elif "{ex}" in text:
+            conds.append("ex")
+        elif "Tera Pok" in text:
+            conds.append("tera")
+        elif "200 or more" in text:
+            conds.append("dmg200")
+    got = tuple(conds)
+    _WALL_COND[defender_cid] = got
+    return got
+
+
+def _attack_bypasses(attack_id: int) -> bool:
+    got = _ATTACK_BYPASS.get(attack_id)
+    if got is None:
+        _, attacks = _tables()
+        a = attacks.get(attack_id)
+        text = (getattr(a, "text", "") or "") if a is not None else ""
+        got = ("affected by" in text
+               and ("effects on your opponent" in text
+                    or "any effects" in text))
+        _ATTACK_BYPASS[attack_id] = got
+    return got
+
+
+def _wall_prevents(attack_id: int, attacker_cid, defender_cid,
+                   dmg: float) -> bool:
+    """True if the defender's wall zeroes this attack from this attacker."""
+    if not WALL_DAMAGE_ENABLED or attacker_cid is None or defender_cid is None:
+        return False
+    conds = _wall_conditions(int(defender_cid))
+    if not conds:
+        return False
+    if _attack_bypasses(int(attack_id or 0)):
+        return False
+    cards, _ = _tables()
+    a = cards.get(int(attacker_cid))
+    if a is None:
+        return False
+    for cond in conds:
+        if cond == "ability" and (getattr(a, "skills", None) or []):
+            return True
+        if cond == "basic_ex" and getattr(a, "basic", False) \
+                and getattr(a, "ex", False):
+            return True
+        if cond == "ex" and getattr(a, "ex", False):
+            return True
+        if cond == "tera" and getattr(a, "tera", False):
+            return True
+        if cond == "dmg200" and dmg >= 200:
+            return True
+    return False
+
+
+def _attack_unsure(attack_id: int) -> bool:
+    """Coin-gated or self-conditional text: printed damage not guaranteed."""
+    got = _ATTACK_UNSURE.get(attack_id)
+    if got is None:
+        _, attacks = _tables()
+        a = attacks.get(attack_id)
+        text = (getattr(a, "text", "") or "") if a is not None else ""
+        low = text.lower()
+        got = ("flip" in low and "coin" in low) \
+            or "this attack does nothing" in low \
+            or "if this pok" in low or "if you" in low or "if your" in low
+        _ATTACK_UNSURE[attack_id] = got
+    return got
+
+
+def _lethal_now(obs, options):
+    """The game-winning attack, if one is on the menu right now.
+
+    Fires only when a listed attack's wall-aware damage knocks out the
+    opposing Active AND that knockout pays our whole remaining prize count —
+    the game ends, so no search margin, rollout noise, or eval term gets a
+    vote. Coin-gated and conditional attacks never qualify. All 16 converted
+    lethals in the v6 ladder wins pass through unchanged; this is insurance
+    that a root-level search override can never decline a won game.
+    """
+    try:
+        cur = _g(obs, "current")
+        me = _g(cur, "yourIndex", 0)
+        players = _g(cur, "players", []) or []
+        if len(players) < 2:
+            return None
+        mine, theirs = players[me], players[1 - me]
+        need = len(_g(mine, "prize", []) or [])
+        target = _g(theirs, "active", []) or []
+        target = target[0] if target and target[0] is not None else None
+        if target is None or need <= 0:
+            return None
+        if prize_value(int(_g(target, "id", 0) or 0)) < need:
+            return None
+        target_hp = _g(target, "hp")
+        if target_hp is None:
+            return None
+        act = _g(mine, "active", []) or []
+        act = act[0] if act and act[0] is not None else None
+        my_cid = _g(act, "id") if act is not None else None
+        sctx, slot_e, slot_dmgc = None, 0.0, 0.0
+        if SCALED_DAMAGE_ENABLED:
+            sctx = _scale_ctx(mine, theirs)
+            if act is not None:
+                slot_e = float(len(_g(act, "energies", []) or []))
+                slot_dmgc = _dmg_counters(act)
+        best_i, best_d = None, -1.0
+        for i, o in enumerate(options):
+            if _g(o, "type") != OPT_ATTACK:
+                continue
+            aid = _g(o, "attackId")
+            if _attack_unsure(int(aid or 0)):
+                continue
+            d = _damage_against(aid, target, sctx, slot_e, slot_dmgc,
+                                attacker_cid=my_cid)
+            if d >= target_hp and d > best_d:
+                best_i, best_d = i, d
+        return best_i
+    except Exception:
+        return None
+
 
 def _damage_against(attack_id: int, target, sctx=None,
-                    slot_e: float = 0.0, slot_dmgc: float = 0.0) -> int:
+                    slot_e: float = 0.0, slot_dmgc: float = 0.0,
+                    attacker_cid=None) -> int:
     """Printed damage, doubled if the defender is weak to this attack's type
     and reduced by RESISTANCE_DAMAGE if it resists it.
 
@@ -329,6 +491,8 @@ def _damage_against(attack_id: int, target, sctx=None,
     if (SCALED_DAMAGE_ENABLED and resistance is not None
             and any(e == resistance for e in energies)):
         dmg = max(dmg - RESISTANCE_DAMAGE, 0)
+    if dmg and _wall_prevents(attack_id, attacker_cid, _g(target, "id"), dmg):
+        dmg = 0
     return dmg
 
 
@@ -353,13 +517,24 @@ def _choose_attack(options, obs) -> int | None:
             TELEMETRY_SCALED["ctx_errors"] += 1
             sctx = None
 
+    my_cid = None
+    try:
+        cur = _g(obs, "current")
+        me = _g(cur, "yourIndex", 0)
+        players = _g(cur, "players", []) or []
+        act = _g(players[me], "active", []) or [] if players else []
+        if act and act[0] is not None:
+            my_cid = _g(act[0], "id")
+    except Exception:
+        my_cid = None
+
     ko_i, ko_d = None, None
     big_i, big_d = None, -1
     for i, o in enumerate(options):
         if _g(o, "type") != OPT_ATTACK:
             continue
         d = _damage_against(_g(o, "attackId"), target, sctx, slot_e,
-                            slot_dmgc)
+                            slot_dmgc, attacker_cid=my_cid)
         if d > big_d:
             big_i, big_d = i, d
         if target_hp is not None and d >= target_hp:
@@ -3329,6 +3504,9 @@ def _agent(obs_dict: dict) -> list[int]:
     options = select.get("option") or []
     if len(options) > 1 and any(o.get("type") in MAIN_PRIORITY
                                 for o in options):
+        won = _lethal_now(obs, options)
+        if won is not None:
+            return [won]
         picked = _search_main(obs, options)
         if picked is not None:
             return [picked]
