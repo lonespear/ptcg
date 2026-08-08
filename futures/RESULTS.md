@@ -1,5 +1,8 @@
 # Phase 0 results — sampler realism (holdout 2026-08-06)
 
+*(The Phase 0.5 engine-legality test proposed at the bottom of this file has
+since run: NO-GO. See `RESULTS_phase05.md`.)*
+
 Verdict of record, under the pre-registered criteria in README.md:
 **NO-GO — archetypes passing A-D cover 33.1% of holdout turns (threshold 70%).**
 

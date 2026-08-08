@@ -1,4 +1,4 @@
-# futures/ — Path B: Full-Turn Futures (Phase 0: sampler realism)
+# futures/ — Path B: Full-Turn Futures (Phase 0 / 0.5: sampler realism)
 
 Provenance: D45 (Three Paths ruling, 2026-08-07). Path B is the pursued path;
 this folder is the new build. Nothing in `agent/` or the submission bundle is
@@ -141,6 +141,19 @@ afterwards to attribute the failures; none of them moves the gate:
 - `diag_damage_head.py` — the damage/prize head drawn against each real
   turn's real attacked flag, separating head error from action-model error.
 
+## Phase 0.5 (engine legality; pre-registered follow-up)
+
+Phase 0's NO-GO decomposed onto the offline availability surrogate, so the
+recommended follow-up ran: `sampler.sample_action()` wired into the engine's
+real legal-menu loop (`search_begin`/`search_step`) on 1,101 holdout
+seat-turns from the mined positions sample, hidden zones determinized from
+the replay-derived deck priors through the agent's posterior machinery, the
+identical A-D tolerances and 70% coverage rule re-applied. Verdict of
+record: **NO-GO at 0% coverage** — real legality fixed A and mostly B, and
+the failure relocated to prizes and attack rate (turn-level compounding the
+decision-level tests cannot see). Full table, decomposition and disposition:
+`RESULTS_phase05.md`.
+
 ## Files
 
 - `fit_policy.py` — refit on train days (adapted from
@@ -151,9 +164,19 @@ afterwards to attribute the failures; none of them moves the gate:
 - `validate_sampler.py` — holdout comparison → `results.json`
   (`--persistent` → `results_v2.json`, diagnostic)
 - `diag_damage_head.py` — head-only diagnostic → `results_head_diag.json`
-- `RESULTS.md` — per-archetype table, verdicts, divergences, recommendation
+- `RESULTS.md` — Phase 0 table, verdicts, divergences, recommendation
+- `validate_sampler_engine.py` — Phase 0.5 engine-playout gate →
+  `results_engine.json`
+- `diag_engine.py` — Phase 0.5 post-verdict decomposition →
+  `results_engine_diag.json`
+- `RESULTS_phase05.md` — Phase 0.5 table, decomposition, disposition
 
 Run (system python3 carries pyarrow; the venv does not):
 
     /usr/bin/python3 futures/fit_policy.py
     /usr/bin/python3 futures/validate_sampler.py
+
+Phase 0.5 needs python ≥ 3.10 for the engine bindings:
+
+    ~/miniforge3/bin/python3 futures/validate_sampler_engine.py
+    ~/miniforge3/bin/python3 futures/diag_engine.py

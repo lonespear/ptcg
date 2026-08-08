@@ -1,0 +1,476 @@
+{
+ "holdout_day": "2026-08-06",
+ "K": 5,
+ "seed": 20260807,
+ "note": "post-verdict diagnostics; the Phase 0.5 gate is results_engine.json and stands as computed",
+ "end_hazard_by_ordinal": {
+  "0": {
+   "real": 0.0238,
+   "n_real": 168,
+   "sampled": 0.019,
+   "n_sampled": 840
+  },
+  "1": {
+   "real": 0.0279,
+   "n_real": 323,
+   "sampled": 0.0215,
+   "n_sampled": 1627
+  },
+  "2": {
+   "real": 0.0302,
+   "n_real": 431,
+   "sampled": 0.0463,
+   "n_sampled": 2138
+  },
+  "3+": {
+   "real": 0.0499,
+   "n_real": 3888,
+   "sampled": 0.0756,
+   "n_sampled": 15288
+  }
+ },
+ "conditional_prizes_baseline": {
+  "real": {
+   "n_attacking": 643,
+   "prizes_per_attacking_turn": 0.7854,
+   "n_non_attacking": 433,
+   "prizes_per_non_attacking_turn": 0.0046
+  },
+  "sampled": {
+   "n_attacking": 2480,
+   "prizes_per_attacking_turn": 0.5472,
+   "n_non_attacking": 2900,
+   "prizes_per_non_attacking_turn": 0.0069
+  }
+ },
+ "conditional_prizes_noearlyend": {
+  "real": {
+   "n_attacking": 643,
+   "prizes_per_attacking_turn": 0.7854,
+   "n_non_attacking": 433,
+   "prizes_per_non_attacking_turn": 0.0046
+  },
+  "sampled": {
+   "n_attacking": 2878,
+   "prizes_per_attacking_turn": 0.524,
+   "n_non_attacking": 2502,
+   "prizes_per_non_attacking_turn": 0.0068
+  }
+ },
+ "noearlyend_table": {
+  "Marnie's Grimmsnarl ex": {
+   "n_real_turns": 366,
+   "n_sampled_turns": 1830,
+   "n_real_visits": 1493,
+   "n_sampled_visits": 6466,
+   "visits_per_turn_real": 4.39,
+   "visits_per_turn_sampled": 4.06,
+   "n_damage_pairs": 360,
+   "action_mix_real": {
+    "ability": 0.1681,
+    "evolve": 0.0898,
+    "play": 0.4387,
+    "attach": 0.1085,
+    "attack": 0.1326,
+    "retreat": 0.0268,
+    "end_turn": 0.0355
+   },
+   "action_mix_sampled": {
+    "ability": 0.1543,
+    "evolve": 0.0914,
+    "play": 0.4018,
+    "attach": 0.118,
+    "attack": 0.1332,
+    "retreat": 0.1013,
+    "end_turn": 0.0
+   },
+   "tv": 0.0862,
+   "chip_mean_real": 47.6,
+   "chip_mean_sampled": 51.5,
+   "chip_w1": 4.1,
+   "prizes_mean_real": 0.4583,
+   "prizes_mean_sampled": 0.2572,
+   "attack_rate_real": 0.541,
+   "attack_rate_sampled": 0.4705,
+   "attach_rate_real": 0.7541,
+   "attach_rate_sampled": 0.7235,
+   "attach_rate_real_suffix": 0.4399,
+   "attach_rate_sampled_suffix": 0.4098,
+   "disr_per_play_real": 0.0671,
+   "disr_per_play_ci": [
+    0.0379,
+    0.1161
+   ],
+   "disr_per_play_n": 164,
+   "disr_per_play_sampled": 0.067,
+   "n_sampled_play_visits": 2598,
+   "criteria": {
+    "A_action_mix": true,
+    "B_chip": true,
+    "C_prizes": false,
+    "D_attack_rate": false
+   },
+   "verdict": "NO-GO",
+   "flags": {
+    "attach_within_5pt_suffix": true,
+    "attach_within_5pt_fullturn": true,
+    "disruption_ok": true
+   }
+  },
+  "Mega Lopunny ex": {
+   "n_real_turns": 190,
+   "n_sampled_turns": 950,
+   "n_real_visits": 891,
+   "n_sampled_visits": 4205,
+   "visits_per_turn_real": 4.83,
+   "visits_per_turn_sampled": 4.86,
+   "n_damage_pairs": 184,
+   "action_mix_real": {
+    "ability": 0.0999,
+    "evolve": 0.0797,
+    "play": 0.4198,
+    "attach": 0.165,
+    "attack": 0.1347,
+    "retreat": 0.0527,
+    "end_turn": 0.0483
+   },
+   "action_mix_sampled": {
+    "ability": 0.1279,
+    "evolve": 0.0792,
+    "play": 0.4433,
+    "attach": 0.1408,
+    "attack": 0.1282,
+    "retreat": 0.0806,
+    "end_turn": 0.0
+   },
+   "tv": 0.0795,
+   "chip_mean_real": 50.4,
+   "chip_mean_sampled": 39.9,
+   "chip_w1": 10.6,
+   "prizes_mean_real": 0.3913,
+   "prizes_mean_sampled": 0.2543,
+   "attack_rate_real": 0.6316,
+   "attack_rate_sampled": 0.5674,
+   "attach_rate_real": 0.9316,
+   "attach_rate_sampled": 0.8663,
+   "attach_rate_real_suffix": 0.6053,
+   "attach_rate_sampled_suffix": 0.5189,
+   "disr_per_play_real": 0.0488,
+   "disr_per_play_ci": [
+    0.0191,
+    0.1188
+   ],
+   "disr_per_play_n": 82,
+   "disr_per_play_sampled": 0.0349,
+   "n_sampled_play_visits": 1864,
+   "criteria": {
+    "A_action_mix": true,
+    "B_chip": false,
+    "C_prizes": false,
+    "D_attack_rate": false
+   },
+   "verdict": "NO-GO",
+   "flags": {
+    "attach_within_5pt_suffix": false,
+    "attach_within_5pt_fullturn": false,
+    "disruption_ok": true
+   }
+  },
+  "Mega Kangaskhan ex": {
+   "n_real_turns": 109,
+   "n_sampled_turns": 545,
+   "n_real_visits": 333,
+   "n_sampled_visits": 1970,
+   "visits_per_turn_real": 3.17,
+   "visits_per_turn_sampled": 4.17,
+   "n_damage_pairs": 104,
+   "action_mix_real": {
+    "ability": 0.1351,
+    "evolve": 0.045,
+    "play": 0.3514,
+    "attach": 0.1381,
+    "attack": 0.1772,
+    "retreat": 0.039,
+    "end_turn": 0.1141
+   },
+   "action_mix_sampled": {
+    "ability": 0.1081,
+    "evolve": 0.0452,
+    "play": 0.5569,
+    "attach": 0.1198,
+    "attack": 0.1223,
+    "retreat": 0.0477,
+    "end_turn": 0.0
+   },
+   "tv": 0.2143,
+   "chip_mean_real": 27.4,
+   "chip_mean_sampled": 29.5,
+   "chip_w1": 2.2,
+   "prizes_mean_real": 0.3942,
+   "prizes_mean_sampled": 0.1904,
+   "attack_rate_real": 0.5413,
+   "attack_rate_sampled": 0.4422,
+   "attach_rate_real": 0.8991,
+   "attach_rate_sampled": 0.8991,
+   "attach_rate_real_suffix": 0.4128,
+   "attach_rate_sampled_suffix": 0.4165,
+   "disr_per_play_real": 0.1136,
+   "disr_per_play_ci": [
+    0.0495,
+    0.2398
+   ],
+   "disr_per_play_n": 44,
+   "disr_per_play_sampled": 0.041,
+   "n_sampled_play_visits": 1097,
+   "criteria": {
+    "A_action_mix": false,
+    "B_chip": true,
+    "C_prizes": false,
+    "D_attack_rate": false
+   },
+   "verdict": "NO-GO",
+   "flags": {
+    "attach_within_5pt_suffix": true,
+    "attach_within_5pt_fullturn": true,
+    "disruption_ok": false
+   }
+  },
+  "Fezandipiti ex": {
+   "n_real_turns": 202,
+   "n_sampled_turns": 1010,
+   "n_real_visits": 925,
+   "n_sampled_visits": 4488,
+   "visits_per_turn_real": 4.76,
+   "visits_per_turn_sampled": 4.8,
+   "n_damage_pairs": 198,
+   "action_mix_real": {
+    "ability": 0.1016,
+    "evolve": 0.1395,
+    "play": 0.4519,
+    "attach": 0.1103,
+    "attack": 0.1438,
+    "retreat": 0.0173,
+    "end_turn": 0.0357
+   },
+   "action_mix_sampled": {
+    "ability": 0.1052,
+    "evolve": 0.1339,
+    "play": 0.469,
+    "attach": 0.1067,
+    "attack": 0.1446,
+    "retreat": 0.0406,
+    "end_turn": 0.0
+   },
+   "tv": 0.0448,
+   "chip_mean_real": 22.8,
+   "chip_mean_sampled": 24.6,
+   "chip_w1": 3.6,
+   "prizes_mean_real": 0.6111,
+   "prizes_mean_sampled": 0.3545,
+   "attack_rate_real": 0.6584,
+   "attack_rate_sampled": 0.6426,
+   "attach_rate_real": 0.8366,
+   "attach_rate_sampled": 0.8109,
+   "attach_rate_real_suffix": 0.495,
+   "attach_rate_sampled_suffix": 0.4644,
+   "disr_per_play_real": 0.0125,
+   "disr_per_play_ci": [
+    0.0022,
+    0.0675
+   ],
+   "disr_per_play_n": 80,
+   "disr_per_play_sampled": 0.0518,
+   "n_sampled_play_visits": 2105,
+   "criteria": {
+    "A_action_mix": true,
+    "B_chip": true,
+    "C_prizes": false,
+    "D_attack_rate": true
+   },
+   "verdict": "NO-GO",
+   "flags": {
+    "attach_within_5pt_suffix": true,
+    "attach_within_5pt_fullturn": true,
+    "disruption_ok": true
+   }
+  },
+  "Dragapult ex": {
+   "n_real_turns": 71,
+   "n_sampled_turns": 355,
+   "n_real_visits": 391,
+   "n_sampled_visits": 1612,
+   "visits_per_turn_real": 5.62,
+   "visits_per_turn_sampled": 5.0,
+   "n_damage_pairs": 70,
+   "action_mix_real": {
+    "ability": 0.1918,
+    "evolve": 0.0818,
+    "play": 0.4271,
+    "attach": 0.1049,
+    "attack": 0.1253,
+    "retreat": 0.0332,
+    "end_turn": 0.0358
+   },
+   "action_mix_sampled": {
+    "ability": 0.1799,
+    "evolve": 0.0856,
+    "play": 0.4349,
+    "attach": 0.0875,
+    "attack": 0.1185,
+    "retreat": 0.0937,
+    "end_turn": 0.0
+   },
+   "tv": 0.0719,
+   "chip_mean_real": 36.1,
+   "chip_mean_sampled": 28.9,
+   "chip_w1": 8.7,
+   "prizes_mean_real": 0.3857,
+   "prizes_mean_sampled": 0.1657,
+   "attack_rate_real": 0.6901,
+   "attack_rate_sampled": 0.538,
+   "attach_rate_real": 0.9296,
+   "attach_rate_sampled": 0.7718,
+   "attach_rate_real_suffix": 0.5634,
+   "attach_rate_sampled_suffix": 0.3972,
+   "disr_per_play_real": 0.08,
+   "disr_per_play_ci": [
+    0.0222,
+    0.2497
+   ],
+   "disr_per_play_n": 25,
+   "disr_per_play_sampled": 0.087,
+   "n_sampled_play_visits": 701,
+   "criteria": {
+    "A_action_mix": true,
+    "B_chip": true,
+    "C_prizes": false,
+    "D_attack_rate": false
+   },
+   "verdict": "NO-GO",
+   "flags": {
+    "attach_within_5pt_suffix": false,
+    "attach_within_5pt_fullturn": false,
+    "disruption_ok": true
+   }
+  },
+  "Teal Mask Ogerpon ex": {
+   "n_real_turns": 67,
+   "n_sampled_turns": 335,
+   "n_real_visits": 333,
+   "n_sampled_visits": 1176,
+   "visits_per_turn_real": 5.01,
+   "visits_per_turn_sampled": 3.79,
+   "n_damage_pairs": 66,
+   "action_mix_real": {
+    "ability": 0.2192,
+    "evolve": 0.0,
+    "play": 0.4535,
+    "attach": 0.1261,
+    "attack": 0.1381,
+    "retreat": 0.009,
+    "end_turn": 0.0541
+   },
+   "action_mix_sampled": {
+    "ability": 0.1675,
+    "evolve": 0.0,
+    "play": 0.4201,
+    "attach": 0.1429,
+    "attack": 0.2041,
+    "retreat": 0.0655,
+    "end_turn": 0.0
+   },
+   "tv": 0.1391,
+   "chip_mean_real": 29.8,
+   "chip_mean_sampled": 29.0,
+   "chip_w1": 2.8,
+   "prizes_mean_real": 0.5606,
+   "prizes_mean_sampled": 0.5727,
+   "attack_rate_real": 0.6866,
+   "attack_rate_sampled": 0.7164,
+   "attach_rate_real": 0.8209,
+   "attach_rate_sampled": 0.7701,
+   "attach_rate_real_suffix": 0.5075,
+   "attach_rate_sampled_suffix": 0.4388,
+   "disr_per_play_real": 0.0968,
+   "disr_per_play_ci": [
+    0.0335,
+    0.249
+   ],
+   "disr_per_play_n": 31,
+   "disr_per_play_sampled": 0.1478,
+   "n_sampled_play_visits": 494,
+   "criteria": {
+    "A_action_mix": false,
+    "B_chip": true,
+    "C_prizes": true,
+    "D_attack_rate": true
+   },
+   "verdict": "NO-GO",
+   "flags": {
+    "attach_within_5pt_suffix": false,
+    "attach_within_5pt_fullturn": false,
+    "disruption_ok": true
+   }
+  },
+  "FIELD": {
+   "n_real_turns": 1101,
+   "n_sampled_turns": 5505,
+   "n_real_visits": 4810,
+   "n_sampled_visits": 21768,
+   "visits_per_turn_real": 4.56,
+   "visits_per_turn_sampled": 4.41,
+   "n_damage_pairs": 1076,
+   "action_mix_real": {
+    "ability": 0.1422,
+    "evolve": 0.0857,
+    "play": 0.4353,
+    "attach": 0.1229,
+    "attack": 0.1387,
+    "retreat": 0.0295,
+    "end_turn": 0.0457
+   },
+   "action_mix_sampled": {
+    "ability": 0.1388,
+    "evolve": 0.085,
+    "play": 0.4446,
+    "attach": 0.1194,
+    "attack": 0.1367,
+    "retreat": 0.0751,
+    "end_turn": 0.0005
+   },
+   "tv": 0.0548,
+   "chip_mean_real": 38.7,
+   "chip_mean_sampled": 37.7,
+   "chip_w1": 2.4,
+   "prizes_mean_real": 0.4712,
+   "prizes_mean_sampled": 0.2835,
+   "attack_rate_real": 0.6058,
+   "attack_rate_sampled": 0.5404,
+   "attach_rate_real": 0.8411,
+   "attach_rate_sampled": 0.7936,
+   "attach_rate_real_suffix": 0.4905,
+   "attach_rate_sampled_suffix": 0.4403,
+   "disr_per_play_real": 0.0592,
+   "disr_per_play_ci": [
+    0.0413,
+    0.0842
+   ],
+   "disr_per_play_n": 473,
+   "disr_per_play_sampled": 0.0602,
+   "n_sampled_play_visits": 9678,
+   "criteria": {
+    "A_action_mix": true,
+    "B_chip": true,
+    "C_prizes": false,
+    "D_attack_rate": false
+   },
+   "verdict": "NO-GO",
+   "flags": {
+    "attach_within_5pt_suffix": false,
+    "attach_within_5pt_fullturn": true,
+    "disruption_ok": true
+   }
+  },
+  "_coverage_if_gated": 0.0
+ }
+}
