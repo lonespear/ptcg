@@ -3,8 +3,12 @@
 Our entry for the Kaggle **Pokémon TCG AI Battle Challenge**. Final deadline
 **13 Sep 2026**.
 
-**Live standing (6 Aug):** `v9` at **656.4**, roughly rank **2905 of 6421** —
-**above the median** and still settling. We started the day at 445.8.
+**Live standing (8 Aug):** rank **831 of 6563** — **top 12.7%**, score ~818–834.
+Two days ago we were 4,567th. Team is `Lemmes Yad` (austinsemmel, jonallday).
+
+Caveat that matters more than the rank: **an identical agent resubmitted scores
+±150 points** (see below), so treat any single figure here as a bracket, not a
+measurement.
 
 | Submission | Score | Rank | |
 |---|---|---|---|
@@ -644,8 +648,31 @@ spending one. Submissions that fail validation return an error and do **not**
 consume one; a bad bundle costs time, not quota. Only the most recent submission
 is active on the ladder, so a worse one replaces a better one.
 
-And ratings take **hours** to settle — 724.9 became 305.8, 634.9 became 695.8.
-Never judge a submission on a fresh score.
+### A single submission's score is worth ±150 points
+
+Austin submitted **v6-twin, byte-identical to v6**, as a variance probe. They
+scored **833.8 and 691.2**. The same day, "v3: scaled-damage KB" went up twice
+and scored **863.2 and 713.0**.
+
+**Two identical agents differ by ~150 rating points.** Scores also drift
+continuously — v6 moved 817.6 → 833.8 within minutes of two queries.
+
+This retroactively demotes most of our submission-to-submission reasoning:
+
+| Comparison | Gap | Verdict |
+|---|---|---|
+| Search live vs rules-only (695.8 / 645.7) | 50 | **inside noise** |
+| Energy term (666.4 / 552.7) | 114 | inside noise |
+| Lucario deck "cost 240" (305.8 / 544.8) | 239 | marginal at best |
+
+So: **do not read a single submission as evidence.** Use it to confirm a
+direction already established locally under SPRT, and expect any one number to
+be off by a hundred points in either direction. Submitting the same agent twice
+is a cheap way to bracket the noise, and worth doing before trusting a
+comparison.
+
+Ratings also take **hours** to settle — 724.9 became 305.8, 634.9 became 695.8.
+Never judge a submission on a fresh score either.
 
 ## Status
 

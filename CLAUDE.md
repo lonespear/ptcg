@@ -29,9 +29,11 @@ record. This file is the operating rules.
    (a lazy import silently disabled search on every submission for a whole day).
 2. **`except Exception` around infrastructure hides production failures.** Both
    bugs above degraded quietly instead of failing loudly. Prefer a loud signal.
-3. **Unsettled ratings lie.** They take hours and swing wildly — 724.9 settled to
-   305.8; 634.9 settled to 695.8. Four wrong calls so far. Never conclude from a
-   fresh score.
+3. **Leaderboard scores are worth +/-150 points.** An identical agent
+   resubmitted scored 833.8 and 691.2; a repeated submission scored 863.2 and
+   713.0. Scores also drift live and take hours to settle (724.9 -> 305.8,
+   634.9 -> 695.8). **Never treat one submission as evidence** - use it to
+   confirm a direction already established locally under SPRT.
 
 ## How to decide whether a change is good
 
