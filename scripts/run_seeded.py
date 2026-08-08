@@ -1,8 +1,11 @@
-"""CLI for the seeded archipelago v3 (D38-D41): five chains x
-(explore + refine), stratified LB panel, two-tier pilot split.
+"""CLI for the seeded archipelago v4 (D46; D38-D41 rules): chains x
+(explore + refine), ladder-representative weighted panel, two-tier
+pilot split.
 
-  python scripts/run_seeded.py --run-id seeded_overnight \
-      --founders runs/seeded_overnight/founders.json --workers 7
+  python scripts/run_seeded.py --run-id seeded_d46 \
+      --panel data/panel_ladder_v3.json \
+      --chains spec-Ogerpon,engine,counter-900,archaludon \
+      --founders runs/seeded_d46/founders_sebastian.json --workers 10
 """
 
 import argparse
@@ -26,12 +29,15 @@ if __name__ == "__main__":
     ap.add_argument("--real-games", type=int, default=6)
     ap.add_argument("--workers", type=int, default=7)
     ap.add_argument("--seed", type=int, default=74)
-    ap.add_argument("--plateau", type=int, default=12)
+    ap.add_argument("--plateau", type=int, default=24)
+    ap.add_argument("--improve-eps", type=float, default=0.005)
     ap.add_argument("--migrate-every", type=int, default=10)
     ap.add_argument("--migrate-top", type=int, default=2)
     ap.add_argument("--floor-wr", type=float, default=0.35)
-    ap.add_argument("--explore-pop", type=int, default=24)
-    ap.add_argument("--refine-pop", type=int, default=10)
+    ap.add_argument("--explore-pop", type=int, default=36)
+    ap.add_argument("--refine-pop", type=int, default=14)
+    ap.add_argument("--chains", default="",
+                    help="comma list of chain keys; empty = all")
     ap.add_argument("--real-top-explore", type=int, default=6)
     ap.add_argument("--real-top-refine", type=int, default=4)
     ap.add_argument("--founders",
@@ -53,6 +59,11 @@ if __name__ == "__main__":
                              f"{sorted(CHAINS)}")
         overrides[sk] = kind
 
+    chains = [c for c in args.chains.split(",") if c]
+    for c in chains:
+        if c not in CHAINS:
+            raise SystemExit(f"bad chain {c!r}; chains: {sorted(CHAINS)}")
+
     run_seeded(run_dir=Path("runs") / args.run_id,
                panel_path=Path(args.panel), hours=args.hours,
                wall_hours=args.wall_hours,
@@ -68,4 +79,5 @@ if __name__ == "__main__":
                if args.founders else None,
                resume=args.resume, deep_top=args.deep_top,
                deep_block=args.deep_block, deep_max=args.deep_max,
-               pilot_overrides=overrides)
+               pilot_overrides=overrides, chains=chains or None,
+               improve_eps=args.improve_eps)

@@ -1,25 +1,36 @@
-"""Seeded archipelago v3 — five chains x (explore + refine), D38-D41.
+"""Seeded archipelago v4 — D46 chains x (explore + refine), D38-D41 rules.
 
 Chains and objectives (cell weights computed at runtime from the
-stratified leaderboard panel, data/panel_lb.json, uniform cells):
+ladder-representative panel, data/panel_ladder_v3.json, whose cell
+weights are 700+-band encounter shares — so "panel weights" IS the
+ladder objective):
 
-  spec-Ogerpon   Grass purity; hard anchor >=2x Teal Mask Ogerpon ex in
-                 the repair path. Fitness: 55% mass spread over the
-                 panel's Grimmsnarl cells, 45% over the rest, plus the
-                 neutral-matchup floor (below).
-  mono-Darkness  harvest-then-refine of the field's own weapon.
-                 Fitness: 2/3 mass on the Grimmsnarl cells (the mirror
-                 is ~2/3 of top-ladder games), 1/3 on the rest.
-  mono-Fighting  discovery wildcard: uniform cell weights.
-  rainbow-Kanga  the field's multi-energy Mega Kangaskhan toolbox
-                 chain; uniform weights; the island's allowed-energy
-                 set is the union of its founders' basic energies, so
-                 ordinary energy mutations re-mix the base.
-  kanga-counter  energy type unconstrained: a retype mutation (p=0.2)
-                 swaps the whole energy base to a random type and pulls
-                 in that type's attacker lines. Fitness: 50% mass on
-                 the Mega Kangaskhan + Mega Lopunny + Dudunsparce
-                 (Colorless) cells, 50% on the rest, plus the floor.
+  spec-Ogerpon       Grass purity; hard anchor >=2x Teal Mask Ogerpon
+                     ex in the repair path (D38a). Fitness: panel
+                     weights (v3 panels are representative; the old
+                     hand-set 55% Grimmsnarl mass is superseded).
+  grimmsnarl-mirror  Darkness purity, the field's own weapon. Fitness:
+                     2/3 mass on the Grimmsnarl cells (the mirror),
+                     1/3 spread over the rest by panel weight.
+  engine             low-energy draw-engine discovery chain: total
+                     basic energy capped at 10 in the repair path;
+                     energy type free (the deck's own base). Fitness:
+                     uniform cell weights (discovery, not the ladder
+                     objective).
+  archaludon         harvest-then-refine of the ladder's
+                     Archaludon-Duraludon-Cinderace shell (our worst
+                     hole). Allowed energy = union of its founders'
+                     bases. Fitness: panel weights.
+  counter-900        energy type unconstrained: a retype mutation
+                     (p=0.2) swaps the whole energy base to a random
+                     type and pulls in that type's attacker lines.
+                     Fitness: 50% mass on the 900+-band archetype
+                     cells (Grimmsnarl + Dudunsparce-Alakazam +
+                     mono-Kangaskhan), 50% over the rest by panel
+                     weight, plus the neutral floor.
+  rainbow-Kanga      the field's multi-energy Mega Kangaskhan toolbox
+                     chain; allowed energy = union of its founders'
+                     bases. Fitness: panel weights.
 
 Neutral-matchup floor (D39 "sensible version, documented"): floored
 chains pay NEUTRAL_SLOPE * max(0, NEUTRAL_FLOOR - mean win rate over
@@ -63,60 +74,84 @@ FRESH_TEMPLATE_EVERY = 10
 PAYABLE_FLOOR = 6           # attacker slots payable from the deck's base
 
 GRIMM = "Grimmsnarl"
-KANGA_TARGETS = ("Mega Kangaskhan ex", "Mega Lopunny ex", "Dudunsparce")
+C900 = ("Grimmsnarl", "Dudunsparce-Alakazam", "Kangaskhan (mono)")
 RAINBOW_FALLBACK = frozenset({1, 3, 4, 5, 6})
+ENGINE_ENERGY_CAP = 10
+UNIFORM_CHAINS = {"engine"}     # fitness ignores panel weights
+# chains whose allowed-energy set is the union of their founders' bases
+FOUNDER_TYPED = ("rainbow-Kanga", "archaludon")
 
 # set_key -> (default real pilot kind, target matcher, target mass, floored)
 CHAINS = {
-    "spec-Ogerpon": ("jon", lambda n: GRIMM in n, 0.55, True),
-    "mono-Darkness": ("grimmsnarl", lambda n: GRIMM in n, 2 / 3, False),
-    "mono-Fighting": ("jon", None, 0.0, False),
+    "spec-Ogerpon": ("jon", None, 0.0, False),
+    "grimmsnarl-mirror": ("grimmsnarl", lambda n: GRIMM in n, 2 / 3, False),
+    "engine": ("jon", None, 0.0, False),
+    # archaludon external: deck-specialized harvest agent on its own
+    # archetype — same tradeoff as the grimmsnarl external (D40).
+    "archaludon": ("archaludon", None, 0.0, False),
+    "counter-900": ("jon", lambda n: any(t in n for t in C900), 0.5, True),
     # Rainbow real pilot: the 2026-08-07 audition on the rainbow founder
     # measured jon 0.069 / greedy 0.208 / kanga external 0.181 vs three
     # panel cells — no pilot is competent on the toolbox; the kanga
     # external at least knows the Mega Kangaskhan + Crispin core, so it
     # takes the real tier (see the run README's pilot-split table).
     "rainbow-Kanga": ("kanga", None, 0.0, False),
-    "kanga-counter": ("jon", lambda n: n in KANGA_TARGETS, 0.5, True),
 }
 
 
-def build_islands(bank: GeneBank, founders: dict | None) -> list[ArchIsland]:
-    rt: set[int] = set()
-    for d in (founders or {}).get("rainbow-Kanga", []):
-        for c in d:
-            card = bank.pool.by_id.get(int(c))
-            if card and card["cardType"] == BASIC_ENERGY:
-                rt.add(card["energyType"])
-    specs = [("spec-Ogerpon", frozenset({1})),
-             ("mono-Darkness", frozenset({7})),
-             ("mono-Fighting", frozenset({6})),
-             ("rainbow-Kanga", frozenset(rt) or RAINBOW_FALLBACK),
-             ("kanga-counter", frozenset())]
+def build_islands(bank: GeneBank, founders: dict | None,
+                  chains: list[str]) -> list[ArchIsland]:
+    ft: dict[str, set[int]] = {}
+    for sk in FOUNDER_TYPED:
+        rt: set[int] = set()
+        for d in (founders or {}).get(sk, []):
+            for c in d:
+                card = bank.pool.by_id.get(int(c))
+                if card and card["cardType"] == BASIC_ENERGY:
+                    rt.add(card["energyType"])
+        ft[sk] = rt
+    specs = {"spec-Ogerpon": frozenset({1}),
+             "grimmsnarl-mirror": frozenset({7}),
+             "engine": frozenset(),
+             "archaludon": frozenset(ft["archaludon"]) or frozenset({4, 8}),
+             "counter-900": frozenset(),
+             "rainbow-Kanga": (frozenset(ft["rainbow-Kanga"])
+                               or RAINBOW_FALLBACK)}
     out = []
-    for sk, allowed in specs:
-        isl = Island(sk, allowed)
+    for sk in chains:
+        isl = Island(sk, specs[sk])
         out.append(ArchIsland(isl, sk, "explore"))
         out.append(ArchIsland(isl, sk, "refine"))
     return out
 
 
-def build_weights(panel: list[dict]) -> dict:
-    """set_key -> (per-cell weights, neutral cell indices, floored)."""
+def build_weights(panel: list[dict], chains: list[str]) -> dict:
+    """set_key -> (per-cell weights, neutral cell indices, floored).
+
+    Base weights are the panel's own (representative) cell weights;
+    UNIFORM_CHAINS use uniform cells; target chains concentrate `mass`
+    on their target cells and spread the rest by panel weight."""
     n = len(panel)
+    base = [e["weight"] for e in panel]
     out = {}
-    for sk, (_pilot, match, mass, floored) in CHAINS.items():
+    for sk in chains:
+        _pilot, match, mass, floored = CHAINS[sk]
+        if sk in UNIFORM_CHAINS:
+            out[sk] = ([1.0 / n] * n, list(range(n)), floored)
+            continue
         tgt = ([i for i, e in enumerate(panel) if match(e["name"])]
                if match else [])
         if not tgt:
-            out[sk] = ([1.0 / n] * n, list(range(n)), floored)
+            out[sk] = (list(base), list(range(n)), floored)
             continue
         rest = [i for i in range(n) if i not in tgt]
+        tw = sum(base[i] for i in tgt)
+        rw = sum(base[i] for i in rest)
         w = [0.0] * n
         for i in tgt:
-            w[i] = mass / len(tgt)
+            w[i] = mass * base[i] / tw
         for i in rest:
-            w[i] = (1.0 - mass) / len(rest)
+            w[i] = (1.0 - mass) * base[i] / rw
         out[sk] = (w, rest, floored)
     return out
 
@@ -131,20 +166,23 @@ def run_seeded(run_dir: Path, panel_path: Path, hours: float = 10.5,
                founders: dict | None = None, resume: bool = False,
                deep_top: int = 3, deep_block: int = 100,
                deep_max: int = 400,
-               pilot_overrides: dict | None = None) -> None:
+               pilot_overrides: dict | None = None,
+               chains: list[str] | None = None,
+               improve_eps: float = 0.005) -> None:
     rng = random.Random(seed)
     bank = GeneBank(pool())
     p = bank.pool
-    islands = build_islands(bank, founders)
+    chains = list(chains) if chains else list(CHAINS)
+    islands = build_islands(bank, founders, chains)
     run_dir.mkdir(parents=True, exist_ok=True)
 
-    real_kind = {sk: spec[0] for sk, spec in CHAINS.items()}
+    real_kind = {sk: CHAINS[sk][0] for sk in chains}
     real_kind.update(pilot_overrides or {})
 
     from .specialist_panel import build_specialist_panel, panel_report
     n_cells = len(json.loads(panel_path.read_text())["decks"])
     panel = build_specialist_panel(panel_path, top_n=n_cells)
-    wspec = build_weights(panel)
+    wspec = build_weights(panel, chains)
     (run_dir / "panel.json").write_text(json.dumps(panel))
     print("panel:\n" + panel_report(panel), flush=True)
     for sk, (w, neutral, floored) in wspec.items():
@@ -254,10 +292,35 @@ def run_seeded(run_dir: Path, panel_path: Path, hours: float = 10.5,
         return island_fit(sk, v[0], v[1]) if v else -9.0
 
     # ---- structural repair per chain -------------------------------------
+    def cap_energy(out: list[int]) -> list[int]:
+        """Engine chain: cap total basic energy at ENGINE_ENERGY_CAP by
+        duplicating the deck's own non-energy cards (copy-cap and ACE
+        SPEC respected; duplication is closure-safe)."""
+        e_idx = [i for i, c in enumerate(out)
+                 if p.by_id[c]["cardType"] == BASIC_ENERGY]
+        excess = len(e_idx) - ENGINE_ENERGY_CAP
+        if excess <= 0:
+            return out
+        rng.shuffle(e_idx)
+        from collections import Counter as _C
+        counts = _C(p.by_id[c]["name"] for c in out
+                    if p.by_id[c]["cardType"] != BASIC_ENERGY)
+        for i in e_idx[:excess]:
+            cands = [c for c in out
+                     if p.by_id[c]["cardType"] != BASIC_ENERGY
+                     and not p.by_id[c]["aceSpec"]
+                     and counts[p.by_id[c]["name"]] < 4]
+            if not cands:
+                break
+            pick = rng.choice(cands)
+            out[i] = pick
+            counts[p.by_id[pick]["name"]] += 1
+        return out
+
     def repair_member(deck: list[int], ai: ArchIsland) -> list[int]:
-        if ai.set_key == "rainbow-Kanga":
+        if ai.set_key in FOUNDER_TYPED:
             allowed = set(ai.island.allowed)
-        elif ai.set_key == "kanga-counter":
+        elif ai.set_key in ("counter-900", "engine"):
             allowed = {p.by_id[c]["energyType"] for c in deck
                        if p.by_id[c]["cardType"] == BASIC_ENERGY}
         else:
@@ -285,13 +348,21 @@ def run_seeded(run_dir: Path, panel_path: Path, hours: float = 10.5,
                 for i in replaceable[:PAYABLE_FLOOR - have]:
                     out[i] = bank.pick_print(
                         rng.choice(rng.choice(lines)), rng)
-        return repair(out, ai.island, bank, rng)
+        out = repair(out, ai.island, bank, rng)
+        if ai.set_key == "engine":
+            out = cap_energy(out)
+        return out
 
     def mutate_member(deck: list[int], ai: ArchIsland,
                       explore: bool) -> list[int]:
         out = list(deck)
         work = ai.island
-        if ai.set_key == "kanga-counter":
+        if ai.set_key == "engine":
+            types = {p.by_id[c]["energyType"] for c in out
+                     if p.by_id[c]["cardType"] == BASIC_ENERGY}
+            work = Island(ai.set_key,
+                          frozenset(types) or frozenset({rng.randint(1, 8)}))
+        elif ai.set_key == "counter-900":
             if rng.random() < 0.2:
                 # retype: the counter island picks its weapon (D39)
                 t = rng.randint(1, 8)
@@ -308,7 +379,8 @@ def run_seeded(run_dir: Path, panel_path: Path, hours: float = 10.5,
             else:
                 types = {p.by_id[c]["energyType"] for c in out
                          if p.by_id[c]["cardType"] == BASIC_ENERGY}
-                work = Island(ai.set_key, frozenset(types))
+                work = Island(ai.set_key, frozenset(types)
+                              or frozenset({rng.randint(1, 8)}))
         out = mutate(out, work, bank, rng)
         if explore:
             out = mutate(out, work, bank, rng)
@@ -316,7 +388,7 @@ def run_seeded(run_dir: Path, panel_path: Path, hours: float = 10.5,
 
     def fresh_member(ai: ArchIsland) -> list[int]:
         isl = ai.island
-        if ai.set_key == "kanga-counter":
+        if ai.set_key in ("counter-900", "engine"):
             isl = Island(ai.set_key, frozenset({rng.randint(1, 8)}))
         return repair_member(build_template(isl, bank, rng), ai)
 
@@ -518,7 +590,7 @@ def run_seeded(run_dir: Path, panel_path: Path, hours: float = 10.5,
                 continue
             best = max(r["best"] for r in recs)
             e0, b0 = best_seen.get(sk, (era, -9.0))
-            if best > b0 + 0.01:
+            if best > b0 + improve_eps:
                 best_seen[sk] = (era, best)
             elif era - e0 >= plateau_window:
                 if waves.get(sk, 0) < 1:
@@ -578,13 +650,13 @@ def run_seeded(run_dir: Path, panel_path: Path, hours: float = 10.5,
 
     # ---- deep final evaluation (real pilots, reclaimed time) -------------
     term = {}
-    for sk in CHAINS:
+    for sk in chains:
         e0, b0 = best_seen.get(sk, (None, None))
         term[sk] = {"path": "plateau" if sk in frozen else "time-cap",
                     "last_improve_era": e0, "best": b0,
                     "waves": waves.get(sk, 0)}
     finals = []
-    for sk in CHAINS:
+    for sk in chains:
         kind = real_kind[sk]
         seen, cands = set(), []
         for temp in ("refine", "explore"):
