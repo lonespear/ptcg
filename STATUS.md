@@ -1,5 +1,11 @@
 **Last updated: 2026-08-08 ~11:50 UTC (Aug 8 morning)**
 
+## Update — Aug 8 midday: **v6 crossed 1000 (1004.2, top-100)**
+
+- Eight episodes from submission to 1000: 7W-2L with the last three wins
+  against 907/949/924-rated opponents — the band that used to beat us.
+  The effect-target fix converts. Judge final convergence at ~30 episodes.
+
 ## Update — Aug 8 morning (v6 up: pilot fix + the proven list)
 
 - **v6 SUBMITTED**: the overnight-gated effect-target fix (on ctx-13/14/15
