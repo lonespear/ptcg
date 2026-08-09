@@ -1,4 +1,48 @@
-**Last updated: 2026-08-09 ~06:00 UTC (Aug 9 morning)**
+**Last updated: 2026-08-09 ~13:00 UTC (Aug 9 midday)**
+
+## Update — Aug 9 midday: v9 up, and two things you can use
+
+**The engine was never seeded, and ours wasn't the only harness that could
+have this.** `ptcg/arena.py` passed a seed to `random.seed()`, but `libcg`
+draws its randomness from `std::random_device` and exports no way to seed
+it. So every "seeded" run in this repository's history was a fresh deal, and
+no two runs of the same command ever played the same games. We fixed it with
+a small preload that replaces that entropy source inside the process
+(`tools/engine_seed`, `ptcg/engine_seed.py`, `scripts/run_pinned.sh`). Nine
+runs of one matchup now return the identical 479-121 out of 600, idle or
+under an eight-process load, at one, two or four workers. One trap worth
+knowing: `run_pinned.sh env VAR=x python ...` runs UNPINNED, because macOS
+strips `DYLD_*` for SIP-protected binaries and `/usr/bin/env` is one.
+
+Second harness bug alongside it: `cg.api` allocates one engine-side search
+handle per process and holds it forever, so every game searched through
+state the previous game left behind. Which games shared a process was set by
+`--workers`, which is why the same seed block scored differently at 2 and 4.
+
+**v9 submitted** (commit `9fe0b3e`): five places where our agent's
+arithmetic disagreed with the engine, each verified against live engine
+output rather than a win rate. Attacks believed affordable under Nighttime
+Mine 150/838 wrong -> 0. End-of-turn damage counters (the Froslass family)
+2001/15451 -> 0. Rare Candy stage skips never seen, 87/87 -> 0. Full Metal
+Lab and Neutralization Zone damage pricing, 0 exact -> exact. Also: Weakness
+was being applied to attacks that PLACE damage counters, which the engine
+does not do because placing counters is not dealing damage. Pinned gate: no
+cell down, mirror 0.4767. We claim no gain — the smallest effect this setup
+resolves is about 6 points and none of these is that large.
+
+**The deck question, settled, and the answer may save you time.** 80,000
+duel games over eleven lists plus 157 mono-Grass candidates. Our list loses
+head-to-head duels (8th of 9), but every duel winner then fails the
+field-weighted matchup gate, always on the Alakazam cell. The reason: a duel
+between two Ogerpon decks IS the mirror, which is 3.5% of the ladder, while
+the four gate matchups are 85.6%. **A duel ranks decks correctly and chooses
+between them wrongly.** Also refuted, with 157 data points: cheaper boards
+do not help. The correlation between prizes-conceded-per-body and win rate
+is **+0.805** — decks that concede fewer prizes per Pokemon win LESS. A
+Crustle wall takes literally zero damage across 4,497 attacks and still
+loses badly, because chip damage is an Ability rather than an attack, Mega
+Lucario ex is typed `megaEx` and not `ex`, and the Alakazam deck runs no ex
+Pokemon at all.
 
 ## Update — Aug 9: **our gate harness was scoring legal moves as crashes**
 
