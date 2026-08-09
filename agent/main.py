@@ -24,6 +24,7 @@ from __future__ import annotations
 import math
 import os
 import random
+import re
 import sys
 import time
 
@@ -182,10 +183,17 @@ def prize_value(card_id: int) -> int:
     if data is None:
         return 1
     if getattr(data, "megaEx", False):
-        return 3
-    if getattr(data, "ex", False):
-        return 2
-    return 1
+        base = 3
+    elif getattr(data, "ex", False):
+        base = 2
+    else:
+        base = 1
+    # E17: Briar makes exactly this knockout pay one more, and `_lethal_now`
+    # tests the prize count against our whole remaining pile — priced at 2, a
+    # line that ends the game reads as short and the agent declines it.
+    if E17_BRIAR and _E17_TURN_FX.get("bonus_cid") == card_id:
+        return base + 1
+    return base
 
 
 def _best_damage(card_id: int) -> int:
@@ -356,9 +364,256 @@ def _attack_bypasses(attack_id: int) -> bool:
     return got
 
 
+# --- E17: damage knowledge corrected against engine truth --------------------
+# Measured on a 1,198-attack probe corpus (`dmg_probe.py`): each attack's
+# context read from the ACTING seat's own observation, each result from that
+# seat's own log stream.
+#
+#   PLACEMENT   an attack that PLACES damage counters is not dealing damage,
+#               and the engine applies neither Weakness nor Resistance to it.
+#               v7 doubled Alakazam's Powerful Hand into a Psychic-weak body
+#               and read exactly 2x, every time (55/55 in the belief audit).
+#               The `(0, 20, hand_self)` KB record is CORRECT: the engine
+#               placed 20 counters' worth per card in hand, exactly.
+#   WAIVER      "this attack's damage isn't affected by Weakness/Resistance"
+#               is printed on 17 attacks and v7 subtracted anyway, which
+#               zeroed Rock Hurl (predicted 0, dealt 40, 26 of 26).
+#   BOOST       a Pokemon in play can add flat damage to its own side's
+#               attacks before Weakness (Cynthia's Roserade, +30, and it
+#               stacks: the residual was 30 x copies x weakness in 100% of
+#               rows). It rides `_DAMAGE_SOURCES` at phase "pre".
+#
+# E17's fourth damage item was Full Metal Lab's 30-point reduction, which is
+# the same correction the Stadium source-walker above already carries, so it
+# is not repeated here — two subtractions would take 60 off.
+#
+# BRIAR is the last and is about prizes rather than damage: a Supporter played
+# this turn can make one knockout pay 3, which is the difference between
+# `_lethal_now` seeing a game-ending line and declining it.
+import re as _e17_re
+
+
+def _e17_flag(name: str, default: int = 1) -> bool:
+    try:
+        return bool(int(os.environ.get(name) or default))
+    except Exception:
+        return bool(default)
+
+
+E17_PLACEMENT = _e17_flag("E17_PLACEMENT")
+E17_WAIVER = _e17_flag("E17_WAIVER")
+E17_BOOST = _e17_flag("E17_BOOST")
+E17_BRIAR = _e17_flag("E17_BRIAR")
+
+_E17_PKMN = "Pok" + chr(0xe9) + "mon"
+_E17_APOS = chr(0x2019)
+_E17_ENERGY_SYMBOL = {"{G}": 1, "{R}": 2, "{W}": 3, "{L}": 4, "{P}": 5,
+                      "{F}": 6, "{D}": 7, "{M}": 8, "{N}": 9, "{C}": 0}
+
+_E17_PLACES: dict = {}
+_E17_WAIVES: dict = {}
+_E17_BOOST_CARD: dict = {}
+_E17_PRIZE_CARD: dict = {}
+_E17_TURN_FX: dict = {"turn": None, "bonus_cid": None}
+
+_E17_BOOST_RE = _e17_re.compile(
+    "[Aa]ttacks used by your (.{0,24}?) ?" + _E17_PKMN + " do ([0-9]+) more")
+_E17_DOES_DMG_RE = _e17_re.compile("does [0-9]+ damage")
+
+
+def _e17_text(attack_id: int) -> str:
+    _, attacks = _tables()
+    a = attacks.get(int(attack_id or 0))
+    return (getattr(a, "text", "") or "") if a is not None else ""
+
+
+def _attack_places_counters(attack_id: int) -> bool:
+    """The attack's whole output is placed damage counters.
+
+    Guarded twice over: the printed damage must be zero and the text must not
+    also deal damage, so an attack that does both never loses its Weakness.
+    """
+    got = _E17_PLACES.get(attack_id)
+    if got is None:
+        _, attacks = _tables()
+        a = attacks.get(int(attack_id or 0))
+        text = (getattr(a, "text", "") or "") if a is not None else ""
+        low = text.lower().replace(_E17_APOS, "'")
+        head = low.split("damage counter")[0]
+        got = bool(
+            text
+            and not (getattr(a, "damage", 0) or 0)
+            and "damage counter" in low
+            and "for each damage counter" not in low
+            and not _E17_DOES_DMG_RE.search(low)
+            and (head.startswith("place ") or head.startswith("put ")
+                 or " place " in head or " put " in head))
+        _E17_PLACES[attack_id] = got
+    return got
+
+
+def _attack_waives(attack_id: int) -> tuple:
+    """(waives Weakness, waives Resistance), read off the attack's own text."""
+    got = _E17_WAIVES.get(attack_id)
+    if got is None:
+        text = _e17_text(attack_id)
+        if "affected by" in text:
+            seg = text.split("affected by", 1)[1][:80]
+            got = ("Weakness" in seg, "Resistance" in seg)
+        else:
+            got = (False, False)
+        _E17_WAIVES[attack_id] = got
+    return got
+
+
+def _e17_boost_of_card(card_id: int):
+    """(amount, name prefix, energy type, stacks) this card adds to our attacks.
+
+    Three qualifiers ride these sentences and all three are honoured or the
+    rule is dropped: WHO attacks ("your Cynthia's Pokemon", "your {F}
+    Pokemon"), WHAT is being hit (Carracosta pays only into an Active
+    EVOLUTION Pokemon, so its sentence is not this sentence), and whether a
+    second copy pays again (Hop's Snorlax says it does not).
+    """
+    got = _E17_BOOST_CARD.get(card_id)
+    if got is None:
+        cards, _ = _tables()
+        data = cards.get(int(card_id or 0))
+        got = ()
+        for sk in (getattr(data, "skills", None) or []):
+            text = getattr(sk, "text", "") or ""
+            m = _E17_BOOST_RE.search(text)
+            if not m:
+                continue
+            if ("opponent" + _E17_APOS + "s Active " + _E17_PKMN) not in text:
+                continue                  # a qualified target we do not model
+            qual = (m.group(1) or "").strip()
+            amount = float(m.group(2))
+            etype = _E17_ENERGY_SYMBOL.get(qual)
+            if qual and etype is None and not qual.endswith("s"):
+                continue                  # a qualifier we cannot evaluate
+            prefix = None if (etype is not None or not qual) else qual
+            stacks = not ("doesn" in text and "stack" in text)
+            got = (amount, prefix, etype, stacks)
+            break
+        _E17_BOOST_CARD[card_id] = got
+    return got
+
+
+def _e17_boost_rules(player) -> tuple:
+    """Every always-on damage boost this side has in play, one per copy."""
+    out = []
+    seen = set()
+    for zone in ("active", "bench"):
+        for mon in _g(player, zone, []) or []:
+            if mon is None:
+                continue
+            cid = int(_g(mon, "id", 0) or 0)
+            rule = _e17_boost_of_card(cid)
+            if not rule:
+                continue
+            if not rule[3]:
+                if cid in seen:
+                    continue
+                seen.add(cid)
+            out.append(rule)
+    return tuple(out)
+
+
+def _e17_boost_amount(sctx, attacker_cid) -> float:
+    rules = (sctx or {}).get("_boost") or ()
+    if not rules or attacker_cid is None:
+        return 0.0
+    cards, _ = _tables()
+    data = cards.get(int(attacker_cid))
+    if data is None:
+        return 0.0
+    name = (getattr(data, "name", "") or "").replace("'", _E17_APOS)
+    etype = getattr(data, "energyType", None)
+    total = 0.0
+    for amount, prefix, want_type, _stacks in rules:
+        if prefix is not None:
+            if not name.startswith(prefix.replace("'", _E17_APOS)):
+                continue
+        elif want_type is not None and etype != want_type:
+            continue
+        total += amount
+    return total
+
+
+def _e17_card_pays_extra_prize(card_id: int) -> bool:
+    got = _E17_PRIZE_CARD.get(card_id)
+    if got is None:
+        cards, _ = _tables()
+        data = cards.get(int(card_id or 0))
+        got = False
+        for sk in (getattr(data, "skills", None) or []):
+            text = getattr(sk, "text", "") or ""
+            if "more Prize card" in text and "Tera" in text:
+                got = True
+                break
+        _E17_PRIZE_CARD[card_id] = got
+    return got
+
+
+def _e17_track_turn(obs) -> None:
+    """Hold open the extra-prize window Briar opens, for this turn only.
+
+    The engine paid 3 prizes for 13 knockouts the agent priced at 2, and every
+    one was our own Briar. Its conditions are all observable: their Prize
+    count is exactly 2, our Active is a Tera Pokemon, and the card was played
+    this turn, which the log stream says outright.
+    """
+    try:
+        cur = (obs or {}).get("current") or {}
+        turn = cur.get("turn")
+        if _E17_TURN_FX.get("turn") != turn:
+            _E17_TURN_FX["turn"] = turn
+            _E17_TURN_FX["bonus_cid"] = None
+        players = cur.get("players") or []
+        if len(players) < 2:
+            return
+        me = cur.get("yourIndex", 0) or 0
+        played = False
+        for lg in (obs.get("logs") or []):
+            if (lg.get("type") == 10 and lg.get("playerIndex") == me
+                    and _e17_card_pays_extra_prize(int(lg.get("cardId") or 0))):
+                played = True
+        if not played and _E17_TURN_FX.get("bonus_cid") is None:
+            return
+        mine, theirs = players[me], players[1 - me]
+        if len(_g(theirs, "prize", []) or []) != 2:
+            _E17_TURN_FX["bonus_cid"] = None
+            return
+        act = _g(mine, "active", []) or []
+        act = act[0] if act and act[0] is not None else None
+        cards, _ = _tables()
+        att = cards.get(int(_g(act, "id", 0) or 0)) if act is not None else None
+        if att is None or not getattr(att, "tera", False):
+            _E17_TURN_FX["bonus_cid"] = None
+            return
+        tgt = _g(theirs, "active", []) or []
+        tgt = tgt[0] if tgt and tgt[0] is not None else None
+        _E17_TURN_FX["bonus_cid"] = (int(_g(tgt, "id", 0) or 0)
+                                     if tgt is not None else None)
+    except Exception:
+        _E17_TURN_FX["bonus_cid"] = None
+
+
+def _e17_reset() -> None:
+    _E17_TURN_FX["turn"] = None
+    _E17_TURN_FX["bonus_cid"] = None
+
+
 def _wall_prevents(attack_id: int, attacker_cid, defender_cid,
-                   dmg: float) -> bool:
-    """True if the defender's wall zeroes this attack from this attacker."""
+                   dmg: float, stad=None) -> bool:
+    """True if the defender's wall zeroes this attack from this attacker.
+
+    E20: the `ability` condition asks whether the ATTACKER has an Ability, and
+    Team Rocket's Watchtower can take it away — a {C} attacker under that
+    Stadium walks through Cornerstone Mask Ogerpon ex. No wall in the pool
+    sits on a {C} body, so the Stadium can never switch a wall OFF; this is
+    the only direction that exists."""
     if not WALL_DAMAGE_ENABLED or attacker_cid is None or defender_cid is None:
         return False
     conds = _wall_conditions(int(defender_cid))
@@ -371,7 +626,8 @@ def _wall_prevents(attack_id: int, attacker_cid, defender_cid,
     if a is None:
         return False
     for cond in conds:
-        if cond == "ability" and (getattr(a, "skills", None) or []):
+        if cond == "ability" and (getattr(a, "skills", None) or []) \
+                and _abilities_live(int(attacker_cid), stad):
             return True
         if cond == "basic_ex" and getattr(a, "basic", False) \
                 and getattr(a, "ex", False):
@@ -398,6 +654,571 @@ def _attack_unsure(attack_id: int) -> bool:
             or "if this pok" in low or "if you" in low or "if your" in low
         _ATTACK_UNSURE[attack_id] = got
     return got
+
+
+# --- every source that edits attack damage, walked in one place -------------
+# E11 taught the damage model about damage prevention printed on the
+# DEFENDER's ability. E15 found the identical class printed on a STADIUM, and
+# an independent belief-vs-truth audit found the same thing by a different
+# method on a different corpus. Finding one bug class twice in two places says
+# the axis is the SOURCE of the modifier, not the card that carries it, so the
+# sources are enumerated here and each one parses its own printed text into
+# the same three verbs. A third source (a Tool, a Supporter, our own boosters)
+# is a function added to `_DAMAGE_SOURCES`, not a third call site inside
+# `_damage_against` — which is how this bug hid twice.
+#
+#   prevent  the attack does nothing at all
+#   reduce   N less damage, printed "after applying Weakness and Resistance"
+#   boost    N more damage, printed "before applying Weakness and Resistance"
+#
+# Phase "pre" runs before the Weakness/Resistance arithmetic and "post" after
+# it, matching where each family is printed; prevention rides "post" because
+# zero is zero at either end.
+
+
+def _src_defender_ability(attack_id, attacker_cid, defender_cid, stadium_cid,
+                          sctx, dmg, phase, stad=None):
+    """E11's wall parse, unchanged, as the first source.
+
+    E20 adds the one board fact the parse cannot read off the two cards: the
+    `ability` condition asks whether the ATTACKER has an Ability, and Team
+    Rocket's Watchtower can take it away."""
+    if phase == "post" and dmg and _wall_prevents(attack_id, attacker_cid,
+                                                  defender_cid, dmg, stad):
+        return 0
+    return dmg
+
+
+def _src_stadium(attack_id, attacker_cid, defender_cid, stadium_cid, sctx,
+                 dmg, phase, stad=None):
+    return _stadium_damage(stadium_cid, attack_id, attacker_cid, defender_cid,
+                           dmg, phase)
+
+
+def _src_own_boosters(attack_id, attacker_cid, defender_cid, stadium_cid, sctx,
+                      dmg, phase, stad=None):
+    """E17's third source: a Pokemon on our own bench adding to our attacks.
+
+    Cynthia's Roserade prints "+30 before applying Weakness and Resistance" and
+    the residual was 30 x copies x weakness in 100% of 137 measured rows, so it
+    is a "boost" at phase "pre" like the Stadium family and arrives the way the
+    pipeline says a new source arrives — a function in the tuple.
+    """
+    if phase != "pre" or not E17_BOOST or sctx is None or not dmg:
+        return dmg
+    return dmg + _e17_boost_amount(sctx, attacker_cid)
+
+
+_DAMAGE_SOURCES = (_src_defender_ability, _src_stadium, _src_own_boosters)
+
+
+def _damage_modified(attack_id, attacker_cid, defender_cid, stadium_cid, sctx,
+                     dmg, phase: str, stad=None):
+    """Walk every damage-modifier source at one phase of the arithmetic."""
+    for source in _DAMAGE_SOURCES:
+        dmg = source(attack_id, attacker_cid, defender_cid, stadium_cid, sctx,
+                     dmg, phase, stad)
+        if not dmg:
+            return 0
+    return dmg
+
+
+# --- Stadium damage modifiers (E15 / D60) -----------------------------------
+# Backward credit attribution over 79 real ladder episodes found that the
+# damage model never read `current.stadium`. Of 301 of our attacks with a
+# recorded engine result, 270 predictions were exact and 31 were HIGH — never
+# low — and 29 of the 31 are two Stadium cards: Full Metal Lab (30 less to a
+# {M} defender) and Neutralization Zone (an attack from a Rule Box Pokemon
+# does nothing to a defender without one, and our whole board is Teal Mask
+# Ogerpon ex). In the 13 of 79 episodes with one of them on the board we went
+# 2-11; in the other 66 we went 33-33.
+#
+# This is the wall bug on the Stadium axis and it is fixed the same way: the
+# conditions are parsed once per Stadium from the engine's own runtime skill
+# text (`all_card_data`), so nothing new ships with the bundle; the energy
+# symbols the text names are read off the Basic Energy cards rather than
+# written down here; and wording the parser cannot prove is ignored, because
+# over-zeroing a real attack is the costly direction.
+try:
+    STADIUM_DAMAGE_ENABLED = bool(
+        int(os.environ.get("CABT_STADIUM_DAMAGE") or 1))
+except Exception:
+    STADIUM_DAMAGE_ENABLED = True
+try:
+    STADIUM_EVAL_ENABLED = bool(int(os.environ.get("CABT_STADIUM_EVAL") or 1))
+except Exception:
+    STADIUM_EVAL_ENABLED = True
+
+_STADIUM_MOD: dict = {}          # stadium cardId -> tuple of modifiers
+_STADIUM_EFFECT: dict = {}       # (stadium, attacker, defender) -> effect
+_ENERGY_SYMBOL: dict | None = None
+
+_RE_APO = re.compile("[\u2019\u02bc]")
+_RE_WS = re.compile(r"\s+")
+_RE_BASIC_ENERGY = re.compile(r"^Basic \{(.)\} Energy$")
+_STAD_SUBJ = r"(?P<subj>\{.\}|[A-Z][\w\-']*'s)"
+_RE_STAD_REDUCE = re.compile(
+    _STAD_SUBJ + r" Pok\wmon \(both yours and your opponent's\) take "
+    r"(?P<amt>\d+) less damage from attacks from the opponent's Pok\wmon")
+_RE_STAD_BOOST = re.compile(
+    r"Attacks used by " + _STAD_SUBJ +
+    r" Pok\wmon \(both yours and your opponent's\) do (?P<amt>\d+) more "
+    r"damage to the opponent's Active Pok\wmon")
+_RE_STAD_PREVENT = re.compile(
+    r"Prevent all damage done to Pok\wmon that don't have a Rule Box.*?"
+    r"by attacks from the opponent's Pok\wmon \{ex\}", re.S)
+
+
+def _apo(text: str) -> str:
+    """One apostrophe and one kind of space.
+
+    The engine's own card text mixes both apostrophe forms and glues clauses
+    together with non-breaking spaces, so a pattern written against the card
+    as printed misses without this.
+    """
+    return _RE_WS.sub(" ", _RE_APO.sub("'", text or "")).strip()
+
+
+def _energy_symbols() -> dict:
+    """Energy symbol -> the engine's own energyType integer.
+
+    Read off the Basic Energy cards, each named "Basic {X} Energy" and
+    carrying the type every other table keys on, so the mapping the Stadium
+    text needs comes from the same place the Stadium text does.
+    """
+    global _ENERGY_SYMBOL
+    if _ENERGY_SYMBOL is None:
+        out = {}
+        cards, _ = _tables()
+        for c in cards.values():
+            m = _RE_BASIC_ENERGY.match(getattr(c, "name", "") or "")
+            if m:
+                t = getattr(c, "energyType", None)
+                if t:
+                    out[m.group(1)] = int(t)
+        _ENERGY_SYMBOL = out
+    return _ENERGY_SYMBOL
+
+
+def _subject_pred(subj: str):
+    """The subject clause of a Stadium modifier, or None when unproven.
+
+    ("type", energyType) for "{M} Pokemon", ("owner", "Steven's ") for the
+    owner-prefixed families. Anything else returns None and the modifier is
+    dropped rather than guessed at.
+    """
+    subj = (subj or "").strip()
+    if len(subj) == 3 and subj[0] == "{" and subj[-1] == "}":
+        t = _energy_symbols().get(subj[1])
+        return ("type", t) if t else None
+    if subj.endswith("'s"):
+        return ("owner", subj + " ")
+    return None
+
+
+def _subject_matches(pred, card) -> bool:
+    if pred is None or card is None:
+        return False
+    kind, val = pred
+    if kind == "type":
+        return int(getattr(card, "energyType", 0) or 0) == val
+    return _apo(getattr(card, "name", "") or "").startswith(val)
+
+
+def _stadium_mods(stadium_cid: int) -> tuple:
+    """Printed damage edits on a Stadium, parsed once from its skill text."""
+    got = _STADIUM_MOD.get(stadium_cid)
+    if got is not None:
+        return got
+    mods = []
+    cards, _ = _tables()
+    data = cards.get(stadium_cid)
+    for sk in (getattr(data, "skills", None) or []):
+        text = _apo(getattr(sk, "text", "") or "")
+        m = _RE_STAD_REDUCE.search(text)
+        if m:
+            pred = _subject_pred(m.group("subj"))
+            if pred is not None:
+                mods.append(("reduce", int(m.group("amt")), pred))
+            continue
+        m = _RE_STAD_BOOST.search(text)
+        if m:
+            pred = _subject_pred(m.group("subj"))
+            if pred is not None:
+                mods.append(("boost", int(m.group("amt")), pred))
+            continue
+        if _RE_STAD_PREVENT.search(text):
+            mods.append(("prevent_no_rulebox", 0, None))
+    got = tuple(mods)
+    _STADIUM_MOD[stadium_cid] = got
+    return got
+
+
+def _has_rule_box(card) -> bool:
+    """Pokemon {ex} and Pokemon {V} have Rule Boxes; this pool prints {ex}."""
+    return bool(getattr(card, "ex", False) or getattr(card, "megaEx", False))
+
+
+def _active_stadium(cur):
+    """The Stadium card in play, or None.
+
+    `current.stadium` holds exactly the one in play — verified against the
+    engine over live games, where it is a one-element list carrying the id,
+    a serial and the playerIndex of whoever played it.
+    """
+    if not STADIUM_DAMAGE_ENABLED:
+        return None
+    try:
+        for card in (_g(cur, "stadium", []) or []):
+            cid = _g(card, "id", 0) or 0
+            if cid:
+                return int(cid)
+    except Exception:
+        pass
+    return None
+
+
+def _stadium_effect(stadium_cid, attacker_cid, defender_cid) -> tuple:
+    """(boost before W/R, reduction after W/R, prevention) for one matchup.
+
+    Resolved once per (Stadium, attacker, defender) triple and cached. This
+    is what makes the fix affordable: `_threat_at` prices every attack of
+    every slot at every leaf of every rollout, so anything it does per attack
+    it does hundreds of thousands of times a game. The first build of this
+    resolved the card text inside that loop and cost 12x the wall clock on
+    the Neutralization Zone cell, which the search — being deadline-bound —
+    pays for in determinizations it never runs.
+    """
+    key = (stadium_cid, attacker_cid, defender_cid)
+    got = _STADIUM_EFFECT.get(key)
+    if got is not None:
+        return got
+    boost = reduce_ = 0
+    prevent = False
+    try:
+        mods = _stadium_mods(int(stadium_cid)) if stadium_cid else ()
+        if mods:
+            cards, _ = _tables()
+            atk = cards.get(int(attacker_cid)) if attacker_cid else None
+            dfn = cards.get(int(defender_cid)) if defender_cid else None
+            for kind, amt, pred in mods:
+                if kind == "boost" and _subject_matches(pred, atk):
+                    boost += amt
+                elif kind == "reduce" and _subject_matches(pred, dfn):
+                    reduce_ += amt
+                elif kind == "prevent_no_rulebox" and atk is not None \
+                        and dfn is not None and _has_rule_box(atk) \
+                        and not _has_rule_box(dfn):
+                    prevent = True
+    except Exception:
+        boost = reduce_ = 0
+        prevent = False
+    got = (boost, reduce_, prevent)
+    _STADIUM_EFFECT[key] = got
+    return got
+
+
+def _stadium_damage(stadium_cid, attack_id, attacker_cid, defender_cid,
+                    dmg, phase: str):
+    """The Stadium's printed damage edits, applied at the named phase.
+
+    "pre" carries the modifiers printed *before* applying Weakness and
+    Resistance and "post" the ones printed *after*; the prevention family
+    rides "post" because zero is zero at either end. An attack whose own text
+    waives opposing effects keeps its damage through the prevention family,
+    which is the direction that never zeroes a real attack.
+    """
+    if not STADIUM_DAMAGE_ENABLED or not stadium_cid or not dmg:
+        return dmg
+    boost, reduce_, prevent = _stadium_effect(stadium_cid, attacker_cid,
+                                              defender_cid)
+    if phase == "pre":
+        return dmg + boost if boost else dmg
+    if prevent and not _attack_bypasses(int(attack_id or 0)):
+        return 0
+    # E19. E17 established that placing damage counters is not dealing damage,
+    # and the two Stadium families do not both follow that rule:
+    #   "take N less damage"        does NOT reach placed counters. The engine
+    #                               paid Powerful Hand in full under Full Metal
+    #                               Lab in 18 of 18 rows where a Stadium-aware
+    #                               model subtracted 30 (belief audit, seed
+    #                               99500, the codex_alakazam corpus).
+    #   "prevent all damage done"   DOES stop them: the same corpus has the
+    #                               engine deal 0 for that attack under
+    #                               Neutralization Zone.
+    # They are printed differently and the engine treats them differently, so
+    # they are guarded separately rather than under one "is this damage" test.
+    if reduce_ and not (E17_PLACEMENT
+                        and _attack_places_counters(int(attack_id or 0))):
+        return max(dmg - reduce_, 0)
+    return dmg
+
+
+# --- E20: rules the STATIC layer has to read off the board (D68) ------------
+# The search's rollouts run the real engine, so every rule below already
+# lands inside a rollout. What was blind is the static layer — `_threat_at`,
+# `_online_turn`, `_exposure`, `_damage_against` — which prices the leaf and
+# which runs whenever the search does not. Wall blindness lived in that same
+# layer and was worth double digits, so the class is proven.
+#
+# Everything here is parsed once from the engine's own runtime card text
+# (`all_card_data`), so nothing new ships in the bundle, and precision comes
+# first: text the parser does not recognise contributes nothing. Over the
+# whole pool exactly one Stadium matches each Stadium rule (Nighttime Mine
+# 1266 for cost, Team Rocket's Watchtower 1256 for the ability lock) and
+# exactly one Pokemon matches each ability rule (Froslass 104, Munkidori 112).
+try:
+    STADIUM_COST_ENABLED = bool(int(os.environ.get("CABT_STADIUM_COST") or 1))
+except Exception:
+    STADIUM_COST_ENABLED = True
+try:
+    ABILITY_LOCK_ENABLED = bool(int(os.environ.get("CABT_ABILITY_LOCK") or 1))
+except Exception:
+    ABILITY_LOCK_ENABLED = True
+try:
+    CHIP_DRAIN_ENABLED = bool(int(os.environ.get("CABT_CHIP_DRAIN") or 1))
+except Exception:
+    CHIP_DRAIN_ENABLED = True
+
+# cg.api.EnergyType, as the card text prints it.
+_ENERGY_SYMBOL = {"C": 0, "G": 1, "R": 2, "W": 3, "L": 4,
+                  "P": 5, "F": 6, "D": 7, "M": 8, "N": 9}
+_STAD_RULES: dict = {}       # stadium cardId -> parsed rules
+_CHECKUP_CHIP: dict = {}     # cardId -> (damage counters, exempt name)
+_DRAIN_AB: dict = {}         # cardId -> (damage it can move, energy needed)
+
+
+def _stadium_rules(card_id: int) -> dict:
+    """What the Stadium in play does to attack costs and to Abilities.
+
+    `Nighttime Mine`: "Attacks used by each Tera Pokemon in play (both yours
+    and your opponent's) cost {C} more." `Team Rocket's Watchtower`: "{C}
+    Pokemon in play (both yours and your opponent's) have no Abilities."
+    """
+    got = _STAD_RULES.get(card_id)
+    if got is not None:
+        return got
+    out = {"cost_extra": 0, "cost_scope": None, "silence": None}
+    cards, _ = _tables()
+    data = cards.get(int(card_id))
+    for sk in (getattr(data, "skills", None) or []):
+        text = getattr(sk, "text", "") or ""
+        if "Attacks used by" in text and "cost" in text and "more" in text:
+            seg = text.split("cost", 1)[1].split("more", 1)[0]
+            n = seg.count("{C}")
+            if n and "Tera Pok" in text:
+                out["cost_extra"], out["cost_scope"] = n, "tera"
+        if "have no Abilities" in text:
+            head = text.split("Pok", 1)[0]
+            for sym, et in _ENERGY_SYMBOL.items():
+                if ("{%s}" % sym) in head:
+                    out["silence"] = et
+                    break
+    _STAD_RULES[int(card_id)] = out
+    return out
+
+
+def _stadium_ids(cur) -> tuple:
+    """Card ids of the Stadium in play; empty when the field is bare."""
+    out = []
+    for card in (_g(cur, "stadium", []) or []):
+        if card is None:
+            continue
+        cid = _g(card, "id", 0) or 0
+        if cid:
+            out.append(int(cid))
+    return tuple(out)
+
+
+def _cost_extra(card_id, stad) -> int:
+    """Extra Energy this Pokemon's attacks cost under the Stadium in play.
+
+    A PAYABILITY correction, not a damage one: our own Teal Mask Ogerpon ex
+    is a Tera Pokemon, so under Nighttime Mine every attack we project as
+    affordable is one Energy short of affordable — on our own deck, in every
+    game against the 10-of-80 field lists that run it.
+    """
+    if not (STADIUM_COST_ENABLED and stad and card_id):
+        return 0
+    cards, _ = _tables()
+    data = cards.get(int(card_id))
+    if data is None:
+        return 0
+    extra = 0
+    for sid in stad:
+        rule = _stadium_rules(sid)
+        if not rule["cost_extra"]:
+            continue
+        if rule["cost_scope"] == "tera" and getattr(data, "tera", False):
+            extra += rule["cost_extra"]
+    return extra
+
+
+def _abilities_live(card_id, stad) -> bool:
+    """False when the Stadium in play switches this Pokemon's Abilities off.
+
+    Our own list is mono {G}, so Watchtower cannot touch Teal Dance; what it
+    does reach is the OPPONENT half — every {C} ability body, the Froslass
+    counter's "has an Ability" test, and a wall whose condition names the
+    attacker's Ability.
+    """
+    if not (ABILITY_LOCK_ENABLED and stad and card_id):
+        return True
+    cards, _ = _tables()
+    data = cards.get(int(card_id))
+    if data is None:
+        return True
+    et = getattr(data, "energyType", None)
+    if et is None:
+        return True
+    for sid in stad:
+        sil = _stadium_rules(sid)["silence"]
+        if sil is not None and int(et) == int(sil):
+            return False
+    return True
+
+
+def _has_live_ability(card_id, stad) -> bool:
+    """Does this card carry an Ability that is switched on right now?"""
+    cards, _ = _tables()
+    data = cards.get(int(card_id or 0))
+    if data is None or not (getattr(data, "skills", None) or []):
+        return False
+    return _abilities_live(card_id, stad)
+
+
+def _checkup_chip_source(card_id: int) -> tuple:
+    """(damage counters, exempt card name) for a checkup chipper.
+
+    `Froslass`: "During Pokemon Checkup, put 1 damage counter on each Pokemon
+    that has an Ability (both yours and your opponent's), except any
+    Froslass." Our whole list has an Ability, so against the third of the
+    field that runs it every body of ours is 10 closer to a knockout each
+    turn than the HP arithmetic believes.
+    """
+    got = _CHECKUP_CHIP.get(card_id)
+    if got is not None:
+        return got
+    out = (0, "")
+    cards, _ = _tables()
+    data = cards.get(int(card_id))
+    for sk in (getattr(data, "skills", None) or []):
+        text = getattr(sk, "text", "") or ""
+        if "Checkup" not in text or "has an Ability" not in text:
+            continue
+        if "put" not in text:
+            continue
+        num = text.split("put", 1)[1].strip().split(" ", 1)[0]
+        if not num.isdigit():
+            continue
+        exempt = ""
+        if "except any" in text:
+            exempt = text.split("except any", 1)[1].strip(" .").strip()
+        out = (int(num), exempt)
+    _CHECKUP_CHIP[int(card_id)] = out
+    return out
+
+
+def _drain_source(card_id: int) -> tuple:
+    """(damage it can move onto us, Energy type it needs) for a drain body.
+
+    `Munkidori`: "Once during your turn, if this Pokemon has any {D} Energy
+    attached, you may move up to 3 damage counters from 1 of your Pokemon to
+    1 of your opponent's Pokemon." ABILITY_BLINDNESS #1 since E2.
+    """
+    got = _DRAIN_AB.get(card_id)
+    if got is not None:
+        return got
+    out = (0.0, None)
+    cards, _ = _tables()
+    data = cards.get(int(card_id))
+    for sk in (getattr(data, "skills", None) or []):
+        text = getattr(sk, "text", "") or ""
+        if "move" not in text or "damage counters" not in text:
+            continue
+        tail = text.split("damage counters", 1)[1]
+        if "opponent" not in tail:
+            continue
+        pre = text.split("damage counters", 1)[0].split()
+        if not pre or not pre[-1].isdigit():
+            continue
+        need = None
+        if "Energy attached" in text:
+            head = text.split("Energy attached", 1)[0]
+            for sym, et in _ENERGY_SYMBOL.items():
+                if ("{%s}" % sym) in head:
+                    need = et
+                    break
+        out = (float(int(pre[-1]) * 10), need)
+    _DRAIN_AB[int(card_id)] = out
+    return out
+
+
+def _chip_sources(cur, stad) -> tuple:
+    """(counters one checkup places on every live-Ability body, exempt names).
+
+    Both boards are counted: Freezing Shroud is symmetric, so our own copy
+    chips us too.
+    """
+    total, exempt = 0, set()
+    for player in (_g(cur, "players", []) or []):
+        for zone in ("active", "bench"):
+            for mon in _g(player, zone, []) or []:
+                if mon is None:
+                    continue
+                cid = int(_g(mon, "id", 0) or 0)
+                n, ex = _checkup_chip_source(cid)
+                if n and _abilities_live(cid, stad):
+                    total += n
+                    if ex:
+                        exempt.add(ex)
+    return total, exempt
+
+
+def _chip_on(mon, counters: int, exempt, stad) -> float:
+    """Damage one checkup puts on this body."""
+    if not counters or mon is None:
+        return 0.0
+    cid = int(_g(mon, "id", 0) or 0)
+    if not _has_live_ability(cid, stad):
+        return 0.0
+    cards, _ = _tables()
+    name = getattr(cards.get(cid), "name", None)
+    if name and exempt and name in exempt:
+        return 0.0
+    return 10.0 * counters
+
+
+def _drain_incoming(theirs, stad) -> float:
+    """Damage their drain abilities can move onto our board next turn.
+
+    Capped by the damage counters actually sitting on their own side, since
+    that is what a drain has to move.
+    """
+    if not CHIP_DRAIN_ENABLED:
+        return 0.0
+    have = 0.0
+    for zone in ("active", "bench"):
+        for mon in _g(theirs, zone, []) or []:
+            if mon is None:
+                continue
+            cid = int(_g(mon, "id", 0) or 0)
+            dmg, need = _drain_source(cid)
+            if not dmg or not _abilities_live(cid, stad):
+                continue
+            if need is not None:
+                energies = [int(e) for e in (_g(mon, "energies", []) or [])]
+                if not any(e == int(need) for e in energies):
+                    continue
+            have += dmg
+    if have <= 0.0:
+        return 0.0
+    on_board = 0.0
+    for zone in ("active", "bench"):
+        for mon in _g(theirs, zone, []) or []:
+            if mon is not None:
+                on_board += _dmg_counters(mon) * 10.0
+    return min(have, on_board)
 
 
 def _lethal_now(obs, options):
@@ -430,6 +1251,7 @@ def _lethal_now(obs, options):
         act = _g(mine, "active", []) or []
         act = act[0] if act and act[0] is not None else None
         my_cid = _g(act, "id") if act is not None else None
+        stadium_cid = _active_stadium(cur)
         sctx, slot_e, slot_dmgc = None, 0.0, 0.0
         if SCALED_DAMAGE_ENABLED:
             sctx = _scale_ctx(mine, theirs)
@@ -444,7 +1266,9 @@ def _lethal_now(obs, options):
             if _attack_unsure(int(aid or 0)):
                 continue
             d = _damage_against(aid, target, sctx, slot_e, slot_dmgc,
-                                attacker_cid=my_cid)
+                                attacker_cid=my_cid,
+                                stadium_cid=stadium_cid,
+                                stad=_stadium_ids(cur))
             if d >= target_hp and d > best_d:
                 best_i, best_d = i, d
         return best_i
@@ -454,7 +1278,7 @@ def _lethal_now(obs, options):
 
 def _damage_against(attack_id: int, target, sctx=None,
                     slot_e: float = 0.0, slot_dmgc: float = 0.0,
-                    attacker_cid=None) -> int:
+                    attacker_cid=None, stadium_cid=None, stad=None) -> int:
     """Printed damage, doubled if the defender is weak to this attack's type
     and reduced by RESISTANCE_DAMAGE if it resists it.
 
@@ -482,17 +1306,32 @@ def _damage_against(attack_id: int, target, sctx=None,
             TELEMETRY_SCALED["ctx_errors"] += 1
     if not dmg or target is None:
         return dmg
-    data = cards.get(_g(target, "id"))
+    tgt_cid = _g(target, "id")
+    # Every modifier printed "before applying Weakness and Resistance".
+    dmg = _damage_modified(attack_id, attacker_cid, tgt_cid, stadium_cid,
+                           sctx, dmg, "pre", stad)
+    data = cards.get(tgt_cid)
     weakness = getattr(data, "weakness", None) if data else None
     resistance = getattr(data, "resistance", None) if data else None
     energies = [e for e in (getattr(a, "energies", None) or []) if e]
-    if weakness is not None and any(e == weakness for e in energies):
-        dmg = dmg * 2
-    if (SCALED_DAMAGE_ENABLED and resistance is not None
-            and any(e == resistance for e in energies)):
-        dmg = max(dmg - RESISTANCE_DAMAGE, 0)
-    if dmg and _wall_prevents(attack_id, attacker_cid, _g(target, "id"), dmg):
-        dmg = 0
+    # E17: an attack that only PLACES damage counters is not dealing damage,
+    # and the engine gives it neither Weakness nor Resistance; an attack whose
+    # own text waives one of them keeps its number through that one.
+    e17_aid = int(attack_id or 0)
+    place = E17_PLACEMENT and _attack_places_counters(e17_aid)
+    waive_w, waive_r = _attack_waives(e17_aid) if E17_WAIVER else (False, False)
+    if not place:
+        if (weakness is not None and not waive_w
+                and any(e == weakness for e in energies)):
+            dmg = dmg * 2
+        if (SCALED_DAMAGE_ENABLED and resistance is not None and not waive_r
+                and any(e == resistance for e in energies)):
+            dmg = max(dmg - RESISTANCE_DAMAGE, 0)
+    # Everything printed "after applying Weakness and Resistance", plus the
+    # prevention family. E11's wall is the first source walked, so a position
+    # with no Stadium in play prices exactly as it did before.
+    dmg = _damage_modified(attack_id, attacker_cid, tgt_cid, stadium_cid,
+                           sctx, dmg, "post", stad)
     return dmg
 
 
@@ -500,6 +1339,7 @@ def _choose_attack(options, obs) -> int | None:
     """Cheapest knockout if one exists, otherwise the biggest hit."""
     target = _opponent_active(obs)
     target_hp = _g(target, "hp")
+    stadium_cid = _active_stadium(_g(obs, "current"))
 
     sctx, slot_e, slot_dmgc = None, 0.0, 0.0
     if SCALED_DAMAGE_ENABLED:
@@ -517,11 +1357,12 @@ def _choose_attack(options, obs) -> int | None:
             TELEMETRY_SCALED["ctx_errors"] += 1
             sctx = None
 
-    my_cid = None
+    my_cid, stad = None, None
     try:
         cur = _g(obs, "current")
         me = _g(cur, "yourIndex", 0)
         players = _g(cur, "players", []) or []
+        stad = _stadium_ids(cur)
         act = _g(players[me], "active", []) or [] if players else []
         if act and act[0] is not None:
             my_cid = _g(act[0], "id")
@@ -534,7 +1375,8 @@ def _choose_attack(options, obs) -> int | None:
         if _g(o, "type") != OPT_ATTACK:
             continue
         d = _damage_against(_g(o, "attackId"), target, sctx, slot_e,
-                            slot_dmgc, attacker_cid=my_cid)
+                            slot_dmgc, attacker_cid=my_cid,
+                            stadium_cid=stadium_cid, stad=stad)
         if d > big_d:
             big_i, big_d = i, d
         if target_hp is not None and d >= target_hp:
@@ -893,8 +1735,39 @@ def _bank_left(obs=None) -> float:
     return _bank_remaining
 
 
+# --- the gate meter (CABT_BUDGET_MODE) --------------------------------------
+# Two meters, and only the clock one ships. The grader hands out 600 seconds an
+# episode and kills an agent that overspends them, so an agent that ignores the
+# clock is not an agent we can submit.
+#
+# A GATE is the other problem. Metering by wall time makes what the agent plays
+# a function of how busy the machine was, which is not a property of the file
+# under test, and a gate that cannot replay its own run cannot attribute a
+# difference to the change it was built to price (D66). Under
+# CABT_BUDGET_MODE=count the meter is the determinization plan alone —
+# SEARCH_N_DET worlds, every candidate scored in each, no clock consulted —
+# so the same file plays the same game whatever else the box is doing.
+#
+# The count is not a new number to calibrate: it is SEARCH_N_DET, which is
+# what the clock-metered agent already spends. At a 600-second bank a decision
+# is allowed ~3.2 seconds and the whole search takes 16 ms (176 ms at worst),
+# so the deadline is three orders of magnitude off binding and removing it
+# changes nothing — measured, not assumed: on an idle box and under a
+# 14-process CPU burner, clock mode and count mode produce byte-identical
+# play over the same games (E18). Count mode is therefore an exact
+# reproduction of the shipped agent at today's constants, and insurance
+# against the day one of them moves.
+BUDGET_COUNT_MODE = (
+    (os.environ.get("CABT_BUDGET_MODE") or "clock").strip().lower() == "count")
+
+
 def _decision_budget(obs=None) -> float:
     """Seconds this decision may search for; 0.0 means the rules policy only."""
+    if BUDGET_COUNT_MODE:
+        # No deadline to reach, so every loop below runs its full plan and the
+        # clock never enters the decision. `inf` rather than a large constant
+        # so no arithmetic on it can wrap back into a binding value.
+        return math.inf
     try:
         left = _bank_left(obs)
         if left < BANK_RESERVE:
@@ -1454,6 +2327,9 @@ def _scale_ctx(attacker, defender) -> dict:
         "prizes_taken_opp":
             float(max(6 - len(_g(defender, "prize", []) or []), 0)),
         "in_play_self_team_rocket": _named_in_play(attacker, "Team Rocket’s"),
+        # E17: the board fact `_src_own_boosters` needs and no printed number
+        # carries — this side's own always-on damage boosters, one per copy.
+        "_boost": _e17_boost_rules(attacker) if E17_BOOST else (),
     }
 
 
@@ -1497,10 +2373,13 @@ class _SlotList(list):
     """One side's slots plus its scaling context, when the KB is live.
 
     `wall_def` (E11) is the OPPOSING Active's cardId when set: `_threat_at`
-    zeroes any slot attack that Active's wall ability prevents. Held at its
-    current observed value across the horizon, the same convention every
-    other projected quantity follows."""
-    __slots__ = ("sctx", "wall_def")
+    zeroes any slot attack that Active's wall ability prevents. `stadium`
+    (E15) is the cardId of the Stadium in play, whose printed damage edits
+    apply to both sides. Both are held at their current observed value across
+    the horizon, the same convention every other projected quantity
+    follows."""
+    __slots__ = ("sctx", "wall_def", "stadium", "stad", "fresh",
+                 "pending_first")
 
 
 def _traj_bucket(turn) -> str:
@@ -1552,6 +2431,7 @@ def _traj_slots(player) -> "_SlotList":
     Pokemon this side has in play. The last two elements exist for the
     scaled-damage KB's per-slot quantities and cost a subtraction each."""
     out = _SlotList()
+    fresh = []
     for zone, benched in (("active", False), ("bench", True)):
         for mon in _g(player, zone, []) or []:
             if mon is None:
@@ -1560,10 +2440,15 @@ def _traj_slots(player) -> "_SlotList":
             if cid:
                 out.append((float(len(_g(mon, "energies", []) or [])),
                             int(cid), _dmg_counters(mon), benched))
+                # E20 item 9: a Pokemon cannot evolve the turn it entered
+                # play. Carried per slot rather than widened into the tuple,
+                # which every other consumer unpacks by position.
+                fresh.append(bool(_g(mon, "appearThisTurn", False)))
+    out.fresh = tuple(fresh)
     return out
 
 
-def _visible_accel(player) -> float:
+def _visible_accel(player, stad=None) -> float:
     """The best accelerator this side can see — private information for us.
 
     Our hand is ours to read; theirs is hidden, so this term is zero on their
@@ -1579,6 +2464,10 @@ def _visible_accel(player) -> float:
             if card is None:
                 continue
             cid = _g(card, "id", 0) or 0
+            # E20: acceleration is an Ability, and a Stadium can switch it
+            # off. A card in hand is not in play, so it is never silenced.
+            if zone != "hand" and not _abilities_live(int(cid), stad):
+                continue
             r = rates.get(int(cid), 0)
             if r > best:
                 best = float(r)
@@ -1598,11 +2487,12 @@ def _online_turn(slots, growth) -> int:
     online inside the horizon returns HORIZON + 1, so the feature is bounded.
     """
     best = TRAJ_HORIZON + 1
+    stad = getattr(slots, "stad", None)
     for e, cid, *_ in slots:
         prof = _attack_profile(cid)
         if not prof:
             continue
-        cost = prof[0][0]
+        cost = prof[0][0] + _cost_extra(cid, stad)
         for k in range(0, TRAJ_HORIZON + 1):
             if k >= best:
                 break
@@ -1624,20 +2514,44 @@ def _threat_at(slots, growth, k: int) -> float:
     best = 0.0
     sctx = getattr(slots, "sctx", None)
     wall_def = getattr(slots, "wall_def", None)
+    # E20: the Stadium ids in play, read for the COST surcharge and the
+    # ability lock. Held apart from `stadium` below, which is E15's handle on
+    # the same card for its DAMAGE edits and is gated by CABT_STADIUM_EVAL —
+    # one handle would mean neither item could be backed out alone.
+    stad = getattr(slots, "stad", None)
+    # Hoisted out of the loop below on purpose: with no Stadium in play, or
+    # one that does not touch damage, this function runs exactly the code v7
+    # ran. The loop is the agent's hottest — every attack of every slot at
+    # every leaf — and the first build of this fix paid 12x the wall clock on
+    # the Neutralization Zone cell for resolving card text inside it.
+    stadium = getattr(slots, "stadium", None) if STADIUM_EVAL_ENABLED else None
+    if stadium and not _stadium_mods(int(stadium)):
+        stadium = None
     for e, cid, dmgc, on_bench in slots:
         budget = e + gain
+        # The surcharge is a payability test and runs FIRST: an attack the
+        # Stadium has priced out of reach is never offered to the damage
+        # arithmetic at all, so the two Stadium rules never compound.
+        extra = _cost_extra(cid, stad)
         if sctx is None:
             for cost, dmg in _attack_profile(cid):
-                if cost <= budget and dmg > best:
+                if cost + extra <= budget and dmg > best:
                     best = dmg
         else:
             for cost, dmg, sc, aid in _attack_profile_sc(cid):
                 if sc is not None:
                     dmg = _scaled_damage(sc, sctx, e, dmgc, on_bench)
                 if wall_def is not None \
-                        and _wall_prevents(aid, cid, wall_def, dmg):
+                        and _wall_prevents(aid, cid, wall_def, dmg, stad):
                     continue
-                if cost <= budget and dmg > best:
+                if stadium is not None and wall_def is not None:
+                    dmg = _stadium_damage(stadium, aid, cid, wall_def,
+                                          dmg, "pre")
+                    dmg = _stadium_damage(stadium, aid, cid, wall_def,
+                                          dmg, "post")
+                    if not dmg:
+                        continue
+                if cost + extra <= budget and dmg > best:
                     best = dmg
     return best
 
@@ -1750,7 +2664,38 @@ def _traj_projection(cur, mine, theirs):
                     slots_t.wall_def = _g(act_m[0], "id")
         except Exception:
             pass
-    accel_m = _visible_accel(mine)
+        # E15: the Stadium in play edits both sides' damage arithmetic. Held
+        # at its observed value across the horizon like everything else here,
+        # so a search leaf that removed a hostile Stadium prices the attacks
+        # it un-blunts.
+        try:
+            if STADIUM_EVAL_ENABLED:
+                stad = _active_stadium(cur)
+                if stad:
+                    slots_m.stadium = stad
+                    slots_t.stadium = stad
+        except Exception:
+            pass
+    # E20: the Stadium in play, and whether each side still has its own
+    # first turn ahead of it. The engine states both: `firstPlayer` names the
+    # starting seat and `turn` counts SEAT turns (1 is the starting player's
+    # first, 2 the second player's first), so turns taken is (turn + 1) // 2
+    # for the starting seat and turn // 2 for the other. Turn parity is the
+    # fallback for an observation form that omits `firstPlayer`.
+    stad_ids = _stadium_ids(cur)
+    slots_m.stad = slots_t.stad = stad_ids
+    try:
+        turn = int(_g(cur, "turn", 1) or 1)
+        me = int(_g(cur, "yourIndex", 0) or 0)
+        first = _g(cur, "firstPlayer", None)
+        first = (me if turn % 2 else 1 - me) if first is None or first < 0             else int(first)
+        taken_m = (turn + 1) // 2 if me == first else turn // 2
+        taken_t = (turn + 1) // 2 if me != first else turn // 2
+        slots_m.pending_first = taken_m <= 0
+        slots_t.pending_first = taken_t <= 0
+    except Exception:
+        slots_m.pending_first = slots_t.pending_first = False
+    accel_m = _visible_accel(mine, stad_ids)
 
     def g_m(k: int) -> float:
         return _traj_growth(us, bucket, e_m, k) + (accel_m if k else 0.0)
@@ -2021,9 +2966,114 @@ def _evo_avail(ctx, evo_id: int, steps: int, k: int, mid: str) -> float:
             outs = pool.get(evo_id, 0) - seen.get(evo_id, 0)
         ps = _p_at_least_one(max(outs, 0), unseen, k - (steps - s) + extra)
         if ps <= 0.0:
-            return 0.0
+            p = 0.0
+            break
         p *= ps
+    if steps == 2:
+        p = max(p, _rc_avail(ctx, evo_id, k))   # E20 item 8
     return p
+
+
+# --- E20 items 8 and 9: what the opponent's evolutions are actually worth ---
+# Both live in `_evo_threat_at`, the opponent half of the threat model. Our
+# own 60 is all Basics, Trainers and Energy — E13 audited 640 games and our
+# seat was offered an EVOLVE option zero times — so neither of these is ever
+# a question about our own play.
+try:
+    EVO_RC_ENABLED = bool(int(os.environ.get("CABT_EVO_RC") or 1))
+except Exception:
+    EVO_RC_ENABLED = True
+try:
+    EVO_LEGAL_ENABLED = bool(int(os.environ.get("CABT_EVO_LEGAL") or 1))
+except Exception:
+    EVO_LEGAL_ENABLED = True
+
+_RARE_CANDY: list = []
+
+
+def _rare_candy_ids() -> tuple:
+    """Item cards that put a Stage 2 straight onto a Basic.
+
+    Read off the engine's text ("skipping the Stage 1"), not a card id.
+    """
+    if _RARE_CANDY:
+        return _RARE_CANDY[0]
+    cards, _ = _tables()
+    out = []
+    for cid, card in cards.items():
+        if getattr(card, "cardType", None) != 1:
+            continue
+        for sk in (getattr(card, "skills", None) or []):
+            text = getattr(sk, "text", "") or ""
+            if "skipping the Stage 1" in text:
+                out.append(int(cid))
+                break
+    _RARE_CANDY.append(tuple(out))
+    return _RARE_CANDY[0]
+
+
+def _rc_avail(ctx, evo_id: int, k: int) -> float:
+    """P(the Stage 2 comes down by own turn k on a Rare Candy).
+
+    The shipped `_evo_avail` prices a two-step chain by multiplying in the
+    odds of finding the STAGE 1 as well, and `_evo_threat_at` refuses a
+    two-step chain before k = 2. Against a list holding Rare Candy that
+    projects their Stage 2 attacker a full turn late: E13 measured the skip
+    executed 0.75-1.2 times a game on the two field lists that run it, and
+    the shipped schedule scores that chain 0.000 at k = 1 where the Rare
+    Candy line prices it at 0.127. Both cards have to be in hand by own turn
+    k, so there is no step-schedule offset here — that is the whole point of
+    the skip.
+    """
+    if not EVO_RC_ENABLED:
+        return 0.0
+    pool, seen, hand_ids, hand_names, unseen, extra, name_outs = ctx
+    p = 0.0
+    for rc in _rare_candy_ids():
+        if pool.get(rc, 0) <= 0:
+            continue
+        q = 1.0
+        if hand_ids.get(evo_id, 0) <= 0:
+            outs = pool.get(evo_id, 0) - seen.get(evo_id, 0)
+            q *= _p_at_least_one(max(outs, 0), unseen, k + extra)
+        if q <= 0.0:
+            continue
+        if hand_ids.get(rc, 0) <= 0:
+            outs = pool.get(rc, 0) - seen.get(rc, 0)
+            q *= _p_at_least_one(max(outs, 0), unseen, k + extra)
+        if q > p:
+            p = q
+    return p
+
+
+def _evo_legal_at(slots, i: int, k: int) -> bool:
+    """May slot i's owner legally evolve it on its k-th turn from now?
+
+    Two printed restrictions, and E13 measured them as 57.5% and 42.5% of a
+    49.2% false-positive rate in the model's bare `evolvesFrom` predicate.
+
+    The just-played restriction binds at k = 0 and NOWHERE ELSE, and saying
+    so is the point. `_evo_threat_at`'s schedule guard already refuses any
+    chain with `steps > k`, so the earliest evolution it ever counts is
+    k = 1 — the owner's NEXT turn, by which time a body played this turn is
+    legal to evolve. E13 enforced it as a +1 shift at k >= 1, measured
+    +2.4 pt, and the arm was correctly killed: that is a one-turn threat
+    DISCOUNT wearing a rule's clothes, not a legality correction. Written
+    here as the predicate it is, it cannot move a shipped number, and it is
+    correct for any consumer that asks about the turn in progress.
+
+    The first-turn restriction does bind: a side that has not taken a turn
+    yet cannot evolve on its k = 1, which is every evaluation before turn 3.
+    """
+    if not EVO_LEGAL_ENABLED:
+        return True
+    if k <= 0:
+        fresh = getattr(slots, "fresh", None)
+        if fresh and i < len(fresh) and fresh[i]:
+            return False
+    if k <= 1 and getattr(slots, "pending_first", False):
+        return False
+    return True
 
 
 def _evo_threat_at(slots, growth, k: int, side: str, ctx) -> float:
@@ -2036,35 +3086,42 @@ def _evo_threat_at(slots, growth, k: int, side: str, ctx) -> float:
     gain = growth(k)
     best = 0.0
     sctx = getattr(slots, "sctx", None)
-    for e, cid, dmgc, on_bench in slots:
+    stad = getattr(slots, "stad", None)
+    for i, (e, cid, dmgc, on_bench) in enumerate(slots):
         budget = e + gain
+        extra = _cost_extra(cid, stad)
         if sctx is None:
             for cost, dmg in _attack_profile(int(cid)):
-                if cost <= budget and dmg > best:
+                if cost + extra <= budget and dmg > best:
                     best = dmg
         else:
             for cost, dmg, sc, _aid in _attack_profile_sc(int(cid)):
                 if sc is not None:
                     dmg = _scaled_damage(sc, sctx, e, dmgc, on_bench)
-                if cost <= budget and dmg > best:
+                if cost + extra <= budget and dmg > best:
                     best = dmg
+        if not _evo_legal_at(slots, i, k):
+            continue
         for evo_id, steps, mid in _evo_edges_for(side, int(cid)):
-            if steps > k:
-                continue
-            p = _evo_avail(ctx, evo_id, steps, k, mid)
+            p = _evo_avail(ctx, evo_id, steps, k, mid) if steps <= k else 0.0
+            # The Rare Candy line puts a Stage 2 onto a Basic in ONE step, so
+            # a two-step chain is reachable at k = 1.
+            if steps == 2 and k >= 1:
+                p = max(p, _rc_avail(ctx, evo_id, k))
             if p <= 0.0:
                 continue
             # Damage counters survive evolution and the Energy stays, so the
             # evolution's scaling attacks price off the same slot quantities.
+            evo_extra = _cost_extra(evo_id, stad)
             if sctx is None:
                 for cost, dmg in _attack_profile(evo_id):
-                    if cost <= budget and dmg * p > best:
+                    if cost + evo_extra <= budget and dmg * p > best:
                         best = dmg * p
             else:
                 for cost, dmg, sc, _aid in _attack_profile_sc(evo_id):
                     if sc is not None:
                         dmg = _scaled_damage(sc, sctx, e, dmgc, on_bench)
-                    if cost <= budget and dmg * p > best:
+                    if cost + evo_extra <= budget and dmg * p > best:
                         best = dmg * p
     return best
 
@@ -2267,9 +3324,22 @@ def _attack_capable(card_id) -> bool:
         return False
 
 
-def _exposure(mine, incoming: float, bench_reachable: bool) -> tuple[int, int]:
-    """(attackers inside their next-turn knockout range, attackers in play)."""
+def _exposure(mine, incoming: float, bench_reachable: bool,
+              chip: int = 0, chip_exempt=None, drain: float = 0.0,
+              stad=None) -> tuple[int, int]:
+    """(attackers inside their next-turn knockout range, attackers in play).
+
+    E20 item 7: an attack is not the only thing that reaches our board before
+    our next turn. A Froslass checkup puts a counter on every body with an
+    Ability — which on our list is every body we own — and a fueled Munkidori
+    can move 30 more onto one of them. Both are deterministic and choice-free,
+    which is what made the wall fix tractable, and both make a body that the
+    shipped arithmetic calls safe not safe. One checkup is priced, the one
+    that ends the turn in progress; the drain is spent on at most one body,
+    because that is what the printed text allows.
+    """
     exposed = capable = 0
+    drain_left = float(drain or 0.0)
     for zone, reachable in (("active", True), ("bench", bench_reachable)):
         for mon in _g(mine, zone, []) or []:
             if mon is None:
@@ -2277,8 +3347,15 @@ def _exposure(mine, incoming: float, bench_reachable: bool) -> tuple[int, int]:
             if not _attack_capable(_g(mon, "id", 0)):
                 continue
             capable += 1
-            if reachable and float(_g(mon, "hp", 0) or 0) <= incoming:
+            if not reachable:
+                continue
+            hp = float(_g(mon, "hp", 0) or 0)
+            reach = incoming + _chip_on(mon, chip, chip_exempt, stad)
+            if hp <= reach:
                 exposed += 1
+            elif drain_left and hp <= reach + drain_left:
+                exposed += 1
+                drain_left = 0.0
     return exposed, capable
 
 
@@ -2301,7 +3378,14 @@ def _threat_and_exposure(cur, mine, theirs) -> tuple[float, int, int]:
     incoming = _threat_at(st, gt, 1)
     _posture_specs()
     reach = _GUST_REACH.get(_TRAJ_ARCH["them"], _GUST_REACH_DEFAULT)
-    exposed, capable = _exposure(mine, incoming, reach)
+    if CHIP_DRAIN_ENABLED:
+        stad = _stadium_ids(cur)
+        chip, chip_exempt = _chip_sources(cur, stad)
+        exposed, capable = _exposure(mine, incoming, reach, chip,
+                                     chip_exempt,
+                                     _drain_incoming(theirs, stad), stad)
+    else:
+        exposed, capable = _exposure(mine, incoming, reach)
     return thr, exposed, capable
 
 
@@ -3567,6 +4651,13 @@ def _free_ability(obs, options) -> int | None:
             cid = _g(mon, "id") if mon is not None else _g(o, "cardId")
             if cid is None or not _ability_free(int(cid)):
                 continue
+            # E20 item 6: a Stadium can switch an Ability off. Our own list
+            # is mono {G} and Watchtower silences {C}, so this cannot fire on
+            # the deck we play; it is here because the rule is a rule, and
+            # because the engine's menu is the only other thing standing
+            # between the search and a silenced Ability.
+            if not _abilities_live(int(cid), _stadium_ids(cur)):
+                continue
             return i
     except Exception:
         return None
@@ -3595,7 +4686,10 @@ def _agent(obs_dict: dict) -> list[int]:
     obs = obs_dict
     select = obs.get("select")
     if select is None:
+        _e17_reset()          # a new episode; the last game's turn state is void
         return read_deck_csv()
+    if E17_BRIAR:
+        _e17_track_turn(obs)
 
     # Both archetype labels, re-read once here and held for every leaf the
     # search scores below (they are per-episode constants).

@@ -132,3 +132,7 @@ leaderboard*.png
 
 # community agents pending license verification
 external/
+
+# Strategy analyses and experiment logs stay local — this fork is public.
+experiments_0808/
+data/leaf_train/

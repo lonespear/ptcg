@@ -95,6 +95,12 @@ def _init(root: str, a_path: str, spec_path: str, deck_a: str,
     import ptcg.creation  # noqa: F401  — engine bootstrap
     from ptcg.arena import load_deck
     from ptcg.creation.pilots import ExternalPilot
+    from ptcg import engine_seed
+
+    # Whether this worker's games are reproducible, recorded per worker rather
+    # than read off the parent: the preload is inherited through the spawn and
+    # a run that lost it would otherwise report a number nothing can replay.
+    _STATE["pinned"] = engine_seed.available()
 
     mod = _load_main(a_path, "spec_gate_a")
     _STATE["a_mod"] = mod
@@ -134,7 +140,8 @@ def _play(seeds: list[int]) -> dict:
     from ptcg.arena import play_game
     out = {"a": 0, "b": 0, "draws": 0, "turns": [], "errors": [],
            "a_error_forfeits": 0, "b_error_forfeits": 0,
-           "a_clean": 0, "b_clean": 0}
+           "a_clean": 0, "b_clean": 0,
+           "pinned": bool(_STATE.get("pinned"))}
     for g in seeds:
         _open_episode(_STATE["a"])
         _open_episode(_STATE["b"])
@@ -198,6 +205,7 @@ def main() -> None:
     res = {"a": 0, "b": 0, "draws": 0, "turns": [], "errors": [],
            "a_error_forfeits": 0, "b_error_forfeits": 0,
            "a_clean": 0, "b_clean": 0}
+    pinned = all(p.get("pinned") for p in parts)
     for p in parts:
         for k in ("a", "b", "draws", "a_error_forfeits", "b_error_forfeits",
                   "a_clean", "b_clean"):
@@ -218,6 +226,7 @@ def main() -> None:
           f"+- {se_clean:.4f} SE   [{secs}s]")
     print(f"  diagnostic only, all games: A {res['a']} / B {res['b']} of "
           f"{decided} decided ({res['draws']} draws) -> {wr:.4f}")
+    print(f"  engine RNG: {'pinned, this run replays' if pinned else 'UNPINNED — these games cannot be replayed (D66); run under scripts/run_pinned.sh'}")
     print(f"  forfeits: theirs {res['b_error_forfeits']}, "
           f"ours {res['a_error_forfeits']} "
           f"({forfeit_rate:.1%} of decided games excluded)")
@@ -252,6 +261,7 @@ def main() -> None:
             # diagnostic. Field names are unchanged from the pre-D54 tool so
             # every result file already on disk stays readable; what changed
             # is which of them is the answer.
+            "engine_pinned": pinned,
             "primary_metric": "a_win_rate_clean",
             "a_win_rate_clean": round(wr_clean, 4),
             "clean_games": clean, "a_clean": res["a_clean"],

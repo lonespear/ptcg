@@ -47,13 +47,51 @@ def load_deck(path: str | Path) -> list[int]:
     return deck
 
 
+def _reset_engine_agent() -> None:
+    """Give this game its own engine-side search agent.
+
+    `cg.api` allocates one `AgentStart()` handle the first time anything
+    searches and then holds it in a module global for the life of the process,
+    so every game a worker plays searches through state the game before it
+    left behind. That is the second half of D60's worker-count defect: which
+    games shared a process was set by `--workers`, so the same seed block
+    scored differently at 2 workers and at 4. Measured: replaying one seed in
+    a process gave three different games, and gives the same game every time
+    with this reset in front of it.
+
+    The handle costs ~25 KB and a few microseconds, and the engine exports no
+    matching free, so a 600-game worker carries ~15 MB of dead handles. That
+    is the price of a game that does not depend on its neighbours.
+    """
+    try:
+        import cg.api as _capi
+        if hasattr(_capi, "agent_ptr"):
+            del _capi.agent_ptr
+    except Exception:
+        pass
+
+
 def play_game(agent0: Agent, agent1: Agent, deck0: list[int], deck1: list[int],
               seed: int | None = None) -> GameResult:
-    """Play one full battle and report who won."""
-    from cg.game import battle_finish, battle_select, battle_start
+    """Play one full battle and report who won.
 
+    `seed` reaches the engine only when the `tools/engine_seed` preload is in
+    the process. Without it this line seeds Python's global `random`, which
+    the engine does not use — `libcg` draws from `std::random_device` and
+    exports no seed entry point — so every "seeded" game was in fact a fresh
+    deal and no run of any gate ever reproduced another (D66). Pinning per
+    GAME rather than per process is also what makes a result independent of
+    `--workers`: the engine's stream would otherwise carry from one game to
+    the next inside a worker, so which games shared a process changed what
+    was dealt (D60).
+    """
+    from cg.game import battle_finish, battle_select, battle_start
+    from ptcg import engine_seed
+
+    _reset_engine_agent()
     if seed is not None:
         random.seed(seed)
+        engine_seed.pin(seed)
 
     agents = (agent0, agent1)
     obs, start = battle_start(list(deck0), list(deck1))
