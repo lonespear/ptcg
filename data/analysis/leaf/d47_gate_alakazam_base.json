@@ -1,0 +1,23 @@
+{
+ "a": "agent/main.py",
+ "deck_a": "agent/deck.csv",
+ "specialist": "external/codex_alakazam_agent.py",
+ "deck_specialist": "external/codex_alakazam_deck.json",
+ "env": {},
+ "games": 300,
+ "seed0": 94000,
+ "decided": 300,
+ "a_wins": 135,
+ "b_wins": 165,
+ "draws": 0,
+ "a_win_rate": 0.45,
+ "clean_games": 300,
+ "a_clean": 135,
+ "b_clean": 165,
+ "a_win_rate_clean": 0.45,
+ "a_error_forfeits": 0,
+ "b_error_forfeits": 0,
+ "n_errors": 0,
+ "errors": [],
+ "seconds": 126.4
+}

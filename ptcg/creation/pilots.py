@@ -359,6 +359,13 @@ class JonDayPilot:
 
     def bind_deck(self, deck: list[int]) -> None:
         self.deck = list(deck)
+        # Fresh episode time bank per game. The grader resets the bank on the
+        # deck-selection call that opens every episode; the harness never
+        # sends one, so a search-mode gate match would otherwise inherit an
+        # ever-draining bank and go rules-only after the first few games.
+        reset = getattr(self._jon, "_reset_bank", None)
+        if callable(reset):
+            reset()
 
     def __call__(self, obs: dict) -> list[int]:
         self._jon._MY_DECK = self.deck

@@ -1,0 +1,74 @@
+{
+ "Marnie's Grimmsnarl ex": {
+  "n": 19360,
+  "chip_mean_real": 66.5,
+  "chip_mean_head": 66.1,
+  "chip_w1": 0.7,
+  "prizes_mean_real": 0.532,
+  "prizes_mean_head": 0.5457
+ },
+ "Mega Lopunny ex": {
+  "n": 7564,
+  "chip_mean_real": 55.1,
+  "chip_mean_head": 57.9,
+  "chip_w1": 3.5,
+  "prizes_mean_real": 0.5271,
+  "prizes_mean_head": 0.5192
+ },
+ "Mega Kangaskhan ex": {
+  "n": 8900,
+  "chip_mean_real": 33.2,
+  "chip_mean_head": 30.8,
+  "chip_w1": 2.6,
+  "prizes_mean_real": 0.3084,
+  "prizes_mean_head": 0.3426
+ },
+ "Fezandipiti ex": {
+  "n": 12278,
+  "chip_mean_real": 21.0,
+  "chip_mean_head": 22.4,
+  "chip_w1": 1.4,
+  "prizes_mean_real": 0.5001,
+  "prizes_mean_head": 0.5048
+ },
+ "Dragapult ex": {
+  "n": 3685,
+  "chip_mean_real": 51.2,
+  "chip_mean_head": 54.7,
+  "chip_w1": 3.9,
+  "prizes_mean_real": 0.4893,
+  "prizes_mean_head": 0.468
+ },
+ "Teal Mask Ogerpon ex": {
+  "n": 3302,
+  "chip_mean_real": 24.0,
+  "chip_mean_head": 28.5,
+  "chip_w1": 4.5,
+  "prizes_mean_real": 0.6469,
+  "prizes_mean_head": 0.6381
+ },
+ "Dudunsparce": {
+  "n": 143,
+  "chip_mean_real": 22.2,
+  "chip_mean_head": 37.7,
+  "chip_w1": 17.0,
+  "prizes_mean_real": 0.5594,
+  "prizes_mean_head": 0.669
+ },
+ "Archaludon ex": {
+  "n": 35,
+  "chip_mean_real": 52.9,
+  "chip_mean_head": 49.2,
+  "chip_w1": 12.6,
+  "prizes_mean_real": 0.6,
+  "prizes_mean_head": 0.6857
+ },
+ "FIELD": {
+  "n": 60656,
+  "chip_mean_real": 44.5,
+  "chip_mean_head": 45.5,
+  "chip_w1": 1.0,
+  "prizes_mean_real": 0.4957,
+  "prizes_mean_head": 0.5002
+ }
+}

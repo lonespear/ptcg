@@ -53,6 +53,41 @@ def write_tables(dest: Path) -> None:
           f"({dest.stat().st_size / 1024:.0f} KB)")
 
 
+def opp_branch() -> int:
+    """The agent's SEARCH_OPP_BRANCH, read off the source it will ship.
+
+    Read rather than imported: importing `agent/main.py` loads `cg`, and this
+    script already loads it once for the card tables.
+    """
+    import re
+    src = (AGENT / "main.py").read_text(encoding="utf-8")
+    m = re.search(r'CABT_OPP_BRANCH"\) or (\d+)\)', src)
+    if m is None:
+        raise ValueError("cannot read SEARCH_OPP_BRANCH out of agent/main.py")
+    return int(m.group(1))
+
+
+def agent_flags() -> dict:
+    """The posture / protection defaults, read off the source that will ship.
+
+    Same reason as `opp_branch` above: importing agent/main.py loads `cg`, and
+    this script already loads it once for the card tables. The environment is
+    deliberately not consulted — what ships is the file's own default, not
+    whatever the shell that ran the build happened to export.
+    """
+    import re
+    src = (AGENT / "main.py").read_text(encoding="utf-8")
+    out = {}
+    for key, name in (("postures", "CABT_POSTURES"), ("protect", "CABT_PROTECT"),
+                      ("tree_leaf", "CABT_TREE_LEAF"),
+                      ("scaled", "CABT_SCALED_DAMAGE")):
+        m = re.search(rf'{name}"\) or (\d+)\)', src)
+        if m is None:
+            raise ValueError(f"cannot read {name} out of agent/main.py")
+        out[key] = int(m.group(1))
+    return out
+
+
 def build() -> Path:
     staging = BUILD / "submission"
     if staging.exists():
@@ -74,6 +109,129 @@ def build() -> Path:
     else:
         print("  WARNING: no deck_priors.json — search will be disabled. "
               "Run scripts/export_priors.py")
+
+    # The fitted margin -> P(win) table (playbook C3). The agent reads its own
+    # verdict off it at run time, and the comeback posture is keyed on that
+    # verdict, so a missing table silently flattens a shipped behaviour to
+    # nothing — hence the same loud absence the priors get.
+    calib = ROOT / "data" / "calibration_v2.json"
+    if calib.exists():
+        shutil.copy2(calib, staging / "calibration.json")
+        print(f"  calibration: {calib.stat().st_size / 1024:.0f} KB")
+    else:
+        print("  WARNING: no data/calibration_v2.json — _pwin returns 0.5 and "
+              "the comeback posture never fires. Run "
+              "python -m ptcg.creation.calibration --games 3000 "
+              "--out data/calibration_v2.json")
+
+    # The C1/C2 trajectory tables: the fitted turn-to-turn Energy curves the
+    # projection reads, and the Energy-mechanics KB it credits a visible
+    # accelerator from. Same loud absence as the two above — without them the
+    # projection falls back to a flat field rate and the fitted C2 weight is
+    # being spent on a number it was not fitted for.
+    for src, dest, rebuild in (
+            (ROOT / "data" / "analysis" / "trajectory_curves.json",
+             "trajectory_curves.json",
+             "python -m ptcg.trajectory"),
+            (ROOT / "data" / "energy_mechanics.json",
+             "energy_mechanics.json",
+             "python -c \"from ptcg.energy_mechanics import write_json; "
+             "write_json()\""),
+            ):
+        if src.exists():
+            shutil.copy2(src, staging / dest)
+            print(f"  {dest}: {src.stat().st_size / 1024:.0f} KB")
+        else:
+            print(f"  WARNING: no {src.relative_to(ROOT)} — the C1/C2 "
+                  f"projection degrades to the field-average rate. "
+                  f"Rebuild it with: {rebuild}")
+
+    # The matchup deny-postures and the gust-reach table (postures.json), under
+    # the same rule the opponent table gets below: a file in the archive that
+    # nothing opens is a bundle audit that lies. Both behaviours that read it
+    # were measured and refused, so CABT_POSTURES and CABT_PROTECT default to
+    # 0 and this normally copies nothing and says so.
+    flags = agent_flags()
+    postures = ROOT / "data" / "analysis" / "postures.json"
+    # The tree leaf reads this file too, and for the same reason the
+    # protection rule does: `attackers_exposed` counts a benched Pokemon only
+    # where their archetype can gust it into the Active Spot, which is
+    # `gust_reach`. Two of the sixteen features would silently fall back to
+    # the play-weighted default without it — a different feature from the one
+    # the forest was fitted on.
+    if flags["postures"] or flags["protect"] or flags["tree_leaf"]:
+        if not postures.exists():
+            raise FileNotFoundError(
+                f"a posture behaviour is on and {postures} is missing — no "
+                f"posture would activate and gust reach would fall back to a "
+                f"default. Rebuild it: python -m ptcg.matchup_postures")
+        shutil.copy2(postures, staging / "postures.json")
+        print(f"  postures: {postures.stat().st_size / 1024:.0f} KB "
+              f"(CABT_POSTURES={flags['postures']}, "
+              f"CABT_PROTECT={flags['protect']}, "
+              f"CABT_TREE_LEAF={flags['tree_leaf']})")
+    else:
+        print("  postures: not bundled — the deny-postures, the protection "
+              "rule and the tree leaf are all off, so nothing in the agent "
+              "would read it")
+
+    # The attack-scaler KB (the scaling/flat-damage/resistance bundle). Ships
+    # only while CABT_SCALED_DAMAGE defaults on in the source, under the same
+    # audit rule as every other switched file: present iff something opens it.
+    scalers = AGENT / "attack_scalers.json"
+    if flags["scaled"]:
+        if not scalers.exists():
+            raise FileNotFoundError(
+                f"CABT_SCALED_DAMAGE is on and {scalers} is missing — every "
+                f"scaling attack would price at its printed number. Rebuild "
+                f"it: python -m ptcg.attack_scalers --write")
+        shutil.copy2(scalers, staging / "attack_scalers.json")
+        print(f"  attack_scalers: {scalers.stat().st_size / 1024:.0f} KB "
+              f"(CABT_SCALED_DAMAGE={flags['scaled']})")
+    else:
+        print("  attack_scalers: not bundled — CABT_SCALED_DAMAGE is 0, so "
+              "nothing in the agent would read it")
+
+    # The D34 tree leaf. Under the same rule the two above get: it ships only
+    # while the agent is configured to read it, and CABT_TREE_LEAF defaults to
+    # 0 because the gate refused it (pooled mirrors 0.2135 over 787). Turning
+    # the leaf on without the forest beside it would put `_evaluate` into a
+    # guarded except on every scored position and score nothing at all, so a
+    # missing file with the flag up is fatal rather than quiet.
+    leaf = ROOT / "data" / "analysis" / "tree_leaf.json"
+    if flags["tree_leaf"]:
+        if not leaf.exists():
+            raise FileNotFoundError(
+                f"CABT_TREE_LEAF is on and {leaf} is missing — every search "
+                f"evaluation would raise into its guard and fall back to the "
+                f"linear margin without saying so. Rebuild it: "
+                f"/usr/bin/python3 scripts/fit_tree_leaf.py fit")
+        shutil.copy2(leaf, staging / "tree_leaf.json")
+        print(f"  tree_leaf: {leaf.stat().st_size / 1024:.0f} KB "
+              f"(CABT_TREE_LEAF={flags['tree_leaf']})")
+    else:
+        print("  tree_leaf: not bundled — CABT_TREE_LEAF is 0, so nothing in "
+              "the agent would open it")
+
+    # Playbook entry 4: the counted opponent reply table. It ships only while
+    # the agent is configured to read it, because a file in the archive that
+    # nothing opens is a bundle audit that lies. SEARCH_OPP_BRANCH is 0 at the
+    # moment — the entry was measured and refused — so this normally copies
+    # nothing and says so.
+    branch = opp_branch()
+    policy = ROOT / "data" / "opponent_policy.json"
+    if branch >= 1:
+        if not policy.exists():
+            raise FileNotFoundError(
+                f"SEARCH_OPP_BRANCH is {branch} and {policy} is missing — the "
+                f"rollout would play their turn under our own priority table. "
+                f"Rebuild it: /usr/bin/python3 scripts/build_opponent_policy.py")
+        shutil.copy2(policy, staging / "opponent_policy.json")
+        print(f"  opponent_policy: {policy.stat().st_size / 1024:.0f} KB "
+              f"(SEARCH_OPP_BRANCH={branch})")
+    else:
+        print("  opponent_policy: not bundled — SEARCH_OPP_BRANCH is 0, so "
+              "nothing in the agent would read it")
 
     # The agent reads card/attack metadata through cg.api, exactly as the
     # official sample does, so the package ships with the bundle. (Importing it
@@ -162,12 +320,13 @@ def main() -> None:
         # under the Windows console codepage — a crash there would look like a
         # validation failure, or worse, be mistaken for noise.
         env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
-        rc = subprocess.run(
-            [sys.executable, str(Path(__file__).parent / "validate_submission.py")],
-            text=True, env=env).returncode
-        if rc != 0:
-            sys.exit("validation failed - not submitting")
-        print("  validation episode passed")
+        for gate in ("falsify_bundle.py", "validate_submission.py"):
+            rc = subprocess.run(
+                [sys.executable, str(Path(__file__).parent / gate)],
+                text=True, env=env).returncode
+            if rc != 0:
+                sys.exit(f"{gate} failed - not submitting")
+            print(f"  {gate} passed")
     if args.submit:
         rc = submit(archive, args.message)
         sys.exit(rc)

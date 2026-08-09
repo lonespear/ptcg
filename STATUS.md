@@ -1,4 +1,336 @@
+**Last updated: 2026-08-09 ~13:20 UTC (Aug 9 midday)**
+
+> **Jon — start with [`FINDINGS_v3_to_v9.md`](FINDINGS_v3_to_v9.md).** It is the
+> whole arc from v3 to v9 in one place: three bugs in our test harness that
+> invalidated a week of numbers, what our measurements can and cannot see, ten
+> agent bugs found by diffing belief against engine truth, four ideas that
+> sounded good and did nothing, and the deck question settled. The daily entries
+> below are the running log; that file is the synthesis.
+
+## Update — Aug 9 midday: v9 up, and two things you can use
+
+**The engine was never seeded, and ours wasn't the only harness that could
+have this.** `ptcg/arena.py` passed a seed to `random.seed()`, but `libcg`
+draws its randomness from `std::random_device` and exports no way to seed
+it. So every "seeded" run in this repository's history was a fresh deal, and
+no two runs of the same command ever played the same games. We fixed it with
+a small preload that replaces that entropy source inside the process
+(`tools/engine_seed`, `ptcg/engine_seed.py`, `scripts/run_pinned.sh`). Nine
+runs of one matchup now return the identical 479-121 out of 600, idle or
+under an eight-process load, at one, two or four workers. One trap worth
+knowing: `run_pinned.sh env VAR=x python ...` runs UNPINNED, because macOS
+strips `DYLD_*` for SIP-protected binaries and `/usr/bin/env` is one.
+
+Second harness bug alongside it: `cg.api` allocates one engine-side search
+handle per process and holds it forever, so every game searched through
+state the previous game left behind. Which games shared a process was set by
+`--workers`, which is why the same seed block scored differently at 2 and 4.
+
+**v9 submitted** (commit `9fe0b3e`): five places where our agent's
+arithmetic disagreed with the engine, each verified against live engine
+output rather than a win rate. Attacks believed affordable under Nighttime
+Mine 150/838 wrong -> 0. End-of-turn damage counters (the Froslass family)
+2001/15451 -> 0. Rare Candy stage skips never seen, 87/87 -> 0. Full Metal
+Lab and Neutralization Zone damage pricing, 0 exact -> exact. Also: Weakness
+was being applied to attacks that PLACE damage counters, which the engine
+does not do because placing counters is not dealing damage. Pinned gate: no
+cell down, mirror 0.4767. We claim no gain — the smallest effect this setup
+resolves is about 6 points and none of these is that large.
+
+**The deck question, settled, and the answer may save you time.** 80,000
+duel games over eleven lists plus 157 mono-Grass candidates. Our list loses
+head-to-head duels (8th of 9), but every duel winner then fails the
+field-weighted matchup gate, always on the Alakazam cell. The reason: a duel
+between two Ogerpon decks IS the mirror, which is 3.5% of the ladder, while
+the four gate matchups are 85.6%. **A duel ranks decks correctly and chooses
+between them wrongly.** Also refuted, with 157 data points: cheaper boards
+do not help. The correlation between prizes-conceded-per-body and win rate
+is **+0.805** — decks that concede fewer prizes per Pokemon win LESS. A
+Crustle wall takes literally zero damage across 4,497 attacks and still
+loses badly, because chip damage is an Ability rather than an attack, Mega
+Lucario ex is typed `megaEx` and not `ex`, and the Alakazam deck runs no ex
+Pokemon at all.
+
+## Update — Aug 9: **our gate harness was scoring legal moves as crashes**
+
+Jon, read this one first — it invalidates numbers, possibly yours too.
+
+`ptcg/arena.py` treated ANY empty selection as a forfeit. But `[]` is the
+engine's own answer whenever a prompt's `minCount` is 0 — the engine's
+`SelectData` documents it, and the competition's reference agent returns it.
+**All 7,726 "opponent crashes" across 97 of our result files were legal
+moves**, typically a specialist saying "done benching" on turn 0 and being
+handed a loss. Our agent cannot emit `[]` by construction, so the penalty
+fell only on opponents: a 24.9% "opponent forfeit rate" against our 0.0%,
+entirely self-inflicted. Fixed.
+
+What we had actually been reading: **archaludon 0.63 where the truth is
+0.32**; grimmsnarl 0.85 where it is 0.758. Every "we win 56% of the panel"
+claim should read ~44% — against a ladder truth of 0.45. If your gates
+score an empty selection as a loss, you have the same inflation.
+
+Two related measurement findings, both costly:
+- **300-game cells are noise at our effect sizes**, in both directions. Four
+  candidate/cell readings flipped sign at 600 games. We now require 600
+  clean games minimum on a named seed block against a baseline pinned to a
+  commit, never to the working tree.
+- **A specialist panel is not the ladder.** v7 gated +13 pt and delivered
+  nothing, because the mechanic it fixed (damage walls) appears in 3 of 80
+  real ladder decks and none of our panel decks. We rebuilt the panel from
+  80 real ladder decklists recovered from replay frame 0 — worth doing on
+  your side too, the lists are public in every replay.
+
+## Update — Aug 9: v8 up — we were throwing away our own free abilities
+
+**v8 submitted** (commit 18e8652): the search may no longer override a
+cost-free Ability on one of our own Pokemon. A free Ability expires with the
+turn and using one never ends the turn, so ending a turn with one unused is
+never right. The rule policy already ranked abilities first; the search
+overrode it. On our shipped list that discarded **one in four legal Teal
+Dances, 2.1 a game, in every ladder game we have played** — most often for a
+manual Energy attach that consumed the very card Teal Dance would have
+attached for free, and cost the draw as well.
+
+Gated +5.69 pt pooled clean against a frozen v7 (z=+5.84, 5,252 paired
+games, every cell positive, self-mirror 0.5320), and confirmed at +2.70 pt
+on the real-ladder-deck panel (z=+2.86). Teal Dance use 75.7% -> 91.9%.
+**If your agent lets a search override a free Ability, check this first.**
+
+Counting note that cost us a week: ability options carry no `cardId`, only
+`(area, index)`. Keying turn-boards by cardId collapses four Ogerpon into
+one row, and Teal Dance is once PER POKEMON per turn — cardId keying hid
+three quarters of the problem and read 11% where the truth was 27%.
+
+Three fixes did NOT ship, which may be the more useful half: a Stadium
+damage fix (correct, but flat — pricing damage right does not help when no
+better action exists), evolution-legality fixes (the measured gain sat in a
+term that cannot be a legality correction), and damage-KB corrections whose
+value is concentrated in decks we do not play.
+
+## Update — Aug 8 late afternoon: **our 300-game gates were lying to us**
+
+Jon — this is the most useful thing we've learned all week, and it applies
+to your gates as much as ours.
+
+We re-ran four candidate/cell combinations at 600 games on a fresh seed
+block. **Three of four flipped sign**, always in the same direction, always
+understating the candidate:
+
+| cell / arm | 300 games | 600 games |
+|---|---|---|
+| grimmsnarl / lethal1 | −2.7 pt | **+6.2 pt** (z=+2.79) |
+| lucario / lethal2 | −4.7 pt | **+12.5 pt** (z=+5.24) |
+| lucario / lethal1 | −1.7 pt | **+12.9 pt** (z=+5.38) |
+| self-mirror / lethal2 | 0.4733 | **0.6733** (z=+8.49) |
+
+The consequence: v7 is not a +2.4 pt change as our 300-game gate reported.
+Against the frozen v6 arm at 600 games a cell it is **+13 points pooled**
+(0.4111 → 0.5411 over 1800 games), and the Dud-Alakazam cell — our worst
+matchup, the archetype the 22-day leader plays — goes 0.2817 → 0.4783. The
+self-mirror says v7 beats v6 about 2:1.
+
+**We've retired 300-game cells as a decision instrument.** They resolve only
+effects above roughly 8-10 points. Ship and kill decisions now need 600
+games minimum on a named seed block against a baseline pinned to a commit,
+never to the working tree. If you have candidates you killed on ~300-game
+evidence, they deserve a rerun — we're re-testing four of ours, including a
+neural evaluator that "failed" by 0.7 points against a 3-point bar.
+
+v7 was also re-staged as a result (commit 7656b69): the arm that teaches the
+evaluator about damage walls, not just the damage function. The two arms are
+indistinguishable on the panel, but only this one stops the search from
+*valuing* punches into an immune defender — it cuts wasted attack turns 27%
+against the Cornerstone list where the other managed 8%.
+
+## Update — Aug 8 afternoon: v6 crashed back to 782; v7 staged on a real bug
+
+- **The 1000 did not hold.** v6 peaked at 1004.2 on episode 8 and then went
+  9W-21L down to 782 over the next 31 episodes. Its twin never launched
+  (652). Same shape as v3's 850→730. Treat single-submission peaks as
+  variance, not strength, when you pick your final pair.
+- **Autopsy of all 39 episodes.** The opponent mix matched our panel almost
+  exactly, so this was not an unseen-archetype problem. The real split:
+  **8-4 vs Grimmsnarl, 2-17 vs everything else** — our panel-weighted
+  fitness was being carried by the single 34.6% Grimmsnarl cell. 14 of 20
+  losses came from AHEAD in the prize race. With an all-ex board every
+  Pokemon we concede pays 2 prizes while our KOs average 1.37, so seven
+  losses had even KO counts and a prize deficit anyway.
+- **The bug worth your attention: wall blindness.** The autopsy first flagged
+  "payable lethal never taken" in one loss. That was a false positive, and
+  chasing it found something better. We *did* attack — into a Cornerstone
+  Mask Ogerpon ex, whose ability prevents all damage from attackers that
+  have an Ability. Every Pokemon in our deck has one. The engine dealt 0
+  four times while both the detector and our own `_damage_against` priced
+  the attack at 780-900 into a 240 HP target. Three of 39 episodes met a
+  damage wall. The pool has a family of these: Crustle and Sylveon wall ex
+  (our whole deck), Milotic ex walls Tera, Farigiraf ex walls Basic ex,
+  Drednaw walls hits of 200+. **If your agent prices printed damage without
+  a prevention model, it has this bug too.**
+- **v7 staged** (commit cf12850): wall conditions parsed from the engine's
+  own runtime skill text, plus a hard rule that takes a genuinely
+  game-winning lethal ahead of the search. Gated at 300 games a cell,
+  paired: pooled 0.5833 vs 0.5592, worst cell -0.98 SE, self-mirror 0.5467,
+  and +11.0 pt on the Dud-Alakazam cell (z=+2.76) — our worst matchup and
+  the archetype the 22-day leader plays. Registered honestly: no panel cell
+  holds a wall card, so those gates price the change's cost, not its
+  benefit. A wall-cell test against the real ladder decks that beat us is
+  running.
+- **A negative result worth your time.** We spent five experiments raising
+  our agreement with strong players' decisions. The evolve-timing one moved
+  its bucket from 21% to 69% agreement (z=+21) and did not move win rate at
+  all (0.576 vs 0.591 over 1200 paired games). Neither did three others. The
+  single conversion was a near context-free rule (always secure the kill on
+  the lowest-HP target). Copying good players' choices pays only where the
+  choice does not depend on their plan — we've stopped using agreement as a
+  candidate generator and switched to autopsying our own ladder losses,
+  which produced the wall bug directly.
+
+## Update — Aug 8 midday: **v6 crossed 1000 (1004.2, top-100)**
+
+- Eight episodes from submission to 1000: 7W-2L with the last three wins
+  against 907/949/924-rated opponents — the band that used to beat us.
+  The effect-target fix converts. Judge final convergence at ~30 episodes.
+
+## Update — Aug 8 morning (v6 up: pilot fix + the proven list)
+
+- **v6 SUBMITTED**: the overnight-gated effect-target fix (on ctx-13/14/15
+  damage-counter prompts, secure the kill on the lowest-HP opposing target,
+  Munkidori prioritized — +4.7pt driving Grimmsnarl over 900 games, 5-cell
+  no-regression clean) on the ORIGINAL Ogerpon list. Ladder verdict from
+  the overnight pair: both GA deck variants converged below the original
+  list (629/692 vs 863), so deck experiments yield to pilot gains for now.
+  Scored pair = v5 + v6; 3 team slots remain today.
+- D46 GA finished both machines (90 + 30 eras, 37-cell real-ladder panel):
+  grimmsnarl-mirror elite 0.64 raw is our best deck but unsubmittable (our
+  pilot can't drive the ability engine — measured 0/30, fix queue open);
+  the low-energy ENGINE chain hit 0.50 and was still improving at era 65.
+  v6-b challenger gate (GA elites under the v6 pilot) is running now.
+
+## Update — Aug 7 late night (v5 up; a pilot gap measured)
+
+- **v5 SUBMITTED** (tonight's last slot): the GA's 0.654 Ogerpon sibling,
+  gated 0.407 mean vs v4's 0.367 on the gatekeeper cells. Scored pair is
+  now v4 + v5 (champion/challenger; fresh quota in the morning).
+- **Measured pilot gap:** our pilot cannot drive ability-engine decks —
+  the 0.691 harvest Grimmsnarl AND the field's stock Grimmsnarl netdeck
+  both gate at 0.02-0.06 under main.py (0/30 in the mirror) because
+  Adrena-Brain/Punk Up never fire. Own-side ability usage is now a
+  named pilot workstream; until it lands, Grimmsnarl-class decks are
+  panel opponents, not candidates. Large-scale overnight GA (new
+  ladder-derived panel, 6 chains incl. a low-energy engine chain) is
+  launching tonight on both machines.
+
+## Update — Aug 7 night (GA wound down early; harvest banked)
+
+- The seeded-archipelago v3 runs were **stopped early by decision** (~6 h
+  in): the high-value chains (Ogerpon, Darkness) froze at their plateaus
+  by hour 6 and the remaining budget was grinding cold chains. Clean
+  checkpoint stops on both machines; every chain's best-ever elite is
+  banked in `runs/seeded_overnight/HARVEST.md` + `harvest_best.json`
+  (decks + full 27-cell matchup profiles). Every chain beat its founder
+  baseline; headline: anchored Ogerpon 0.654 uniform panel WR (the v4
+  family), Darkness 0.691.
+- A redesigned overnight run launches later tonight; the harvest is its
+  seed bank. The Archaludon panel ask below stands for that run.
+
+## Update — Aug 7 evening (v4: the GA's first shipped deck)
+
+- **v4 SUBMITTED** (~21:40 UTC; **1 team slot left today**). v3's rating hit
+  850 then fell to ~720; replay autopsy of its 18 ladder losses: 5 to one
+  Duraludon/Archaludon/Cinderace list — an archetype with zero cells in our
+  fitness panel. No episode errors; v3's record (20W-18L) tracks v2's, so
+  the crash reads as a panel hole plus Elo convergence, not a pilot bug.
+- v4 deck = the seeded GA's Ogerpon-chain elite (raw 0.660 vs founder 0.574
+  on the 27-cell panel): 4x Teal Mask / **26 energy** / 30 trainers — the
+  scaled-damage pilot prices Myriad Leaf Shower's energy scaling, and the
+  GA traded six one-of trainers for six energy. Ship gate (5 loss-archetype
+  cells, 30 games each, specialist-piloted): better-or-equal everywhere,
+  +10pp on the Archaludon cell (0.30 — improved, still negative),
+  bench-out losses 28% vs the old deck's 61%.
+- Ask: the Archaludon archetype goes into the fitness panel before the next
+  GA selection round; flag if your side has a better list for it.
+
 # Status — Austin's side (deck creation + shared infra)
+
+## Update — Aug 7 PM (v3 shipped: the scaling-attack blindness fix)
+
+- **v3 = v2 + the scaled-damage bundle, gated and SUBMITTED 2026-08-07
+  20:50 UTC** (same Ogerpon list, repaired pilot; 2 team submissions left
+  today — sequence yours under the latest-2 rule). The threat
+  machinery read printed damage only, so Alakazam's Powerful Hand (printed
+  0, 20 x own hand size) registered as ZERO threat while Dudunsparce
+  engines built 20-card hands — the ladder-autopsy loss mode Austin ruled
+  on. `agent/attack_scalers.json` (generator `ptcg/attack_scalers.py`, KB =
+  attackId + numbers only) now prices 100 attacks from the observed state:
+  hand/energy/bench/damage-counter/prize scalers, flat effect damage
+  (Cruel Arrow's printed-0 100), the Gale Thrust from-bench rider, and the
+  engine-verified −30 resistance. No new evaluator weights — honest numbers
+  feeding the existing screened threat terms. Playbook entry 10 holds the
+  full gate: targeted alakazam cell **+3.4 pp** (0.434→0.468, 500/arm,
+  paired seeds, replicate +0.6 pp), pooled 8-entry specialist panel
+  no-regression (clean −0.81 SE, all-games −0.27 SE, no cell past 2 SE).
+  `CABT_SCALED_DAMAGE=0` is the revert.
+- Emergent behavior confirmed in trace: Judge into a 20-card Alakazam hand
+  now evaluates **+547** on the resulting margin through the ordinary
+  1-ply search; the blind build scored it +0.0.
+- Limitation on the record: future-turn projections hold scaling
+  quantities (hand size, Energy counts) at their observed values — no
+  opponent hand-growth model yet.
+
+## Update — Aug 7 PM (seeded archipelago v3 launched, both machines)
+
+- **The GA deck search is LIVE** on both machines: the seeded
+  archipelago v3 (`ptcg/creation/seeded.py`, spec + pilot-split table in
+  `runs/seeded_overnight/README.md`). Five chains x (explore + refine):
+  spec-Ogerpon (anchored refinement of the shipped list), mono-Darkness
+  (mirror-weighted Grimmsnarl harvest), mono-Fighting (uniform
+  wildcard), rainbow-Kanga (the field's 5-energy toolbox), kanga-counter
+  (energy-unconstrained counter chain). Fitness = the 27-cell stratified
+  leaderboard panel (`data/panel_lb.json`, manifest
+  `data/analysis/PANEL_LB.md`), specialist-piloted; selection decided by
+  real/specialist pilots, greedy only screens (D40).
+- ~12 h budget each, deep final evals (`final_eval.json`) under real
+  pilots at the end. Results + candidate lists tomorrow morning.
+- Yesterday's mono-typing sprint findings that shaped this design:
+  `data/analysis/MONO_SPRINT.md`.
+
+## Update — Aug 7 (pilot frozen at its ceiling; GA rotation starts tonight)
+
+- **Ladder:** v2 at ~817 (team record, top ~12%), v1 at 686. No new
+  submission today — v2 stays the incumbent and the scored-pair member.
+  Submission sequencing stays coordinated under the latest-2 rule.
+- **The pilot is FROZEN at v2** after a day of systematic refusals, each
+  with a diagnosis (all committed here: `b36a6cb`, `570aa37`, `18bd1f7`;
+  playbook entries 7–8):
+  1. **D34 GBDT tree leaf** — better held-out description (AUC 0.692 vs
+     0.661) yet 0.2135 pooled at the play gate. TreeSHAP convicts the
+     struck `hand_diff` returning as shape (+0.174 log-odds). Playbook
+     entry 7.
+  2. **Interaction mining off the dead forest** — 18/18 candidates
+     refused. The forest's edge is diffuse (top-5 pairs hold 18% of
+     pairwise mass), and expected-incoming-damage anti-prices (wrong
+     sign). `data/analysis/INTERACTION_MINING.md`.
+  3. **Phase-conditional weights** — the coefficient drift is real
+     (bench 202 early vs 12 late) but the gate refused 0.4763/590: a
+     state-dependent evaluator hands one search two rulers at the phase
+     boundary. Playbook entry 8.
+
+  Net: the 1-ply linear leaf on this feature universe is at its measured
+  ceiling — three independent axes now say so with numbers.
+- **Tonight: GA rotation begins per D30** — deck STABLE (~100 tuned decks,
+  decorrelated matchup weaknesses, per-deck fitted weights). Prep is in
+  flight now; overnight runs on both machines.
+- **One live screen:** an evolution-aware threat ladder. The shipped
+  `_attack_profile` never sees a benched basic's evolved attacks — a
+  verified coverage hole. Offline screen only for now.
+- **Standing asks (unchanged, still open):**
+  1. Post the forum question **in writing** on per-episode deck variation
+     — it gates the stable's runtime use.
+  2. Mirror the team roster on the Strategy-track competition before
+     Sep 6.
+  3. Add an OSI license file to the public repo.
+
+---
 
 > ## ⚡ ACTION FOR JON: accept PR #1
 > **https://github.com/lonespear/ptcg/pull/1** — your `main` (through your

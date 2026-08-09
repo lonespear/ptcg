@@ -1,0 +1,157 @@
+{
+ "args": {
+  "cmd": "fit",
+  "data": "data/leaf_train/dataset.npz",
+  "out": "data/leaf_train/model_h128_rank",
+  "hidden": 128,
+  "objective": "rank",
+  "holdout_day": "2026-08-07",
+  "epochs": 16,
+  "batch_groups": 1024,
+  "lr": 0.001,
+  "seed": 47
+ },
+ "n_rows": 4585460,
+ "train": {
+  "n_groups": 550523,
+  "top1_net": 0.3534,
+  "top1_linear": 0.3062,
+  "pairwise_net": 0.6972,
+  "pairwise_linear": 0.6385,
+  "value_auc": 0.5575,
+  "value_logloss": 0.6861,
+  "per_archetype": {
+   "Arboliva ex": {
+    "n": 3002,
+    "top1_net": 0.3424,
+    "top1_linear": 0.3281
+   },
+   "Cynthia's Garchomp ex": {
+    "n": 12906,
+    "top1_net": 0.322,
+    "top1_linear": 0.3083
+   },
+   "Dragapult ex": {
+    "n": 32043,
+    "top1_net": 0.2727,
+    "top1_linear": 0.2362
+   },
+   "Dudunsparce": {
+    "n": 441,
+    "top1_net": 0.3333,
+    "top1_linear": 0.2993
+   },
+   "Fezandipiti ex": {
+    "n": 13408,
+    "top1_net": 0.2894,
+    "top1_linear": 0.2748
+   },
+   "Hydrapple ex": {
+    "n": 837,
+    "top1_net": 0.3035,
+    "top1_linear": 0.3321
+   },
+   "Marnie's Grimmsnarl ex": {
+    "n": 198442,
+    "top1_net": 0.3859,
+    "top1_linear": 0.3526
+   },
+   "Mega Kangaskhan ex": {
+    "n": 110221,
+    "top1_net": 0.3241,
+    "top1_linear": 0.2339
+   },
+   "Mega Lopunny ex": {
+    "n": 20875,
+    "top1_net": 0.2991,
+    "top1_linear": 0.2746
+   },
+   "Mega Lucario ex": {
+    "n": 21224,
+    "top1_net": 0.3268,
+    "top1_linear": 0.29
+   },
+   "Mega Starmie ex": {
+    "n": 547,
+    "top1_net": 0.3839,
+    "top1_linear": 0.3492
+   },
+   "Teal Mask Ogerpon ex": {
+    "n": 43811,
+    "top1_net": 0.3647,
+    "top1_linear": 0.332
+   },
+   "Team Rocket's Mewtwo ex": {
+    "n": 14539,
+    "top1_net": 0.3268,
+    "top1_linear": 0.3148
+   },
+   "archaludon": {
+    "n": 17918,
+    "top1_net": 0.3918,
+    "top1_linear": 0.3324
+   },
+   "codex_alakazam": {
+    "n": 27591,
+    "top1_net": 0.4012,
+    "top1_linear": 0.3357
+   },
+   "grimmsnarl": {
+    "n": 21030,
+    "top1_net": 0.3844,
+    "top1_linear": 0.3142
+   },
+   "lucario": {
+    "n": 11688,
+    "top1_net": 0.3197,
+    "top1_linear": 0.2681
+   }
+  }
+ },
+ "holdout": {
+  "n_groups": 34304,
+  "top1_net": 0.3054,
+  "top1_linear": 0.2845,
+  "pairwise_net": 0.6641,
+  "pairwise_linear": 0.6272,
+  "value_auc": 0.523,
+  "value_logloss": 0.6883,
+  "per_archetype": {
+   "Dragapult ex": {
+    "n": 2850,
+    "top1_net": 0.2789,
+    "top1_linear": 0.2646
+   },
+   "Fezandipiti ex": {
+    "n": 2669,
+    "top1_net": 0.2615,
+    "top1_linear": 0.2671
+   },
+   "Hydrapple ex": {
+    "n": 1328,
+    "top1_net": 0.3261,
+    "top1_linear": 0.3238
+   },
+   "Marnie's Grimmsnarl ex": {
+    "n": 9757,
+    "top1_net": 0.3647,
+    "top1_linear": 0.3514
+   },
+   "Mega Kangaskhan ex": {
+    "n": 7031,
+    "top1_net": 0.2699,
+    "top1_linear": 0.2251
+   },
+   "Mega Lopunny ex": {
+    "n": 8584,
+    "top1_net": 0.276,
+    "top1_linear": 0.2549
+   },
+   "Mega Lucario ex": {
+    "n": 2085,
+    "top1_net": 0.3477,
+    "top1_linear": 0.3185
+   }
+  }
+ }
+}

@@ -32,6 +32,55 @@ data/*
 !data/history_cards.csv
 !data/history_archetypes.csv
 !data/history_agents.csv
+# The fitted margin -> P(win) table the agent ships and reads at run time.
+!data/calibration_v2.json
+# Same rule for the two C1/C2 tables: the agent ships them in the bundle and
+# reads them on every position it scores, so they are versioned with it.
+!data/analysis/
+data/analysis/*
+!data/analysis/trajectory_curves.json
+# D47 neural leaf: winning model + fit reports + gate results + attribution
+# examples (ptcg/leaf/train.py and scripts/leaf_gates.sh regenerate them;
+# the training parquets stay out — 8 GB, rebuilt by ptcg/leaf/build_table.py).
+!data/analysis/leaf/
+# The v2 ladder autopsy: loss taxonomy over the real ladder games (report +
+# machine-readable companion; scripts/autopsy_v2.py regenerates the json).
+!data/analysis/LADDER_AUTOPSY_V2.md
+!data/analysis/ladder_autopsy_v2.json
+# Mono-sprint typing report (scripts/mono_sprint_report.py regenerates the
+# tables from runs/mono_sprint/; the narrative sections are hand-written).
+!data/analysis/MONO_SPRINT.md
+# Stratified leaderboard fitness panel + manifest (D38 amendment; card-id
+# lists mined from public replays — same provenance as agent/deck_priors).
+!data/panel_lb.json
+!data/analysis/PANEL_LB.md
+# Ladder-representative weighted panel v3 (D46; scripts/build_panel_v3.py,
+# lists from public-replay autopsy — same provenance as panel_lb.json).
+!data/panel_ladder_v3.json
+!data/analysis/PANEL_V3.md
+# Matchup deny-posture spec + its design note: integration surface for the
+# agent side (ptcg/matchup_postures.py regenerates the json).
+!data/analysis/postures.json
+!data/analysis/POSTURES.md
+!data/energy_mechanics.json
+# Playbook entry 7: the D34 tree leaf. Same rule again — the agent bundles it
+# and walks it on every scored position whenever CABT_TREE_LEAF is on, which
+# is the one environment variable the refused entry's retest needs.
+!data/analysis/tree_leaf.json
+# Interaction mining (the D34 salvage): the nomination report and the two
+# artifacts its numbers are read from. The features CSV it also produces
+# regenerates from local mined data and stays untracked, the
+# tree_features.csv rule.
+!data/analysis/INTERACTION_MINING.md
+!data/analysis/interaction_shap.json
+!data/analysis/interaction_screen.json
+# Playbook entry 4: the counted opponent reply table. Same rule again — the
+# agent ships it in the bundle and reads it on every rollout of their turn.
+!data/opponent_policy.json
+# Top-5 team profiles: per-team submission trajectories, deck repertoires and
+# matchups mined from Meta Kaggle + public replays (report + raw companion).
+!data/analysis/TOP5_PROFILE.md
+!data/analysis/top5_profile.json
 
 # Python
 __pycache__/
@@ -46,7 +95,23 @@ venv/
 *.pth
 *.ckpt
 checkpoints/
-runs/
+# Exclude runs/ contents, not the directory itself, so the seeded-overnight
+# run README and founder bank (deck lists mined from public replays/priors —
+# same provenance as data/panel_lb.json) can be versioned.
+runs/*
+!runs/seeded_overnight/
+runs/seeded_overnight/*
+!runs/seeded_overnight/README.md
+!runs/seeded_overnight/founders.json
+!runs/seeded_overnight/founders_manifest.json
+!runs/seeded_overnight/HARVEST.md
+!runs/seeded_overnight/harvest_best.json
+# D46 run config: founder bank + Sebastian pop snapshot + run README
+!runs/seeded_d46/
+runs/seeded_d46/*
+!runs/seeded_d46/README.md
+!runs/seeded_d46/founders.json
+!runs/seeded_d46/seb_v3_rainbow_pops.json
 
 # OS
 .DS_Store
@@ -67,3 +132,8 @@ leaderboard*.png
 
 # community agents pending license verification
 external/
+
+# Strategy analyses and experiment logs stay local — this fork is public.
+experiments_0808/
+data/leaf_train/
+sweep_mid.log

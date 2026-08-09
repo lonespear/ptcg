@@ -255,13 +255,13 @@ def repair(deck: list[int], island: Island, bank: GeneBank,
     # basics floor (mulligan risk)
     n_basic = sum(1 for c in out if p.by_id[c]["cardType"] == POKEMON
                   and p.by_id[c]["basic"])
-    if n_basic < 9:
+    if n_basic < 4:  # D18: soft floor; mulligan cost is priced by fitness
         have = [c for c in out if p.by_id[c]["cardType"] == POKEMON
                 and p.by_id[c]["basic"]]
         if have:
             energies = [i for i, c in enumerate(out)
                         if p.by_id[c]["cardType"] == BASIC_ENERGY]
-            for i in energies[:9 - n_basic]:
+            for i in energies[:4 - n_basic]:
                 candidate = rng.choice(have)
                 if sum(1 for c in out
                        if p.by_id[c]["name"] == p.by_id[candidate]["name"]) < 4:

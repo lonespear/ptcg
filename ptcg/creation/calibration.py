@@ -9,10 +9,15 @@ The evaluator is recomputed here from the observation dict rather than
 imported, so the fit is an independent reimplementation of the arithmetic and
 a drift check on it:
 
-    margin = 1000 * (their prizes left - our prizes left)
-           +        (our board HP     - their board HP)
+    margin = 1000 * (their prizes left  - our prizes left)
+           +  2.6 * (our board HP       - their board HP)
            +   30 * (our Energy in play - their Energy in play)
-           +    5 *  our hand size
+           +  153 * (our bench width    - their bench width)
+           +  4.2 * (damage on their board - damage on ours)
+
+Every weight is the fitted one (data/analysis/REPORT.md §A2); `check_drift`
+asserts this copy still matches `agent/main.py`'s WEIGHTS, because a curve
+fitted to one weight vector says nothing about another.
 
 The fit is isotonic (pool-adjacent-violators): monotone by construction, so a
 bigger margin can never map to a smaller win probability, and free of any
@@ -38,29 +43,45 @@ from .pilots import JonDayPilot
 RESULT = 23
 ROOT = Path(__file__).resolve().parents[2]
 
-PRIZE_WEIGHT = 1000.0
-ENERGY_WEIGHT = 30.0
-HAND_WEIGHT = 5.0
+WEIGHTS = {
+    "prize": 1000.0,
+    "hp": 2.6,
+    "energy": 30.0,
+    "bench": 153.0,
+    "damage": 4.2,
+    "no_active": 4000.0,
+}
+
+
+def check_drift() -> None:
+    """Fail loudly if this copy of the vector has drifted from the agent's."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "_agent_main_for_calibration", ROOT / "agent" / "main.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    theirs = {k: v for k, v in mod.WEIGHTS.items() if k != "search_margin"}
+    if theirs != WEIGHTS:
+        raise SystemExit(
+            f"weight drift: agent/main.py has {theirs}, calibration has "
+            f"{WEIGHTS} — the curve would be fitted to the wrong evaluator")
 
 
 # --- the evaluator, recomputed from the observation dict --------------------
 
-def _side_hp(player: dict) -> float:
-    total = 0.0
+def _side_totals(player: dict) -> tuple[float, float, float, float]:
+    """(board HP, Energy in play, bench width, damage taken) for one side."""
+    hp = energy = damage = 0.0
     for zone in ("active", "bench"):
         for mon in player.get(zone) or []:
-            if mon:
-                total += mon.get("hp", 0) or 0
-    return total
-
-
-def _side_energy(player: dict) -> float:
-    total = 0.0
-    for zone in ("active", "bench"):
-        for mon in player.get(zone) or []:
-            if mon:
-                total += len(mon.get("energies") or [])
-    return total
+            if not mon:
+                continue
+            cur_hp = mon.get("hp", 0) or 0
+            hp += cur_hp
+            damage += (mon.get("maxHp", 0) or 0) - cur_hp
+            energy += len(mon.get("energies") or [])
+    bench = len([m for m in (player.get("bench") or []) if m])
+    return hp, energy, bench, damage
 
 
 def margin(obs: dict, me: int) -> float:
@@ -68,11 +89,17 @@ def margin(obs: dict, me: int) -> float:
     cur = obs["current"]
     mine = cur["players"][me]
     theirs = cur["players"][1 - me]
-    score = (len(theirs.get("prize") or [])
-             - len(mine.get("prize") or [])) * PRIZE_WEIGHT
-    score += _side_hp(mine) - _side_hp(theirs)
-    score += ENERGY_WEIGHT * (_side_energy(mine) - _side_energy(theirs))
-    score += (mine.get("handCount", 0) or 0) * HAND_WEIGHT
+    hp_m, en_m, bench_m, dmg_m = _side_totals(mine)
+    hp_t, en_t, bench_t, dmg_t = _side_totals(theirs)
+    w = WEIGHTS
+    score = w["prize"] * (len(theirs.get("prize") or [])
+                          - len(mine.get("prize") or []))
+    score += w["hp"] * (hp_m - hp_t)
+    score += w["energy"] * (en_m - en_t)
+    score += w["bench"] * (bench_m - bench_t)
+    score += w["damage"] * (dmg_t - dmg_m)
+    if not (mine.get("active") or []):
+        score -= w["no_active"]
     return score
 
 
@@ -288,8 +315,7 @@ def run(decks: list[tuple[str, list[int]]], n_games: int = 2000,
         "n_samples_train": len(tr_x),
         "n_samples_test": len(te_x),
         "elapsed_s": round(time.time() - t0, 1),
-        "weights": {"prize": PRIZE_WEIGHT, "hp": 1.0,
-                    "energy": ENERGY_WEIGHT, "hand": HAND_WEIGHT},
+        "weights": dict(WEIGHTS),
         "curve_breakpoints": len(curve),
         "curve": curve,
         "landmarks": {str(m): round(predict(curve, m), 4) for m in landmarks},
@@ -368,6 +394,7 @@ if __name__ == "__main__":
     ap.add_argument("--out", default=str(ROOT / "data" / "calibration.json"))
     a = ap.parse_args()
 
+    check_drift()
     if a.deck:
         decks = [(d, read_deck(d)) for d in a.deck]
     else:

@@ -1,0 +1,136 @@
+{
+ "mono-Grass": [
+  {
+   "class": "sprint-elite",
+   "label": "mono-Grass/explore deep 0.153"
+  },
+  {
+   "class": "sprint-elite",
+   "label": "mono-Grass/refine deep 0.065"
+  },
+  {
+   "class": "field-list",
+   "label": "Mega Kangaskhan ex (p=2645)"
+  },
+  {
+   "class": "field-list",
+   "label": "Teal Mask Ogerpon ex (p=2388)"
+  },
+  {
+   "class": "constructed",
+   "label": "4x Mega Heracross ex + 19 energy + consensus engine"
+  }
+ ],
+ "mono-Fire": [
+  {
+   "class": "sprint-elite",
+   "label": "mono-Fire/refine deep 0.062"
+  },
+  {
+   "class": "sprint-elite",
+   "label": "mono-Fire/explore deep 0.062"
+  },
+  {
+   "class": "field-list",
+   "label": "Dragapult ex (p=1233)"
+  },
+  {
+   "class": "field-list",
+   "label": "Dragapult ex (p=720)"
+  },
+  {
+   "class": "constructed",
+   "label": "4x Regirock ex + 19 energy + consensus engine"
+  }
+ ],
+ "mono-Fighting": [
+  {
+   "class": "sprint-elite",
+   "label": "mono-Fighting/explore deep 0.099"
+  },
+  {
+   "class": "sprint-elite",
+   "label": "mono-Fighting/refine deep 0.080"
+  },
+  {
+   "class": "field-list",
+   "label": "Cynthia's Garchomp ex (p=5574)"
+  },
+  {
+   "class": "field-list",
+   "label": "Mega Lucario ex (p=646)"
+  },
+  {
+   "class": "constructed",
+   "label": "4x Cornerstone Mask Ogerpon ex + 19 energy + consensus engine"
+  }
+ ],
+ "mono-Darkness": [
+  {
+   "class": "field-list",
+   "label": "Marnie's Grimmsnarl ex (p=48306)"
+  },
+  {
+   "class": "field-list",
+   "label": "Marnie's Grimmsnarl ex (p=10346)"
+  },
+  {
+   "class": "field-list-fez",
+   "label": "Fezandipiti ex (p=14070)"
+  },
+  {
+   "class": "field-list-fez",
+   "label": "Fezandipiti ex (p=1973)"
+  },
+  {
+   "class": "constructed",
+   "label": "4x Marnie's Grimmsnarl ex + 19 energy + consensus engine"
+  }
+ ],
+ "spec-Ogerpon": [
+  {
+   "class": "jon-submitted",
+   "label": "agent/deck.csv (shipped)"
+  },
+  {
+   "class": "d17-sister",
+   "label": "priors p=2388"
+  },
+  {
+   "class": "d17-sister",
+   "label": "priors p=848"
+  }
+ ],
+ "rainbow-Kanga": [
+  {
+   "class": "field-rainbow",
+   "label": "Mega Kangaskhan ex (p=2645, types ['Grass', 'Water', 'Lightning', 'Psychic', 'Fighting'])"
+  },
+  {
+   "class": "sister-rebalance",
+   "label": "energy base rebalanced uniform across types"
+  }
+ ],
+ "kanga-counter": [
+  {
+   "class": "sprint-elite",
+   "label": "mono-Fighting/explore deep 0.099"
+  },
+  {
+   "class": "sprint-elite",
+   "label": "mono-Fighting/refine deep 0.080"
+  },
+  {
+   "class": "field-list",
+   "label": "Cynthia's Garchomp ex (p=5574)"
+  },
+  {
+   "class": "field-list",
+   "label": "Mega Lucario ex (p=646)"
+  },
+  {
+   "class": "constructed",
+   "label": "4x Cornerstone Mask Ogerpon ex + 19 energy + consensus engine"
+  }
+ ]
+}

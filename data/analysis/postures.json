@@ -1,0 +1,503 @@
+{
+ "spec": "matchup deny-postures v1 (D30 component 1, exploit half)",
+ "source": "ptcg/matchup_postures.py",
+ "provenance": {
+  "analysis": "data/analysis/archetypes_C.json + REPORT.md #C",
+  "lists": "agent/deck_priors.json most-played per archetype",
+  "names": "data/engine_dump/cards.json",
+  "posterior_id": "scripts/validate_posterior.py via agent/main.py",
+  "gust_reach": "play-weighted majority over agent/deck_priors.json of whether an archetype's lists run a card whose effect text switches an opponent's Benched Pokemon into the Active Spot"
+ },
+ "bench_per_pp_sd": 20.0,
+ "postures": {
+  "Marnie's Grimmsnarl ex": {
+   "archetype": "Marnie's Grimmsnarl ex",
+   "win_condition": "close the prize race (89% of wins) by turn 12 [10-14]",
+   "lose_condition": "raced: median 4 prizes still on their side at turn 12",
+   "deny_component": "draw and search volume (cardsel_diff)",
+   "deny_pp_per_sd": 8.6,
+   "engine_pokemon": [
+    {
+     "card_id": 646,
+     "name": "Marnie's Impidimp",
+     "copies": 4,
+     "hp": 70,
+     "role": "base of the 320 HP Grimmsnarl ex line"
+    },
+    {
+     "card_id": 647,
+     "name": "Marnie's Morgrem",
+     "copies": 3,
+     "hp": 100,
+     "role": "stage 1 of the line"
+    },
+    {
+     "card_id": 112,
+     "name": "Munkidori",
+     "copies": 4,
+     "hp": 110,
+     "role": "Adrena-Brain damage mover"
+    },
+    {
+     "card_id": 860,
+     "name": "Snorunt",
+     "copies": 2,
+     "hp": 70,
+     "role": "base of Froslass (Freezing Shroud)"
+    }
+   ],
+   "our_levers": {
+    "real": [
+     "Boss's Orders x3: gust-KO Impidimp/Morgrem before Rare Candy resolves; Myriad Leaf Shower at 2+ Energy clears any of these bodies",
+     "Judge x4: reset their hand during setup turns (their draw volume is trainer-heavy: Poke Pad, Petrel, Lillie's)"
+    ],
+    "unavailable": [
+     "no direct draw denial; no ability lock for Punk Up / Adrena-Brain"
+    ]
+   },
+   "lever_factor": 1.0,
+   "weight_delta": {
+    "bench": 172.0
+   },
+   "scoring_rule": "gust preference order Impidimp > Morgrem > Munkidori > Snorunt when posterior says Grimmsnarl; bump Judge's card score on their setup turns (t<=4) — both need main.py card/target scoring, not weights",
+   "gust_order": [
+    646,
+    647,
+    112,
+    860
+   ],
+   "expected_trigger": {
+    "encounter_share": 0.298,
+    "posterior_id_by_t3": 0.84,
+    "gust_availability": 0.711,
+    "activation": "posterior top-1 == archetype at confidence >= 0.80 (agent/main.py CONFIDENCE_GATE); the delta then rides every searched decision"
+   },
+   "note": "ladder already favors us 0.86 (n=527); the posture defends the edge rather than creating it"
+  },
+  "Mega Lopunny ex": {
+   "archetype": "Mega Lopunny ex",
+   "win_condition": "close the prize race (85% of wins) by turn 14 [12-16]",
+   "lose_condition": "raced: median 4 prizes still on their side at turn 12",
+   "deny_component": "evolution line (evolve_diff)",
+   "deny_pp_per_sd": 5.0,
+   "engine_pokemon": [
+    {
+     "card_id": 848,
+     "name": "Buneary",
+     "copies": 4,
+     "hp": 70,
+     "role": "base of the 330 HP Mega Lopunny ex line"
+    },
+    {
+     "card_id": 305,
+     "name": "Dunsparce",
+     "copies": 4,
+     "hp": 70,
+     "role": "base of Dudunsparce"
+    },
+    {
+     "card_id": 66,
+     "name": "Dudunsparce",
+     "copies": 4,
+     "hp": 140,
+     "role": "Run Away Draw engine"
+    },
+    {
+     "card_id": 174,
+     "name": "Fan Rotom",
+     "copies": 1,
+     "hp": 70,
+     "role": "Fan Call opener"
+    }
+   ],
+   "our_levers": {
+    "real": [
+     "Boss's Orders x3: gust-KO Buneary pre-evolution — every Buneary down is a Mega Lopunny that never lands; Dunsparce equally cheap",
+     "Judge x4: strips held Wally's Compassion / Hilda"
+    ],
+    "unavailable": [
+     "nothing stops Run Away Draw once Dudunsparce stands"
+    ]
+   },
+   "lever_factor": 1.0,
+   "weight_delta": {
+    "bench": 100.0
+   },
+   "scoring_rule": "gust preference Buneary > Dunsparce when posterior says Lopunny; value denial highest on turns 2-4 before Mega Lopunny lands",
+   "gust_order": [
+    848,
+    305
+   ],
+   "expected_trigger": {
+    "encounter_share": 0.16,
+    "posterior_id_by_t3": 0.84,
+    "gust_availability": 0.711,
+    "activation": "posterior top-1 == archetype at confidence >= 0.80 (agent/main.py CONFIDENCE_GATE); the delta then rides every searched decision"
+   },
+   "note": null
+  },
+  "Fezandipiti ex": {
+   "archetype": "Fezandipiti ex",
+   "win_condition": "close the prize race (84% of wins) by turn 12 [9-14]",
+   "lose_condition": "raced: median 4 prizes still on their side at turn 11",
+   "deny_component": "draw and search volume (cardsel_diff)",
+   "deny_pp_per_sd": 4.9,
+   "engine_pokemon": [
+    {
+     "card_id": 741,
+     "name": "Abra",
+     "copies": 4,
+     "hp": 50,
+     "role": "base of the Psychic Draw line"
+    },
+    {
+     "card_id": 742,
+     "name": "Kadabra",
+     "copies": 4,
+     "hp": 80,
+     "role": "Psychic Draw stage 1"
+    },
+    {
+     "card_id": 743,
+     "name": "Alakazam",
+     "copies": 4,
+     "hp": 140,
+     "role": "Psychic Draw stage 2"
+    },
+    {
+     "card_id": 66,
+     "name": "Dudunsparce",
+     "copies": 2,
+     "hp": 140,
+     "role": "Run Away Draw"
+    },
+    {
+     "card_id": 140,
+     "name": "Fezandipiti ex",
+     "copies": 1,
+     "hp": 210,
+     "role": "Flip the Script"
+    }
+   ],
+   "our_levers": {
+    "real": [
+     "Boss's Orders x3: 50 HP Abra is the cheapest gust-KO in the format; Kadabra at 80 still one-shot territory",
+     "Judge x4 against a hand-sculpting deck"
+    ],
+    "caution": [
+     "their Enhanced Hammer x4 strips our Grow Grass Energy x2 — energy denial runs the other way too"
+    ]
+   },
+   "lever_factor": 1.0,
+   "weight_delta": {
+    "bench": 98.0
+   },
+   "scoring_rule": "gust preference Abra > Kadabra when posterior says Fezandipiti; their Flip the Script makes our own KOs feed their draw — prefer KO sequencing that closes prizes fast over chip",
+   "gust_order": [
+    741,
+    742
+   ],
+   "expected_trigger": {
+    "encounter_share": 0.155,
+    "posterior_id_by_t3": 0.84,
+    "gust_availability": 0.711,
+    "activation": "posterior top-1 == archetype at confidence >= 0.80 (agent/main.py CONFIDENCE_GATE); the delta then rides every searched decision"
+   },
+   "note": null
+  },
+  "Mega Kangaskhan ex": {
+   "archetype": "Mega Kangaskhan ex",
+   "win_condition": "close the prize race (69% of wins) by turn 16, and 18% of wins by grinding past the prizes entirely (attrition)",
+   "lose_condition": "raced: median 4 prizes still on their side at turn 12",
+   "deny_component": "evolution line / board development (evolve_diff)",
+   "deny_pp_per_sd": 8.3,
+   "engine_pokemon": [
+    {
+     "card_id": 756,
+     "name": "Mega Kangaskhan ex",
+     "copies": 3,
+     "hp": 300,
+     "role": "Run Errand draw engine ON the attacker"
+    },
+    {
+     "card_id": 96,
+     "name": "Teal Mask Ogerpon ex",
+     "copies": 3,
+     "hp": 210,
+     "role": "Teal Dance acceleration"
+    },
+    {
+     "card_id": 1071,
+     "name": "Meowth ex",
+     "copies": 3,
+     "hp": 170,
+     "role": "Last-Ditch Catch"
+    },
+    {
+     "card_id": 184,
+     "name": "Latias ex",
+     "copies": 2,
+     "hp": 210,
+     "role": "Skyliner mobility"
+    }
+   ],
+   "our_levers": {
+    "unavailable": [
+     "every engine body is a 170-300 HP multi-prize ex: gust-KO costs us 2+ turns of attacks and hands them 2-prize trades on OUR 210 HP attacker; no cheap denial target exists",
+     "their 18% attrition mode threatens our 18-energy list with deck-out in long games"
+    ]
+   },
+   "lever_factor": 0.0,
+   "weight_delta": null,
+   "scoring_rule": "none expressible: race them — their median winning turn (16) is the slowest in the top 8 and our t11 close beats it; deck refinement ask: bench damage or a cheap-prize secondary attacker",
+   "gust_order": [],
+   "expected_trigger": {
+    "encounter_share": 0.123,
+    "posterior_id_by_t3": 0.84,
+    "gust_availability": null,
+    "activation": "posterior top-1 == archetype at confidence >= 0.80 (agent/main.py CONFIDENCE_GATE); the delta then rides every searched decision"
+   },
+   "note": "DENY LEVER ABSENT IN OUR LIST — feeds deck-refinement workstream; ladder says they beat us 0.78 (n=145)"
+  },
+  "Teal Mask Ogerpon ex": {
+   "archetype": "Teal Mask Ogerpon ex",
+   "win_condition": "close the prize race (92% of wins) by turn 11 [9-12] — the fastest close in the top 8",
+   "lose_condition": "raced: median 4 prizes still on their side at turn 10",
+   "deny_component": "ability activations (Teal Dance)",
+   "deny_pp_per_sd": 7.0,
+   "engine_pokemon": [
+    {
+     "card_id": 96,
+     "name": "Teal Mask Ogerpon ex",
+     "copies": 4,
+     "hp": 210,
+     "role": "Teal Dance accel + only attacker"
+    }
+   ],
+   "our_levers": {
+    "unavailable": [
+     "no ability lock; every KO target is a 210 HP 2-prizer — denial IS the prize race, nothing cheaper exists"
+    ],
+    "real": [
+     "Judge x4 still taxes their Lillie's/Judge-fueled setup; went_first is worth +4.7 pp/SD to them, symmetric"
+    ]
+   },
+   "lever_factor": 0.0,
+   "weight_delta": null,
+   "scoring_rule": "none expressible: the mirror is a pure race decided by energy tempo; C4's risk posture (buy variance when behind) is the correct instrument here, not a deny weight",
+   "gust_order": [],
+   "expected_trigger": {
+    "encounter_share": 0.086,
+    "posterior_id_by_t3": 0.84,
+    "gust_availability": null,
+    "activation": "posterior top-1 == archetype at confidence >= 0.80 (agent/main.py CONFIDENCE_GATE); the delta then rides every searched decision"
+   },
+   "note": "DENY LEVER ABSENT — mirror; deck refinement ask: any card that breaks attachment symmetry"
+  },
+  "Dragapult ex": {
+   "archetype": "Dragapult ex",
+   "win_condition": "close the prize race (90% of wins) by turn 13 [11-15]",
+   "lose_condition": "raced: median 4 prizes still on their side at turn 12",
+   "deny_component": "draw and search volume (cardsel_diff)",
+   "deny_pp_per_sd": 8.9,
+   "engine_pokemon": [
+    {
+     "card_id": 119,
+     "name": "Dreepy",
+     "copies": 4,
+     "hp": 70,
+     "role": "base of the 320 HP Dragapult ex line"
+    },
+    {
+     "card_id": 120,
+     "name": "Drakloak",
+     "copies": 4,
+     "hp": 90,
+     "role": "Recon Directive draw engine"
+    },
+    {
+     "card_id": 112,
+     "name": "Munkidori",
+     "copies": 2,
+     "hp": 110,
+     "role": "Adrena-Brain"
+    },
+    {
+     "card_id": 235,
+     "name": "Budew",
+     "copies": 2,
+     "hp": 30,
+     "role": "item-lock nuisance, free prize"
+    }
+   ],
+   "our_levers": {
+    "real": [
+     "Boss's Orders x3: Drakloak is both their draw engine AND their evolution step — the single highest-value gust-KO in any matchup; Dreepy/Budew nearly free prizes",
+     "Judge x4"
+    ],
+    "caution": [
+     "their Crushing Hammer x4 + Jamming Tower pressure our energy and tools; our worst ladder matchup (0.19, n=98)"
+    ]
+   },
+   "lever_factor": 1.0,
+   "weight_delta": {
+    "bench": 178.0
+   },
+   "scoring_rule": "gust preference Drakloak > Dreepy > Budew > Munkidori when posterior says Dragapult; this is the flagship posture for the matchup we most need to move",
+   "gust_order": [
+    120,
+    119,
+    235,
+    112
+   ],
+   "expected_trigger": {
+    "encounter_share": 0.085,
+    "posterior_id_by_t3": 0.84,
+    "gust_availability": 0.711,
+    "activation": "posterior top-1 == archetype at confidence >= 0.80 (agent/main.py CONFIDENCE_GATE); the delta then rides every searched decision"
+   },
+   "note": null
+  },
+  "Mega Lucario ex": {
+   "archetype": "Mega Lucario ex",
+   "win_condition": "close the prize race (85% of wins) by turn 11 [10-13]",
+   "lose_condition": "raced: median 4 prizes still on their side at turn 11",
+   "deny_component": "draw and search volume (cardsel_diff)",
+   "deny_pp_per_sd": 11.8,
+   "engine_pokemon": [
+    {
+     "card_id": 677,
+     "name": "Riolu",
+     "copies": 3,
+     "hp": 80,
+     "role": "base of the 340 HP Mega Lucario ex line"
+    },
+    {
+     "card_id": 675,
+     "name": "Lunatone",
+     "copies": 2,
+     "hp": 110,
+     "role": "Lunar Cycle draw"
+    },
+    {
+     "card_id": 674,
+     "name": "Hariyama",
+     "copies": 2,
+     "hp": 150,
+     "role": "Heave-Ho Catcher (their gust)"
+    }
+   ],
+   "our_levers": {
+    "partial": [
+     "Boss's Orders x3: Riolu and Lunatone are gustable, but the 11.8 pp/SD cardsel edge lives mostly in Judge x4 / Lillie's x4 / Poke Pad x4 — trainers we cannot reach",
+     "Judge x4: our best counter to their trainer draw, and not a weight"
+    ]
+   },
+   "lever_factor": 0.5,
+   "weight_delta": {
+    "bench": 118.0
+   },
+   "scoring_rule": "gust preference Riolu > Lunatone when posterior says Lucario; counter-Judge on their sculpted hands is the real lever and needs card-score integration",
+   "gust_order": [
+    677,
+    675
+   ],
+   "expected_trigger": {
+    "encounter_share": 0.034,
+    "posterior_id_by_t3": 0.84,
+    "gust_availability": 0.711,
+    "activation": "posterior top-1 == archetype at confidence >= 0.80 (agent/main.py CONFIDENCE_GATE); the delta then rides every searched decision"
+   },
+   "note": null
+  },
+  "Cynthia's Garchomp ex": {
+   "archetype": "Cynthia's Garchomp ex",
+   "win_condition": "close the prize race (89% of wins) by turn 13 [11-15]",
+   "lose_condition": "raced: median 4 prizes still on their side at turn 11",
+   "deny_component": "ability activations (Champion's Call / Cheer On to Glory)",
+   "deny_pp_per_sd": 8.0,
+   "engine_pokemon": [
+    {
+     "card_id": 379,
+     "name": "Cynthia's Gible",
+     "copies": 4,
+     "hp": 70,
+     "role": "base of the 330 HP Garchomp ex line"
+    },
+    {
+     "card_id": 380,
+     "name": "Cynthia's Gabite",
+     "copies": 4,
+     "hp": 100,
+     "role": "Champion's Call search engine"
+    },
+    {
+     "card_id": 341,
+     "name": "Cynthia's Roselia",
+     "copies": 4,
+     "hp": 70,
+     "role": "base of Roserade"
+    },
+    {
+     "card_id": 342,
+     "name": "Cynthia's Roserade",
+     "copies": 3,
+     "hp": 130,
+     "role": "Cheer On to Glory"
+    }
+   ],
+   "our_levers": {
+    "real": [
+     "Boss's Orders x3: Gabite IS the ability engine and dies to any mid-game Myriad Leaf Shower; Gible/Roselia at 70 are free",
+     "Judge x4"
+    ]
+   },
+   "lever_factor": 1.0,
+   "weight_delta": {
+    "bench": 160.0
+   },
+   "scoring_rule": "gust preference Gabite > Gible > Roselia > Roserade when posterior says Garchomp",
+   "gust_order": [
+    380,
+    379,
+    341,
+    342
+   ],
+   "expected_trigger": {
+    "encounter_share": 0.019,
+    "posterior_id_by_t3": 0.84,
+    "gust_availability": 0.711,
+    "activation": "posterior top-1 == archetype at confidence >= 0.80 (agent/main.py CONFIDENCE_GATE); the delta then rides every searched decision"
+   },
+   "note": "smallest sample in the top 8 (n=321 seats; only prize_diff and ability_diff clear significance)"
+  }
+ },
+ "gust_cards": {
+  "221": "Meowstic",
+  "310": "Hop’s Dubwool",
+  "385": "Arven's Toedscruel",
+  "438": "Primeape",
+  "508": "Cryogonal",
+  "674": "Hariyama",
+  "1039": "Clefairy",
+  "1088": "Prime Catcher",
+  "1124": "Pokémon Catcher",
+  "1182": "Boss’s Orders",
+  "1204": "Lisia’s Appeal",
+  "1218": "Team Rocket's Giovanni"
+ },
+ "gust_reach": {
+  "Marnie's Grimmsnarl ex": true,
+  "Fezandipiti ex": true,
+  "Cynthia's Garchomp ex": true,
+  "Mega Kangaskhan ex": true,
+  "Teal Mask Ogerpon ex": true,
+  "Mega Lopunny ex": true,
+  "Team Rocket's Mewtwo ex": true,
+  "Dragapult ex": true,
+  "Mega Lucario ex": true,
+  "Thwackey": true,
+  "Mega Venusaur ex": true
+ },
+ "gust_reach_default": true
+}
