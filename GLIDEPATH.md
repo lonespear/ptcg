@@ -192,6 +192,49 @@ are things his branch does not have.
 
 ---
 
+## 5b. The engine was always seedable — a flag turns it off
+
+Reading `ptcg_engine/ptcgProgram 22/` rather than working around it:
+
+```cpp
+// CardMove.h:263
+if (state.game->config.deviceRand) {
+    std::shuffle(ps.deck.begin(), ps.deck.end(), std::random_device());  // unseedable
+} else {
+    std::shuffle(ps.deck.begin(), ps.deck.end(), state.game->rng);       // seeded
+}
+```
+
+`GameConfig` carries a `seed`, the game carries a seeded `mt19937`, and Kaggle's
+own episode configs contain a `seed` field. **`ApiBattleStart` (Api.h:33) simply
+hardcodes `config.deviceRand = true`**, and then overwrites the seeded generator
+with `std::seed_seq{rd(), rd(), rd(), rd()}` at Api.h:77. `ApiAgentStart` — the
+*search* path — does neither, so search determinizations were already seeded.
+
+So determinism needs three edits to a local-gating build, not a preload:
+
+1. `config.deviceRand = false`
+2. `config.seed = <caller-supplied>` instead of `rd()`
+3. `data->game.rng = std::mt19937(config.seed)` instead of the `seed_seq`
+4. plus `EffectInstant.h:585`, a second `std::random_device()` target-list shuffle
+
+**Why this matters beyond tidiness:** Austin's `tools/engine_seed` preload is
+macOS/Linux only — it needs `DYLD_INSERT_LIBRARIES`/`LD_PRELOAD`, which Windows
+does not have. Jon's machine is Windows, so **he currently cannot reproduce any
+pinned run**. Rebuilding the engine from the shipped source fixes it on every
+platform and needs no interception.
+
+Toolchain is present on Jon's box but off PATH:
+
+```
+vcvars64: C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvars64.bat
+cl.exe  : ...\MSVC\14.29.30133\bin\Hostx64\x64\cl.exe
+```
+
+Licence note: building locally is squarely "use it to build and test your
+competition entries". The build stays gitignored like the rest of the engine,
+and **nothing about this ships** — the submission uses Kaggle's own `cg`.
+
 ## 6. If you do one thing next
 
 In order:
