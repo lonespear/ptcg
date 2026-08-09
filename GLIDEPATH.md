@@ -307,6 +307,51 @@ built (`scripts/belief_audit.py`), which compares what the agent believed to
 what the engine did. That answers "are the overrides right?" without a single
 submission.
 
+## 5e. The rebuild tournament ran, and it is not usable. Here is the check.
+
+Fixing the *field* did not fix the *pilot*. Same eight opponents, same decks,
+`current` list, local tournament against ladder truth:
+
+| Opponent | local | ladder | gap | share |
+|---|---|---|---|---|
+| Grimmsnarl/Munkidori | 1.000 | 0.750 | +0.250 | 41.6% |
+| Dudunsparce-Alakazam | 0.840 | 0.500 | +0.340 | 15.6% |
+| Archaludon-Cinderace | 0.860 | **0.300** | **+0.560** | 13.0% |
+| Archaludon-Cinderace (2) | 0.860 | **0.286** | **+0.574** | 9.1% |
+| **Mega Lucario** | 0.780 | **0.000** | **+0.780** | 7.8% |
+| **WEIGHTED** | **0.892** | **0.519** | **+0.372** | |
+
+**The harness reports 0.892 where the ladder says 0.519.** And the error is not
+uniform — it is +0.25 on the deck our agent knows how to pilot and **+0.78** on
+Mega Lucario, which it cannot pilot at all. The bias scales with how much skill
+the *opponent's* deck needs, so it is largest exactly on the matchups that are
+costing us rating.
+
+This is the symmetric-pilot bias, unchanged: the autopsy pool fixed *which*
+decks appear, but both sides are still driven by our own agent. Austin measured
+the same thing independently — his real-ladder-deck panel "says we win 74% where
+the ladder says 45%".
+
+**Consequence: no deck decision can be made on this harness yet.** The variant
+scores it produced (`current` 0.892 against 0.21–0.32 for every single-prize
+build) cannot separate "the prize-liability idea is wrong" from "our agent
+cannot pilot the variants". Both arms carry the bias, so the comparison is
+internally fair, but it is fair about the wrong quantity.
+
+What the run does establish, because it replicates an earlier independent
+result: **diluting Ogerpon is catastrophic** — 0.892 → 0.205–0.322 across four
+builds, matching the earlier plus4/plus6/plus8 collapse. The Trainers are the
+engine. So the prize-liability hypothesis is **untested, not refuted**: the
+right test is a list that lowers prize liability *without* cutting the draw
+engine, and an opponent driven by something other than us.
+
+**The blocking dependency is an opponent pilot that is not our agent.** Options,
+cheapest first: drive pool decks with the competition's reference agent; use
+Austin's specialist panel; or replay real ladder episodes and score our agent's
+divergence from what the human-tuned opponent actually did. Until one exists,
+deck selection has to lean on ladder autopsies, which are slow and cost
+submissions.
+
 ## 6. If you do one thing next
 
 In order:
