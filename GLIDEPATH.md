@@ -18,9 +18,25 @@ Kaggle **PTCG AI Battle Challenge**, two linked competitions:
 Deadline **13 Sep 2026**. Team `Lemmes Yad` = jonallday + austinsemmel
 (+ a contributor committing as Sebastian).
 
-Last confirmed standing: **rank ~831 of 6,563, top ~12.7%**, score ~818–834,
-from 4,567th three days earlier. Leader ~1,182; exactly one team above 1,200;
-median 631. **Verify before quoting — see §2.**
+Last confirmed standing, **2026-08-09 ~17:00 UTC**: **rank 778 of 6,679, top
+11.6%**, score **822.0** — Austin's **v9**, submitted 16:38 UTC. From 4,567th
+four days earlier. Leader ~1,180; two teams above 1,200; median ~631.
+**Verify before quoting — see §2d.**
+
+Live submission history is the clearest illustration of §2d. These are all the
+same team, days apart, and the *gated* improvements do not order the scores:
+
+| Submission | Local verdict | Live score |
+|---|---|---|
+| **v9** — engine-verified rules fixes | no gain claimed | **822.0** |
+| v8 — free abilities never overridden | **+5.69 pt**, z=+5.84, 5,252 games | 617.7 |
+| v7 — wall-aware evaluator | +13 pt pooled at 600 g/cell | 577.3 |
+| v6 | — | 771.5 |
+| v6-twin — **byte-identical to v6** | — | 655.0 |
+
+v8 carried the strongest local evidence in the project and scored 154 points
+*below* v6. v6 and its identical twin differ by 116. **The ladder cannot resolve
+a single change**; it can only confirm a direction already established locally.
 
 Deck: **Teal Mask Ogerpon ex**, mono-Grass. Chosen because ~47% of the *global*
 field is weak to Grass. See §4 for why that denominator is now suspect.
