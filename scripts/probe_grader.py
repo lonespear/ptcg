@@ -36,6 +36,7 @@ INSTRUMENT = '''
 import atexit as _atexit, json as _json, os as _os, tempfile as _tf
 
 _PROBE = {"agent_calls": 0, "search_calls": 0, "search_decided": 0,
+          "search_differed": 0, "rules_failed": 0, "latency_ms": [],
           "cg_available": bool(globals().get("CG_AVAILABLE", False)),
           "errors": {}}
 
@@ -54,9 +55,14 @@ _atexit.register(_probe_dump)
 _orig_agent = agent
 _orig_search = globals().get("_search_main")
 
+_orig_rules = globals().get("_choose_main")
+
 if _orig_search is not None:
+    import time as _time
+
     def _probe_search(obs, options):
         _PROBE["search_calls"] += 1
+        t0 = _time.perf_counter()
         try:
             out = _orig_search(obs, options)
         except Exception as e:
@@ -64,8 +70,18 @@ if _orig_search is not None:
             _PROBE["errors"][k] = _PROBE["errors"].get(k, 0) + 1
             _probe_dump()
             raise
+        _PROBE["latency_ms"].append((_time.perf_counter() - t0) * 1000.0)
         if out is not None:
             _PROBE["search_decided"] += 1
+            # The number that decides whether search is worth its risk: when it
+            # DOES return, does it pick anything the rule policy would not have?
+            # Search that runs but never disagrees is pure cost on the grader.
+            if _orig_rules is not None:
+                try:
+                    if _orig_rules(options, obs) != out:
+                        _PROBE["search_differed"] += 1
+                except Exception:
+                    _PROBE["rules_failed"] += 1
         return out
 
     _search_main = _probe_search
@@ -131,9 +147,32 @@ def main() -> None:
     if not data.get("search_decided"):
         sys.exit("\nFAIL: search never returned a decision — the agent is "
                  "playing pure rules on the ladder.")
-    rate = data["search_decided"] / max(data["search_calls"], 1)
-    print(f"\nPASS: search decided {data['search_decided']} of "
-          f"{data['search_calls']} calls ({rate:.0%}).")
+    calls = max(data["search_calls"], 1)
+    decided = data["search_decided"]
+    differed = data.get("search_differed", 0)
+    lat = data.get("latency_ms") or [0.0]
+    lat_sorted = sorted(lat)
+
+    print(f"\n--- search audit ---")
+    print(f"  ran                 {decided}/{calls} calls "
+          f"({decided/calls:.0%}) — the rest fell back to rules")
+    print(f"  changed the move    {differed}/{max(decided,1)} of those "
+          f"({differed/max(decided,1):.0%})")
+    print(f"  net effect          {differed}/{data['agent_calls']} agent "
+          f"decisions ({differed/max(data['agent_calls'],1):.0%})")
+    print(f"  latency ms          median {lat_sorted[len(lat_sorted)//2]:.1f}, "
+          f"p90 {lat_sorted[int(len(lat_sorted)*0.9)]:.1f}, "
+          f"max {lat_sorted[-1]:.1f}")
+    if data.get("rules_failed"):
+        print(f"  rules comparison failed {data['rules_failed']}x")
+
+    print(f"\nPASS: search decided {decided} of {calls} calls "
+          f"({decided/calls:.0%}).")
+    if differed / max(data["agent_calls"], 1) < 0.05:
+        print("\n  NOTE: search changes under 5% of decisions. On the grader it "
+              "\n  is carrying timeout and exception risk for very little "
+              "\n  behaviour — best-rules + best-deck may be the stronger "
+              "\n  configuration.")
 
 
 if __name__ == "__main__":

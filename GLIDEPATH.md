@@ -274,6 +274,39 @@ that one-shot a 210 HP two-prize attacker. **Rebuild against this pool, not
 against the mined field**, and treat "survives a 270 hit or does not concede
 two prizes" as a design constraint rather than a nicety.
 
+## 5d. Search audit — it is not dead weight, but it is small
+
+Measured under `kaggle_environments`' own `cabt` environment
+(`scripts/probe_grader.py`), five episodes:
+
+| | run 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| search returned an answer | 24% | 25% | 20% | 39% | 33% |
+| …and changed the move | **100%** | 100% | 100% | 100% | 100% |
+| net share of decisions changed | 10% | 10% | 6% | 15% | 11% |
+| latency median / max (ms) | 13/163 | 17/158 | 9/143 | 17/164 | 17/137 |
+
+Neither of the two failure modes we were worried about. Search is **not**
+silently falling back everywhere, and it is **not** running-but-agreeing:
+
+- It declines ~70% of the time **by design** — the confidence gate and the
+  `search_margin` hysteresis mean it only overrides when it can show the margin
+  against a fairly-sampled alternative.
+- When it does return, it disagrees with the rule policy **every single time**.
+- Net: it changes roughly **10% of all decisions**, each one deliberately.
+- Latency is a non-issue: max 164 ms against a 600 s episode budget.
+
+**So the fork resolves toward keeping search**, but the honest read is that it
+is a 10%-of-decisions lever, not a transformation — which is consistent with the
+production signal never separating it from noise. Whether those 10% are *good*
+decisions remains unresolved, and the ladder cannot answer it at ±150.
+
+The cheap next step is not more search work: it is to log which decision
+contexts those 10% fall in, and check a sample against the belief audit Austin
+built (`scripts/belief_audit.py`), which compares what the agent believed to
+what the engine did. That answers "are the overrides right?" without a single
+submission.
+
 ## 6. If you do one thing next
 
 In order:
