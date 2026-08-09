@@ -4,8 +4,14 @@ Kaggle **PTCG AI Battle Challenge**. Two linked competitions: *Simulation*
 (an agent bundle, has the leaderboard) and *Strategy* (a ≤2000-word writeup,
 70% model / 20% deck / 10% report). Deadline **13 Sep 2026**.
 
-Read `README.md` for the strategy and `EDA_FINDINGS.md` for the full numbered
-record. This file is the operating rules.
+**Start with `GLIDEPATH.md`** — current state, what is invalidated, and what to
+do next. Then `README.md` for the strategy and `EDA_FINDINGS.md` for the
+numbered record. This file is the operating rules.
+
+> Three measurement faults found 2026-08-08/09 invalidate much of the recorded
+> evidence: our arena scored legal empty selections as forfeits (opponents only,
+> 24.9% vs our 0.0%), the engine was never actually seeded, and 300-game cells
+> flip sign at 600. Re-derive before citing a win rate. Details in `GLIDEPATH.md` §2.
 
 ## Hard rules
 

@@ -75,9 +75,22 @@ def play_game(agent0: Agent, agent1: Agent, deck0: list[int], deck1: list[int],
             except Exception as e:  # a crashing agent forfeits, as on Kaggle
                 return GameResult(1 - who, cur.get("turn", 0), steps,
                                   f"agent {who} raised {type(e).__name__}: {e}")
-            if not isinstance(choice, list) or not choice:
+            # An EMPTY selection is legal whenever the prompt's minCount is 0 —
+            # it is the engine's own way of saying "done", and the competition's
+            # reference agent returns it. Treating `[]` as a forfeit handed a
+            # loss to any opponent that declined an optional prompt, typically
+            # "done benching" on turn 0.
+            #
+            # Our own agent never emits `[]` by construction, so the penalty
+            # fell entirely on opponents: Austin measured a 24.9% opponent
+            # forfeit rate against our 0.0%, and it inflated every gauntlet and
+            # field number this harness has ever produced. Found by him, in
+            # this file, which is ours.
+            min_count = sel.get("minCount", 1) or 0
+            if not isinstance(choice, list) or (not choice and min_count > 0):
                 return GameResult(1 - who, cur.get("turn", 0), steps,
-                                  f"agent {who} returned {choice!r}")
+                                  f"agent {who} returned {choice!r} "
+                                  f"(minCount={min_count})")
             try:
                 obs = battle_select(choice)
             except (ValueError, IndexError) as e:

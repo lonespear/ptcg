@@ -1,5 +1,25 @@
 # ptcg — Pokémon TCG AI Battle Challenge
 
+> ## ⚠ Read `GLIDEPATH.md` before trusting numbers below
+>
+> On 2026-08-08/09 three measurement faults were found, two in code we own:
+>
+> 1. **Our arena scored legal moves as forfeits.** `[]` is legal whenever a
+>    prompt's `minCount` is 0. Our agent never emits it, so the penalty fell
+>    only on opponents — a **24.9% opponent forfeit rate against our 0.0%**.
+>    Every gauntlet, field-SPRT and matchup figure produced by this harness is
+>    inflated (Archaludon 0.63 → **0.32**; Grimmsnarl 0.85 → 0.758). Fixed.
+> 2. **The engine was never seeded** — `libcg` draws from `std::random_device`.
+>    Every "seeded" run in this repo's history played *different games*, so the
+>    paired-seed premise behind `field_sprt.py` was false. Austin fixed it with
+>    `tools/engine_seed`.
+> 3. **300-game cells flip sign.** Three of four re-runs at 600 games reversed,
+>    always understating the candidate.
+>
+> **The decision ledger below is provisional and needs re-running.** Findings
+> that came from ground truth or direct code inspection — the grader traps, the
+> opponent-model calibration, the metagame structure — still stand.
+
 Our entry for the Kaggle **Pokémon TCG AI Battle Challenge**. Final deadline
 **13 Sep 2026**.
 
