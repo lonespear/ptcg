@@ -1,4 +1,60 @@
-**Last updated: 2026-08-08 ~14:30 UTC (Aug 8 afternoon)**
+**Last updated: 2026-08-09 ~06:00 UTC (Aug 9 morning)**
+
+## Update — Aug 9: **our gate harness was scoring legal moves as crashes**
+
+Jon, read this one first — it invalidates numbers, possibly yours too.
+
+`ptcg/arena.py` treated ANY empty selection as a forfeit. But `[]` is the
+engine's own answer whenever a prompt's `minCount` is 0 — the engine's
+`SelectData` documents it, and the competition's reference agent returns it.
+**All 7,726 "opponent crashes" across 97 of our result files were legal
+moves**, typically a specialist saying "done benching" on turn 0 and being
+handed a loss. Our agent cannot emit `[]` by construction, so the penalty
+fell only on opponents: a 24.9% "opponent forfeit rate" against our 0.0%,
+entirely self-inflicted. Fixed.
+
+What we had actually been reading: **archaludon 0.63 where the truth is
+0.32**; grimmsnarl 0.85 where it is 0.758. Every "we win 56% of the panel"
+claim should read ~44% — against a ladder truth of 0.45. If your gates
+score an empty selection as a loss, you have the same inflation.
+
+Two related measurement findings, both costly:
+- **300-game cells are noise at our effect sizes**, in both directions. Four
+  candidate/cell readings flipped sign at 600 games. We now require 600
+  clean games minimum on a named seed block against a baseline pinned to a
+  commit, never to the working tree.
+- **A specialist panel is not the ladder.** v7 gated +13 pt and delivered
+  nothing, because the mechanic it fixed (damage walls) appears in 3 of 80
+  real ladder decks and none of our panel decks. We rebuilt the panel from
+  80 real ladder decklists recovered from replay frame 0 — worth doing on
+  your side too, the lists are public in every replay.
+
+## Update — Aug 9: v8 up — we were throwing away our own free abilities
+
+**v8 submitted** (commit 18e8652): the search may no longer override a
+cost-free Ability on one of our own Pokemon. A free Ability expires with the
+turn and using one never ends the turn, so ending a turn with one unused is
+never right. The rule policy already ranked abilities first; the search
+overrode it. On our shipped list that discarded **one in four legal Teal
+Dances, 2.1 a game, in every ladder game we have played** — most often for a
+manual Energy attach that consumed the very card Teal Dance would have
+attached for free, and cost the draw as well.
+
+Gated +5.69 pt pooled clean against a frozen v7 (z=+5.84, 5,252 paired
+games, every cell positive, self-mirror 0.5320), and confirmed at +2.70 pt
+on the real-ladder-deck panel (z=+2.86). Teal Dance use 75.7% -> 91.9%.
+**If your agent lets a search override a free Ability, check this first.**
+
+Counting note that cost us a week: ability options carry no `cardId`, only
+`(area, index)`. Keying turn-boards by cardId collapses four Ogerpon into
+one row, and Teal Dance is once PER POKEMON per turn — cardId keying hid
+three quarters of the problem and read 11% where the truth was 27%.
+
+Three fixes did NOT ship, which may be the more useful half: a Stadium
+damage fix (correct, but flat — pricing damage right does not help when no
+better action exists), evolution-legality fixes (the measured gain sat in a
+term that cannot be a legality correction), and damage-KB corrections whose
+value is concentrated in decks we do not play.
 
 ## Update — Aug 8 late afternoon: **our 300-game gates were lying to us**
 
