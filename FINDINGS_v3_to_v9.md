@@ -228,7 +228,27 @@ The search was never the broken part. The estimator was.
 
 ---
 
-Everything above is reproducible from this branch. The experiment logs live
-outside the repo, but the instruments are here: `scripts/belief_audit.py`,
-`scripts/reproduce_check.py`, `scripts/run_pinned.sh`,
-`scripts/specialist_gate.py`, `scripts/ab_gate.py`.
+## 8. The instruments, and how to run them
+
+All on this branch. The experiment logs and the competitor decklists are not —
+`data/analysis/*` is gitignored, so you build your own copy of the field data
+rather than inheriting ours.
+
+| tool | what it does |
+|---|---|
+| `scripts/belief_audit.py` | the belief-vs-truth differ. Records what the agent predicted at each decision, diffs it against what the engine did next. Adding a class is one function plus a `PREDICTORS` entry. This is the tool that found every real bug. |
+| `scripts/reproduce_check.py` | runs the same command N times and reports the spread. Use it to confirm your own harness reproduces before trusting any A/B. |
+| `scripts/run_pinned.sh` | wraps a command with the engine-RNG preload and the deterministic search budget. Builds the preload on first use. |
+| `scripts/extract_field_decks.py` | pulls both players' 60-card lists out of replay JSON and builds a field deck corpus. Start here — the lists are public and free. |
+| `scripts/build_field_panel.py` | turns that corpus into a weighted panel of matchups. |
+| `scripts/field_panel_gate.py` | runs an agent against that panel; `--report tagA tagB` tabulates two arms. |
+| `scripts/field_panel_validate.py` | checks the panel against known ladder results. Ours failed this — it says we win 74% where the ladder says 45% — which is how we learned not to trust its absolute level. |
+| `scripts/specialist_gate.py`, `scripts/ab_gate.py` | matchup and head-to-head gates. Both now headline the forfeit-excluded win rate and warn below a clean-sample floor. |
+
+Run any gate as `scripts/run_pinned.sh python scripts/specialist_gate.py ...`,
+and check `ptcg.engine_seed.available()` inside the worker rather than in a
+shell beforehand.
+
+The trained evaluator from the experiment in section 4 is committed at
+`data/analysis/leaf/model_h64_multi.npz` with its gate results beside it, in
+case the offline result is useful to you even though it won no games.

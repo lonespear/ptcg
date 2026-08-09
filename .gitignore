@@ -136,3 +136,4 @@ external/
 # Strategy analyses and experiment logs stay local — this fork is public.
 experiments_0808/
 data/leaf_train/
+sweep_mid.log

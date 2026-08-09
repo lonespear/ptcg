@@ -48,6 +48,16 @@ elif [ "$ROLE" = stall ]; then
         pkill -f "$PAT" || true
         sleep 15
         pkill -9 -f "$PAT" || true
+        # Reap orphaned pool workers (PPID 1 after the parent dies) —
+        # they hold the driver's tee pipe open, which otherwise blocks
+        # the keeper's relaunch forever (2026-08-08 01:40 lesson).
+        sleep 5
+        for wp in $(pgrep -f "spawn_main" 2>/dev/null); do
+          if [ "$(ps -o ppid= -p "$wp" | tr -d ' ')" = "1" ]; then
+            note "reaping orphan worker $wp"
+            kill -9 "$wp" 2>/dev/null || true
+          fi
+        done
       fi
     fi
   done
