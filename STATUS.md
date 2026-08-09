@@ -1,4 +1,11 @@
-**Last updated: 2026-08-09 ~13:00 UTC (Aug 9 midday)**
+**Last updated: 2026-08-09 ~13:20 UTC (Aug 9 midday)**
+
+> **Jon — start with [`FINDINGS_v3_to_v9.md`](FINDINGS_v3_to_v9.md).** It is the
+> whole arc from v3 to v9 in one place: three bugs in our test harness that
+> invalidated a week of numbers, what our measurements can and cannot see, ten
+> agent bugs found by diffing belief against engine truth, four ideas that
+> sounded good and did nothing, and the deck question settled. The daily entries
+> below are the running log; that file is the synthesis.
 
 ## Update — Aug 9 midday: v9 up, and two things you can use
 
