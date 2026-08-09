@@ -75,7 +75,18 @@ def play_game(agent0: Agent, agent1: Agent, deck0: list[int], deck1: list[int],
             except Exception as e:  # a crashing agent forfeits, as on Kaggle
                 return GameResult(1 - who, cur.get("turn", 0), steps,
                                   f"agent {who} raised {type(e).__name__}: {e}")
-            if not isinstance(choice, list) or not choice:
+            # An empty selection is the engine-sanctioned answer whenever the
+            # prompt's minCount is 0 ("done benching", declining a TO_HAND or
+            # an ATTACH_TO), and the competition's own reference agent returns
+            # it. Treating [] as a forfeit scored 7,726 legal moves across 97
+            # result files as opponent crashes, and our agent cannot emit []
+            # by construction, so the penalty fell only on opponents: it read
+            # as a 24.9% opponent forfeit rate against our 0.0%, and inflated
+            # archaludon from a true 0.32 to 0.63.
+            if not isinstance(choice, list):
+                return GameResult(1 - who, cur.get("turn", 0), steps,
+                                  f"agent {who} returned {choice!r}")
+            if not choice and (sel.get("minCount") or 0) > 0:
                 return GameResult(1 - who, cur.get("turn", 0), steps,
                                   f"agent {who} returned {choice!r}")
             try:

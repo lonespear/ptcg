@@ -18,8 +18,28 @@ it is playing.
 Seats swap every other game and a game's seed is its index, exactly as
 `ab_gate.py` does it, so the two harnesses report comparable numbers.
 
+SCORING (D54, 2026-08-08). The headline number is `a_win_rate_clean` over
+`clean_games` — games neither seat forfeited on an engine error. The
+all-games rate is printed and stored beside it as a DIAGNOSTIC only, because
+it is not a measurement of this matchup: a forfeit hands the game to whoever
+did not forfeit, our seat has never forfeited once in 38,000 recorded gate
+games, and the specialists forfeit at rates from 0% (lucario,
+codex_alakazam) to 58% (archaludon). All-games scoring therefore pays us a
+different bonus in every cell. Across 39 real ladder episodes there were
+zero forfeits, so the bonus does not exist where it counts.
+
+POWER (D54 + D51). Exclusions cost sample, and the cost is the whole point:
+600 games in the archaludon cell is ~250 clean games. `--clean-floor`
+(default 600, matching D51's 600-game rule read on the CLEAN sample) makes
+the tool say so. At p=0.5 the SE of a two-arm difference is 0.0408 at
+n=300 and 0.0289 at n=600, so the minimum effect resolvable at 80% power
+(two-sided 0.05) is 11.4 pt and 8.1 pt respectively. We work in the 3-12 pt
+range, so 600 clean is the bar for a ship or kill decision and 300 clean is
+the bar below which the cell decides nothing at all. Extend the run; never
+score the contaminated number instead.
+
     python scripts/specialist_gate.py --a agent/main.py \
-        --specialist external/grimmsnarl_agent.py --games 300 --workers 8
+        --specialist external/grimmsnarl_agent.py --games 600 --workers 8
 """
 
 from __future__ import annotations
@@ -27,6 +47,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import math
 import os
 import sys
 import time
@@ -37,7 +58,21 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
+# D51's 600-game rule, read on the clean sample (see module docstring).
+CLEAN_FLOOR = 600
+# Below this a cell resolves nothing we have ever measured; it is not a
+# weak reading, it is not a reading.
+CLEAN_HARD_FLOOR = 300
+
 _STATE: dict = {}
+
+
+def _se(wins: int, n: int) -> float:
+    """Standard error of a win rate, the honest width on `n` clean games."""
+    if not n:
+        return float("nan")
+    p = wins / n
+    return math.sqrt(p * (1 - p) / n)
 
 
 def _load_main(path: str, name: str):
@@ -140,6 +175,10 @@ def main() -> None:
     ap.add_argument("--games", type=int, default=300)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--clean-floor", type=int, default=CLEAN_FLOOR,
+                    help="warn when games surviving forfeit exclusion fall "
+                         f"below this (default {CLEAN_FLOOR}, D51's rule "
+                         "read on the clean sample)")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
 
@@ -169,15 +208,35 @@ def main() -> None:
     wr = res["a"] / decided if decided else float("nan")
     clean = res["a_clean"] + res["b_clean"]
     wr_clean = res["a_clean"] / clean if clean else float("nan")
+    se_clean = _se(res["a_clean"], clean)
+    forfeit_rate = ((decided - clean) / decided) if decided else float("nan")
     secs = round(time.time() - t0, 1)
 
     print(f"{args.a} on {args.deck_a} vs {args.specialist} on its own list")
-    print(f"  A {res['a']} / B {res['b']} of {decided} decided "
-          f"({res['draws']} draws) -> {wr:.4f}   [{secs}s]")
-    print(f"  no forfeit either side: A {res['a_clean']} / B {res['b_clean']} "
-          f"of {clean} -> {wr_clean:.4f}")
-    print(f"  forfeits: ours {res['a_error_forfeits']}, "
-          f"theirs {res['b_error_forfeits']}")
+    print(f"  PRIMARY (D54, forfeits excluded): A {res['a_clean']} / "
+          f"B {res['b_clean']} of {clean} clean -> {wr_clean:.4f} "
+          f"+- {se_clean:.4f} SE   [{secs}s]")
+    print(f"  diagnostic only, all games: A {res['a']} / B {res['b']} of "
+          f"{decided} decided ({res['draws']} draws) -> {wr:.4f}")
+    print(f"  forfeits: theirs {res['b_error_forfeits']}, "
+          f"ours {res['a_error_forfeits']} "
+          f"({forfeit_rate:.1%} of decided games excluded)")
+    warn = None
+    if clean < CLEAN_HARD_FLOOR:
+        warn = (f"UNDERPOWERED: {clean} clean games is below the "
+                f"{CLEAN_HARD_FLOOR} hard floor. A two-arm difference here "
+                f"has SE ~{math.sqrt(2 * 0.25 / max(clean, 1)):.4f}; nothing "
+                f"under ~{2.8 * math.sqrt(2 * 0.25 / max(clean, 1)):.1%} is "
+                f"resolvable. This cell decides nothing — extend it.")
+    elif clean < args.clean_floor:
+        warn = (f"WARN: {clean} clean games is below the {args.clean_floor} "
+                f"floor (D51's 600-game rule read on the clean sample). "
+                f"Minimum resolvable two-arm effect ~"
+                f"{2.8 * math.sqrt(2 * 0.25 / clean):.1%} at 80% power. "
+                f"Extend with more games; do not score the all-games number "
+                f"instead.")
+    if warn:
+        print(f"  !! {warn}")
     for e, n in Counter(res["errors"]).most_common(5):
         print(f"    {n:4d}  {e[:110]}")
     if res["turns"]:
@@ -188,13 +247,28 @@ def main() -> None:
             "deck_specialist": args.deck_specialist,
             "env": {k: os.environ[k] for k in sorted(os.environ)
                     if k.startswith("CABT_")},
-            "games": args.games, "seed0": args.seed, "decided": decided,
-            "a_wins": res["a"], "b_wins": res["b"], "draws": res["draws"],
-            "a_win_rate": round(wr, 4),
+            "games": args.games, "seed0": args.seed,
+            # PRIMARY metric (D54). Everything below `a_win_rate` is a
+            # diagnostic. Field names are unchanged from the pre-D54 tool so
+            # every result file already on disk stays readable; what changed
+            # is which of them is the answer.
+            "primary_metric": "a_win_rate_clean",
+            "a_win_rate_clean": round(wr_clean, 4),
             "clean_games": clean, "a_clean": res["a_clean"],
-            "b_clean": res["b_clean"], "a_win_rate_clean": round(wr_clean, 4),
+            "b_clean": res["b_clean"],
+            "clean_se": round(se_clean, 4),
+            "clean_floor": args.clean_floor,
+            "clean_hard_floor": CLEAN_HARD_FLOOR,
+            "underpowered": bool(clean < args.clean_floor),
+            "power_warning": warn,
+            "forfeit_rate": round(forfeit_rate, 4),
             "a_error_forfeits": res["a_error_forfeits"],
             "b_error_forfeits": res["b_error_forfeits"],
+            # Diagnostic: inflated by opponent forfeits, never a ship
+            # criterion (D54).
+            "a_win_rate": round(wr, 4),
+            "decided": decided,
+            "a_wins": res["a"], "b_wins": res["b"], "draws": res["draws"],
             "n_errors": len(res["errors"]),
             "errors": [e for e, _ in Counter(res["errors"]).most_common(5)],
             "seconds": secs}

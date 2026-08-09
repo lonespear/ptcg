@@ -3496,6 +3496,83 @@ def _search_main(obs: dict, options: list[dict]) -> int | None:
         _SEARCH_ME = None
 
 
+# --- free abilities are not optional (E12) ----------------------------------
+# A cost-free Ability expires with the turn, and using one never ends the turn,
+# so there is no position in which ending the turn with one unused is right.
+# The rule policy already knows this (MAIN_PRIORITY ranks OPT_ABILITY first);
+# the SEARCH overrides it, and measured on our own shipped list that override
+# threw away 200 of 779 legal Teal Dances over 120 games -- 18 of them to a
+# manual Energy attachment that consumed the very card Teal Dance would have
+# attached for free, plus a card. Free is read off the engine's own runtime
+# skill text: an ability that Knocks this Pokemon Out, shuffles it away,
+# demands a discard "in order to use", or repeats "as often as you like"
+# (which would loop) is NOT free and is left to the search. Stadium abilities
+# are excluded: they are not ours and Spikemuth Gym does nothing for our list.
+try:
+    FREE_ABILITY_ENABLED = bool(int(os.environ.get("CABT_FREE_ABILITY") or 1))
+except Exception:
+    FREE_ABILITY_ENABLED = True
+
+_FREE_AB: dict = {}
+
+
+def _ability_free(card_id: int) -> bool:
+    """True if every ability this card carries is cost-free to activate."""
+    got = _FREE_AB.get(card_id)
+    if got is None:
+        cards, _ = _tables()
+        data = cards.get(int(card_id))
+        skills = (getattr(data, "skills", None) or []) if data else []
+        got = bool(skills)
+        for sk in skills:
+            text = getattr(sk, "text", "") or ""
+            low = text.lower()
+            if ("knocked out" in low and "this pok" in low) \
+                    or "shuffle this pok" in low \
+                    or "in order to use" in low \
+                    or "as often as you like" in low:
+                got = False
+        _FREE_AB[int(card_id)] = got
+    return got
+
+
+def _free_ability(obs, options) -> int | None:
+    """Index of a cost-free Ability on one of our own in-play Pokemon."""
+    if not FREE_ABILITY_ENABLED:
+        return None
+    try:
+        cur = _g(obs, "current")
+        me = _g(cur, "yourIndex", 0)
+        players = _g(cur, "players", []) or []
+        if len(players) < 2:
+            return None
+        if (_g(players[me], "deckCount", 0) or 0) <= 1:
+            return None                 # a free draw can deck us out
+        for i, o in enumerate(options):
+            if _g(o, "type") != OPT_ABILITY:
+                continue
+            pi = _g(o, "playerIndex")
+            if pi is not None and pi != me:
+                continue
+            area = _g(o, "inPlayArea")
+            if area is None:
+                area = _g(o, "area")
+            if area not in (AREA_ACTIVE, AREA_BENCH):
+                continue                # stadium abilities are not our board
+            idx = _g(o, "inPlayIndex")
+            if idx is None:
+                idx = _g(o, "index")
+            zone = _zone(obs, area, me)
+            mon = zone[idx] if (idx is not None and idx < len(zone)) else None
+            cid = _g(mon, "id") if mon is not None else _g(o, "cardId")
+            if cid is None or not _ability_free(int(cid)):
+                continue
+            return i
+    except Exception:
+        return None
+    return None
+
+
 def _rules_choice_for(observation) -> list[int]:
     """The rollout policy, one seat each.
 
@@ -3531,6 +3608,9 @@ def _agent(obs_dict: dict) -> list[int]:
         won = _lethal_now(obs, options)
         if won is not None:
             return [won]
+        free = _free_ability(obs, options)
+        if free is not None:
+            return [free]
         picked = _search_main(obs, options)
         if picked is not None:
             return [picked]
