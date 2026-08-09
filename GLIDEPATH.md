@@ -235,6 +235,45 @@ Licence note: building locally is squarely "use it to build and test your
 competition entries". The build stays gitignored like the rest of the engine,
 and **nothing about this ships** — the submission uses Kaggle's own `cg`.
 
+## 5c. The field we actually play — measured, and it is not the mined one
+
+`scripts/build_autopsy_pool.py` rebuilds the opponent pool from
+`data/analysis/ladder_autopsy.json`, which records the real opposing decklist
+and both ratings for every episode we have played. Filtered to our band
+(700–900), 123 episodes, 8 lists covering 63% of them:
+
+| Opponent | Mined share | Actually faced | Error | **Our real win rate** |
+|---|---|---|---|---|
+| Grimmsnarl/Munkidori | 45.7% | 41.6% | 0.9× | **0.750** |
+| Dudunsparce-Alakazam | 0.96% | 15.6% | **16×** | 0.500 |
+| Archaludon-Cinderace | 0.29% | 13.0% | **45×** | **0.300** |
+| Archaludon-Cinderace (2nd list) | 0.29% | 9.1% | **31×** | **0.286** |
+| Mega Lucario | 1.20% | 7.8% | 6.5× | **0.000** (0 of 6) |
+| Dudunsparce-Alakazam (2nd) | 0.96% | 6.5% | 6.7× | 0.400 |
+
+**The mined field predicted exactly one opponent** — Grimmsnarl, which is also
+the one our deck was built to beat, and it does beat it at 0.750 on 42% of
+games. Everything else is wrong by 6× to 45×.
+
+Encounter-weighted, that pool comes to roughly **0.52** — about even, which is
+what our rating says.
+
+**Where the rating is actually going:** Archaludon (22% of games across two
+lists, ~0.29) and Mega Lucario (7.8%, 0-for-6). Together **~30% of our games at
+about 0.2**. That is the entire gap, and neither was in the design.
+
+Mechanically both are the same failure. Mega Lucario ex's Mega Brave does **270
+for two Energy**; Teal Mask Ogerpon ex has **210 HP** and concedes **two
+prizes**. We are one-shot by a two-Energy attack while giving up double. The
+Archaludon lists run Cinderace, a **Fire** attacker, and Ogerpon is weak to
+Fire — the same story with the doubling done by Weakness rather than raw damage.
+
+So the thesis is half-right and precisely diagnosable: the Grass plan works
+exactly as designed against the deck it targeted, and loses to the two decks
+that one-shot a 210 HP two-prize attacker. **Rebuild against this pool, not
+against the mined field**, and treat "survives a 270 hit or does not concede
+two prizes" as a design constraint rather than a nicety.
+
 ## 6. If you do one thing next
 
 In order:
