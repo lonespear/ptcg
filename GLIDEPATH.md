@@ -375,12 +375,34 @@ deck, and its ordering does not track the gap: the deck we pilot *best*
 (Roselia, 0.318) has a *negative* gap. Archaludon's +0.56 rests on 80 decisions
 from 2 player-slots and cannot carry weight either way.
 
-**So the local-vs-ladder gap is not explained by how often we make a different
-decision.** The more likely mechanism is that the decks differ in how
-*punishing* a mistake is — Mega Lucario one-shots a 210 HP two-prize attacker,
-so a single misplay ends the game, while Grimmsnarl gives you turns to recover.
-Frequency of divergence is the wrong axis; cost of divergence is the right one,
-and this instrument cannot see it.
+**The solid finding is narrow and worth stating precisely: whatever drives the
+gap, it is not divergence _rate_.** That rests on the two well-measured rows
+(17,577 and 12,690 decisions).
+
+**The cost story is an inference, not a measurement.** The proposal — that decks
+differ in how *punishing* a mistake is, so one misplay into a one-shot deck is
+terminal where one into Grimmsnarl is a tempo loss — is mechanistically
+plausible and it is the best available explanation. But it is inferred from the
+failure of the alternative, and the two rows that motivate it (+0.560 on 80
+decisions, +0.780 on zero) are the two worst-measured in the table. Do not build
+on it as though it were established.
+
+**Cost is directly measurable with tools already here, and needs no new data.**
+For a decision, roll out both our choice and the alternative to terminal and
+diff the win probability — that *is* the cost of the divergence. A few hundred
+decisions per matchup gives a cost-weighted disagreement number, which is the
+quantity the agreement rate was a bad proxy for. If the story holds,
+cost-per-divergence against Lucario should dwarf Grimmsnarl at identical
+agreement rates. **If it does not, there is a third explanation nobody has
+named** — grader-environment differences being the next suspect, given the v8
+twin history.
+
+**But do not spend the hours there yet.** The cost story points at the same
+place the autopsy already did: if error *tolerance* is the fragility, the fix is
+the deck rebuild that is already the top open item. Reserve the rollout
+measurement for validating the winning variant — "does this list actually reduce
+cost-per-error against one-shot decks?" — rather than running it as a research
+direction of its own.
 
 **And the data does not exist to fix it.** Mega Lucario appears **zero** times
 in 4,669 episodes, because these decks are rare in the general population
@@ -390,10 +412,13 @@ The daily datasets are samples, not exhaustive.
 
 **Unblocking deck evaluation therefore needs one of:**
 
-1. **Our own episodes.** Austin's autopsy has them, so some route exists —
-   likely a per-submission episode endpoint rather than the daily dumps. Ask
-   him; this is the cheapest path and it also refreshes the pool after each
-   settle.
+1. **Our own episodes — and these are retrievable without Austin.** The Kaggle
+   episode API serves any episode by ID, and the submission page lists our
+   games. A small script pulling the last N ladder episodes after each settle
+   gives exactly the corpus this instrument needed **and** the standing
+   pool-refresh that §5c already wanted as a post-settle step. Build it once;
+   it permanently unblocks both this analysis and the autopsy re-weighting.
+   **This is the highest-leverage tooling left.**
 2. **A non-us opponent driver** — the competition reference agent, or Austin's
    specialist panel, accepting that each is itself biased.
 3. **Accept that matchup truth costs submissions**, and spend them deliberately.
@@ -403,13 +428,31 @@ exactly where the opponent's deck punishes error hardest.
 
 ## 6. If you do one thing next
 
-In order:
+Austin's branch is **merged** (§5) and the field is **re-weighted** (§5c), so
+the original next-steps are done. What remains, in order:
 
-1. **Re-run the decision ledger** with the arena fix, the seeded engine, and
-   600-game cells. Several verdicts in `README.md` will move; some accepts may
-   become rejects.
-2. **Re-weight the field** from the ladder autopsy (§4), then re-rank decks.
-3. **Merge his branch into ours**, carrying the four guard files forward.
+1. **Build the episode puller** (§5f option 1). The Kaggle episode API serves
+   any episode by ID and our submission page lists our games. This is the one
+   piece of tooling that unblocks everything else — matchup truth, the pilot
+   measurement, and the standing pool refresh after each settle. An afternoon.
+2. **The deck rebuild**, on the prize-liability budget: single-prize bodies so a
+   misplay costs one prize instead of two, *without* cutting the draw engine
+   (that is what sank the first four variants — §5e). Score on the **matchup
+   vector**, not the weighted scalar; a flat 0.55 beats a spiky 0.75/0.30
+   against a field that moves. Bar: Archaludon and Lucario above ~0.45 with
+   Grimmsnarl still above ~0.65, which takes ~0.52 overall to ~0.61.
+3. **Then one consolidated submission** with a written hypothesis, left to
+   settle fully. Nothing ships unless its local effect clears the ±150 twin
+   spread.
 
-Do not spend submissions to answer questions a local test can answer — the
-quota is five a day, shared, and one submission carries ±150 points of noise.
+Standing rule after each settle: **re-run the autopsy and re-weight the pool.**
+The band we play in moves as the rating moves, and a deck fitted to the old
+neighbourhood is fitted to the wrong one.
+
+Do not spend submissions on questions a local test can answer — five a day,
+shared with Austin, and one submission carries ±150 points of noise.
+
+**Division of labour**, now that two people share one quota: Austin owns agent
+internals and his branch is canonical; this side owns measurement, the opponent
+pool, and submission autopsies. One designated submitter per day, and every
+submission carries a written hypothesis.

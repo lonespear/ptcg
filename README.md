@@ -19,6 +19,13 @@
 > **The decision ledger below is provisional and needs re-running.** Findings
 > that came from ground truth or direct code inspection — the grader traps, the
 > opponent-model calibration, the metagame structure — still stand.
+>
+> Since then the arena is fixed and audited (`scripts/harness_selftest.py`:
+> symmetry ✓, forfeits 0 ✓, realism 1.00 ✓, determinism ✗ on Windows), Austin's
+> branch is merged, and the opponent pool is rebuilt from games we actually
+> played rather than global mining. **Two things below are now known wrong and
+> corrected in `GLIDEPATH.md`:** the field weights (§5c) and every local matchup
+> number (§5e — the harness reports 0.892 where the ladder says 0.519).
 
 Our entry for the Kaggle **Pokémon TCG AI Battle Challenge**. Final deadline
 **13 Sep 2026**.

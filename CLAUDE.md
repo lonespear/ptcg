@@ -85,9 +85,22 @@ measurement tool, four checks catch this whole class:
 2. **Determinism** — same seed, same game, or say plainly that it is unpaired.
 3. **Distribution** — compare against real replays; a private world that ends
    games at half the real length is not measuring the real one.
-4. **Coverage — assert what you expected to find, and fail loudly when you do
-   not.** A script that reports on 3 of 6 targets must exit non-zero, not print
-   a confident table. This is the one that keeps getting missed.
+4. **Declare the expected output shape up front, and diff actuals against it
+   before printing anything.** Not just "did I find something" — how many
+   targets, how many rows per target, nonzero where nonzero is required. All
+   six bugs above share one shape: *the tool silently measured less than it
+   claimed*. A five-line preamble per script converts "silently wrong" into
+   "loudly incomplete", which this project's history says is the difference
+   between one run and four.
+
+```python
+EXPECT = {"decks": 6, "min_rows_per_deck": 200}
+...
+missing = [d for d in EXPECT_DECKS if d not in measured]
+if missing:
+    sys.exit(f"INCOMPLETE: {len(missing)} of {EXPECT['decks']} never appeared: "
+             f"{missing}")
+```
 
 ## Conventions
 
