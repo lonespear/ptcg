@@ -70,9 +70,24 @@ graded the opponent model, distributional comparison against real games found a
 world-model bug, and reading code found two more. Games are for confirming; the
 mined data is for learning.
 
-And **check the instrument too** — three probes this project reported on
-something other than what they claimed (a copied formula, a deleted counter, a
-misparsed timestamp).
+And **check the instrument too — it is code under test.** Every bug that
+invalidated evidence here lived in an instrument, not in the agent: the arena's
+forfeit rule, the unseeded engine, a probe copying a formula instead of calling
+it, one keying on a deleted counter, a watcher misparsing a timestamp, and an
+analysis that measured three decks while silently omitting the two it existed to
+measure.
+
+Run `scripts/harness_selftest.py` before trusting a result. For any *new*
+measurement tool, four checks catch this whole class:
+
+1. **Symmetry** — swap sides; a rule that can only penalise one seat shows up
+   here and nowhere else.
+2. **Determinism** — same seed, same game, or say plainly that it is unpaired.
+3. **Distribution** — compare against real replays; a private world that ends
+   games at half the real length is not measuring the real one.
+4. **Coverage — assert what you expected to find, and fail loudly when you do
+   not.** A script that reports on 3 of 6 targets must exit non-zero, not print
+   a confident table. This is the one that keeps getting missed.
 
 ## Conventions
 

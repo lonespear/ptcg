@@ -352,6 +352,55 @@ divergence from what the human-tuned opponent actually did. Until one exists,
 deck selection has to lean on ladder autopsies, which are slow and cost
 submissions.
 
+## 5f. Pilot-agreement does NOT explain the gap. Line closed.
+
+The idea: measure how well our agent pilots each opponent deck by comparing its
+choices to what real players did, and use that as a trust score for local
+matchups. If we pilot a deck badly, our local number for that matchup is
+inflated.
+
+Measured against real replays:
+
+| Deck | agreement | decisions | local-minus-ladder gap |
+|---|---|---|---|
+| Grimmsnarl/Munkidori | 0.330 | 17,577 | +0.250 |
+| Dudunsparce-Alakazam | 0.266 | 12,690 | +0.340 |
+| Archaludon-Cinderace | 0.287 | **80** | +0.560 |
+| other (Cynthia's Roselia) | 0.318 | 538 | −0.140 |
+| **Mega Lucario** | — | **0 found** | +0.780 |
+
+**No usable relationship.** Agreement sits in a narrow 0.27–0.33 band for every
+deck, and its ordering does not track the gap: the deck we pilot *best*
+(Grimmsnarl, 0.330) has a +0.25 gap, while the one we pilot similarly
+(Roselia, 0.318) has a *negative* gap. Archaludon's +0.56 rests on 80 decisions
+from 2 player-slots and cannot carry weight either way.
+
+**So the local-vs-ladder gap is not explained by how often we make a different
+decision.** The more likely mechanism is that the decks differ in how
+*punishing* a mistake is — Mega Lucario one-shots a 210 HP two-prize attacker,
+so a single misplay ends the game, while Grimmsnarl gives you turns to recover.
+Frequency of divergence is the wrong axis; cost of divergence is the right one,
+and this instrument cannot see it.
+
+**And the data does not exist to fix it.** Mega Lucario appears **zero** times
+in 4,669 episodes, because these decks are rare in the general population
+(Archaludon 0.31%) and common only in *our* games — and our own episodes are not
+recoverable: **zero of the 187 autopsy episode IDs appear in any public dump.**
+The daily datasets are samples, not exhaustive.
+
+**Unblocking deck evaluation therefore needs one of:**
+
+1. **Our own episodes.** Austin's autopsy has them, so some route exists —
+   likely a per-submission episode endpoint rather than the daily dumps. Ask
+   him; this is the cheapest path and it also refreshes the pool after each
+   settle.
+2. **A non-us opponent driver** — the competition reference agent, or Austin's
+   specialist panel, accepting that each is itself biased.
+3. **Accept that matchup truth costs submissions**, and spend them deliberately.
+
+Until then, treat every local matchup number as an upper bound, most inflated
+exactly where the opponent's deck punishes error hardest.
+
 ## 6. If you do one thing next
 
 In order:
