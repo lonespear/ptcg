@@ -51,14 +51,39 @@ def load_agent(path: Path, name: str):
         os.chdir(cwd)
 
 
+_POKEMON: set[int] | None = None
+
+
+def _pokemon_ids() -> set[int]:
+    global _POKEMON
+    if _POKEMON is None:
+        from cg.sim import lib
+        _POKEMON = {c["cardId"] for c in json.loads(lib.AllCard().decode())
+                    if c.get("cardType") == 0}
+    return _POKEMON
+
+
 def deck_key(counts: Counter) -> frozenset:
-    return frozenset(counts.items())
+    """Identify a deck by its Pokémon lines, not all 60 cards.
+
+    Exact-composition matching found only three of eight pool decks: the pool
+    comes from opponents we personally faced, and those precise lists are rare
+    in the wider population even when the archetype is common. The Pokémon lines
+    are what make a deck the deck — Trainer and Energy counts are the tuning
+    knobs players differ on — so keying on them recovers the archetype.
+    """
+    pk = _pokemon_ids()
+    return frozenset((cid, n) for cid, n in counts.items() if cid in pk)
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--agent", default="agent/main.py")
     ap.add_argument("--episodes", type=int, default=250)
+    ap.add_argument("--day", default=None,
+                    help="restrict to one day's dump, e.g. 2026-08-08. Without "
+                         "it the scan starts at the oldest day on disk and may "
+                         "never reach the day the pool came from.")
     ap.add_argument("--max-decisions", type=int, default=60,
                     help="cap per episode; search is not free")
     args = ap.parse_args()
@@ -75,7 +100,7 @@ def main() -> None:
     total: defaultdict[str, int] = defaultdict(int)
     seen_eps = matched = 0
 
-    for path in iter_episode_files():
+    for path in iter_episode_files(args.day):
         if seen_eps >= args.episodes:
             break
         try:
