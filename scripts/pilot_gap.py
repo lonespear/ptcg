@@ -73,7 +73,11 @@ def deck_key(counts: Counter) -> frozenset:
     knobs players differ on — so keying on them recovers the archetype.
     """
     pk = _pokemon_ids()
-    return frozenset((cid, n) for cid, n in counts.items() if cid in pk)
+    # Count >= 2 only: singleton techs are how two copies of the same deck
+    # differ. Our pool's Archaludon carries a lone Relicanth, which no general
+    # copy of that deck has, and matching on it found the archetype zero times.
+    return frozenset((cid, n) for cid, n in counts.items()
+                     if cid in pk and n >= 2)
 
 
 def main() -> None:
@@ -84,6 +88,10 @@ def main() -> None:
                     help="restrict to one day's dump, e.g. 2026-08-08. Without "
                          "it the scan starts at the oldest day on disk and may "
                          "never reach the day the pool came from.")
+    ap.add_argument("--only", default=None,
+                    help="comma-separated archetype substrings to measure; "
+                         "skip everything else. Use it to hunt rare decks over "
+                         "a whole day without paying for the common ones.")
     ap.add_argument("--max-decisions", type=int, default=60,
                     help="cap per episode; search is not free")
     args = ap.parse_args()
@@ -119,6 +127,10 @@ def main() -> None:
             k = deck_key(Counter(decks[seat]))
             entry = want.get(k)
             if entry is None:
+                continue
+            if args.only and not any(
+                    t.strip().lower() in (entry["archetype"] or "").lower()
+                    for t in args.only.split(",")):
                 continue
             matched += 1
             label = entry["archetype"][:30]
