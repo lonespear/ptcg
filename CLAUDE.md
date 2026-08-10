@@ -71,7 +71,10 @@ world-model bug, and reading code found two more. Games are for confirming; the
 mined data is for learning.
 
 And **check the instrument too — it is code under test.** Every bug that
-invalidated evidence here lived in an instrument, not in the agent: the arena's
+invalidated evidence here lived in an instrument, not in the agent, and the
+reason is structural: **the instruments were the only code without gates of
+their own.** The agent had SPRT, validation episodes and grader probes; the
+tools that produced those verdicts had nothing but trust. The list: the arena's
 forfeit rule, the unseeded engine, a probe copying a formula instead of calling
 it, one keying on a deleted counter, a watcher misparsing a timestamp, and an
 analysis that measured three decks while silently omitting the two it existed to

@@ -93,11 +93,29 @@ Most SPRT verdicts recorded in `README.md` were decided on 82–511 games, on an
 unseeded engine, with opponent forfeits inflating them. **Treat the whole
 decision ledger as provisional.**
 
-### 2d. And the leaderboard itself is ±150
+### 2d. The ladder noise floor — a number, not a vibe
 
-Byte-identical submissions scored **833.8 and 691.2**; a repeated submission
-scored 863.2 and 713.0. v6 read 1004.2 at 8 episodes and later crashed to 782.
-Never conclude from one submission.
+Every observed pair of identical or behaviourally-identical submissions:
+
+| pair | spread |
+|---|---|
+| v6 / v6-twin (byte-identical), reading 1 | 93.5 |
+| v6 / v6-twin, reading 2 | 116.5 |
+| v6 / v6-twin, reading 3 | 142.6 |
+| "v3: scaled-damage KB" submitted twice | 150.2 |
+
+**Noise floor: ~125 points, observed range 93–150.** Same agent, same deck,
+different launch luck.
+
+**The ship rule, stated numerically:** a single submission cannot resolve a
+difference below **~150 rating points**, so nothing ships on ladder evidence
+alone. Ship on *local* evidence from the audited harness, then read the ladder
+expecting ±150 either way. And judge a submission at roughly 30 settled
+episodes, never at its peak — v6 read 1004.2 at 8 episodes and crashed to 782.
+
+Every future settle adds another anchor; keep this table updated, because five
+weeks leaves only a handful of informative settles and each should be spent
+against a known noise budget.
 
 ---
 
@@ -434,13 +452,28 @@ the original next-steps are done. What remains, in order:
 1. **Build the episode puller** (§5f option 1). The Kaggle episode API serves
    any episode by ID and our submission page lists our games. This is the one
    piece of tooling that unblocks everything else — matchup truth, the pilot
-   measurement, and the standing pool refresh after each settle. An afternoon.
+   measurement, and the standing pool refresh after each settle.
+
+   **Make it incremental and unconditional, not on-demand.** It should run after
+   every settle and *append* to one growing episode store. Episodes age out of
+   easy retrieval, the band we play in keeps moving, and every downstream tool
+   wants a longitudinal corpus rather than a snapshot. Ten extra lines, and it
+   is the difference between an instrument and a chore someone has to remember:
+   the pool refresh below stops being a step and becomes a property of the data.
 2. **The deck rebuild**, on the prize-liability budget: single-prize bodies so a
-   misplay costs one prize instead of two, *without* cutting the draw engine
-   (that is what sank the first four variants — §5e). Score on the **matchup
-   vector**, not the weighted scalar; a flat 0.55 beats a spiky 0.75/0.30
-   against a field that moves. Bar: Archaludon and Lucario above ~0.45 with
-   Grimmsnarl still above ~0.65, which takes ~0.52 overall to ~0.61.
+   misplay costs one prize instead of two.
+
+   **State the lesson from the failed variants correctly** — they did not fail
+   because more Pokémon is wrong, they failed because the slots came out of
+   *consistency*. So the search space is **trainer-line-preserving swaps only**.
+   That is a much smaller space, small enough that the tournament can be
+   **exhaustive over it rather than sampled**.
+
+   Score on the **matchup vector**, not the weighted scalar, and keep the
+   flatness criterion live alongside the mean: at rank 778 we are entering the
+   band where opponents stop being copy-paste and a spiky vector's blind spots
+   get found. Bar: Archaludon and Lucario above ~0.45 with Grimmsnarl still
+   above ~0.65 — that takes ~0.52 overall to ~0.61.
 3. **Then one consolidated submission** with a written hypothesis, left to
    settle fully. Nothing ships unless its local effect clears the ±150 twin
    spread.
